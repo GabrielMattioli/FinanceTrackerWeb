@@ -26,6 +26,7 @@ export default function SettingsPage() {
             await updateBaseCurrency(newCurrency);
         } catch (err) {
             console.error(err);
+            alert('Erro ao atualizar: ' + (err.message || JSON.stringify(err)));
         } finally {
             setUpdatingCurrency(false);
         }

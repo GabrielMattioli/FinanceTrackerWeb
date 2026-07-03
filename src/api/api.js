@@ -145,7 +145,7 @@ export const getSettings = async () => {
   if (!data) {
     return { baseCurrency: 'EUR' };
   }
-  return { baseCurrency: data.base_currency };
+  return data;
 };
 
 export const updateCurrency = async (baseCurrency) => {
