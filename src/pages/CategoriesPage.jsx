@@ -157,7 +157,7 @@ export default function CategoriesPage() {
         try {
             await createCategoryRule({
                 keyword: ruleKeyword.trim(),
-                categoryId: parseInt(ruleCategoryId, 10)
+                categoryId: ruleCategoryId
             });
             toast.success('Regra criada com sucesso!');
             setRuleKeyword('');

@@ -59,7 +59,11 @@ export const getCategoryRules = async () => {
 };
 
 export const createCategoryRule = async (dto) => {
-  const { data, error } = await supabase.from('category_rules').insert([dto]).select().single();
+  const payload = {
+    keyword: dto.keyword,
+    category_id: dto.categoryId
+  };
+  const { data, error } = await supabase.from('category_rules').insert([payload]).select().single();
   return checkError(error, data);
 };
 
