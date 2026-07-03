@@ -34,7 +34,7 @@ export default function HistoryPage() {
             setTotalPages(txPage.totalPages || 0);
             setTotalElements(txPage.totalElements || 0);
             setCategories(cats);
-            setSelected(new Set());
+            clearSelection();
         } catch {
             toast.error('Erro ao carregar histórico.');
         } finally {
@@ -45,6 +45,7 @@ export default function HistoryPage() {
     useEffect(() => {
         setPage(0);
         load(0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [year, month, categoryId]);
 
     const handleUncategorize = async (id) => {
@@ -98,6 +99,9 @@ export default function HistoryPage() {
         : transactions;
 
     const { selected, setSelected, toggleSelect, toggleAll, clearSelection, allSelected, someSelected } = useRowSelection(filtered);
+
+    // Note: clearSelection is used inside `load` — React guarantees the latest ref is used
+    // because `load` is recreated each render and captures the latest `clearSelection`.
 
 
     return (
@@ -167,7 +171,7 @@ export default function HistoryPage() {
                                             type="checkbox"
                                             className="custom-checkbox"
                                             checked={allSelected}
-                                            onChange={toggleAll}
+                                            onChange={() => toggleAll()}
                                         />
                                     </th>
                                     <th>Data</th>

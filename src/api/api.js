@@ -99,14 +99,13 @@ export const getHistory = async (params = {}) => {
     .not('category_id', 'is', null)
     .order('date', { ascending: false });
 
-  if (params.year) {
-    const startDate = `${params.year}-01-01`;
-    const endDate = `${params.year}-12-31`;
-    query = query.gte('date', startDate).lte('date', endDate);
-  }
-  if (params.month) {
+  if (params.month && params.year) {
     const startDate = `${params.year}-${String(params.month).padStart(2, '0')}-01`;
     const endDate = new Date(params.year, params.month, 0).toISOString().split('T')[0];
+    query = query.gte('date', startDate).lte('date', endDate);
+  } else if (params.year) {
+    const startDate = `${params.year}-01-01`;
+    const endDate = `${params.year}-12-31`;
     query = query.gte('date', startDate).lte('date', endDate);
   }
   if (params.categoryId) {

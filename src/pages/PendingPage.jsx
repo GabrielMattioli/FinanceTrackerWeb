@@ -173,7 +173,7 @@ export default function PendingPage({ onCountChange }) {
                                             type="checkbox"
                                             className="custom-checkbox"
                                             checked={allSelected}
-                                            onChange={toggleAll}
+                                            onChange={() => toggleAll()}
                                         />
                                     </th>
                                     <th>Data</th>

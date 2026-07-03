@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
     LineChart, Line, Tooltip, ResponsiveContainer, LabelList,
-    ReferenceLine, ReferenceArea
+    ReferenceArea
 } from 'recharts';
 import { ShieldCheck, AlertCircle, Info, TrendingDown, Target } from 'lucide-react';
 import { getDashboardSummary, getLatestDashboardMonth } from '../api/api';
@@ -18,7 +18,7 @@ const MONTHS = [
 
 const SEM_CATEGORIA_COLOR = '#6b7280';
 
-function StatCard({ label, value, type, baseCurrency, note }) {
+function StatCard({ label, value, type, baseCurrency, note = null }) {
     const icon = type === 'income' ? '↑' : type === 'expense' ? '↓' : type === 'accumulated' ? '∑' : '≈';
     return (
         <div className={`stat-card ${type}`}>
@@ -30,7 +30,7 @@ function StatCard({ label, value, type, baseCurrency, note }) {
     );
 }
 
-const LineTooltip = ({ active, payload, label, baseCurrency }) => {
+const LineTooltip = ({ active = false, payload = null, label = '', baseCurrency }) => {
     if (active && payload && payload.length) {
         const transactions = payload[0]?.payload?.transactions || [];
         return (
@@ -55,7 +55,7 @@ const LineTooltip = ({ active, payload, label, baseCurrency }) => {
     return null;
 };
 
-const BarTooltip = ({ active, payload, baseCurrency }) => {
+const BarTooltip = ({ active = false, payload = null, baseCurrency }) => {
     if (active && payload && payload.length) {
         const { name, value } = payload[0];
         return (
@@ -69,7 +69,7 @@ const BarTooltip = ({ active, payload, baseCurrency }) => {
 };
 
 // Custom label rendered at the tip of each bar
-function BarValueLabel({ x, y, width, height, value, pct, baseCurrency }) {
+function BarValueLabel({ x = 0, y = 0, width = 0, height = 0, value = 0, pct, baseCurrency }) {
     if (!value) return null;
     return (
         <text
@@ -191,272 +191,276 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={setMonth} />
+                <MonthBar year={year} month={month} onMonthChange={setMonth} allowAllMonths={false} />
             </div>
 
             <div className={`dashboard-slide-wrapper ${slideClass}`}>
 
-            {loading ? (
-                <div className="loading-page"><span className="spinner" /> Carregando...</div>
-            ) : (
-                <>
-                    {/* Stats */}
-                    <div className="stat-grid">
-                        <StatCard label="Total de Entradas" value={data?.totalIncome} type="income" baseCurrency={baseCurrency} />
-                        <StatCard label="Total de Saídas" value={data?.totalExpense} type="expense" baseCurrency={baseCurrency} />
-                        <StatCard
-                            label="Saldo Líquido"
-                            value={data?.netBalance}
-                            type="net"
-                            baseCurrency={baseCurrency}
-                        />
-                        <StatCard
-                            label="Saldo Acumulado"
-                            value={data?.accumulatedBalance}
-                            type="accumulated"
-                            baseCurrency={baseCurrency}
-                            note={Number(data?.previousMonthBalance || 0) !== 0
-                                ? `Inclui ${formatCurrencyValue(data.previousMonthBalance, baseCurrency)} de meses anteriores`
-                                : null}
-                        />
-                    </div>
+                {loading ? (
+                    <div className="loading-page"><span className="spinner" /> Carregando...</div>
+                ) : (
+                    <>
+                        {/* Stats */}
+                        <div className="stat-grid">
+                            <StatCard label="Total de Entradas" value={data?.totalIncome} type="income" baseCurrency={baseCurrency} />
+                            <StatCard label="Total de Saídas" value={data?.totalExpense} type="expense" baseCurrency={baseCurrency} />
+                            <StatCard
+                                label="Saldo Líquido"
+                                value={data?.netBalance}
+                                type="net"
+                                baseCurrency={baseCurrency}
+                            />
+                            <StatCard
+                                label="Saldo Acumulado"
+                                value={data?.accumulatedBalance}
+                                type="accumulated"
+                                baseCurrency={baseCurrency}
+                                note={Number(data?.previousMonthBalance || 0) !== 0
+                                    ? `Inclui ${formatCurrencyValue(data.previousMonthBalance, baseCurrency)} de meses anteriores`
+                                    : null}
+                            />
+                        </div>
 
-                    {/* Safety Margin Visual Bar - Redesigned for "Financial Health" */}
-                    {(() => {
-                        const accBal = Number(data?.accumulatedBalance ?? data?.netBalance ?? 0);
-                        const safe = Number(data?.safeMoneyMargin || 0);
-                        const expectedTotal = Number(data?.expectedEssentialOutflow || 0);
-                        const reserved = Math.max(0, accBal - safe);
-                        const netBal = accBal; // alias so the rest of the block is unchanged
-                        
-                        const safePctCalc = netBal > 0 ? (safe / netBal) * 100 : 0;
-                        const isNegative = safe <= 0;
-                        const isTight = safe > 0 && safePctCalc < 20; // Less than 20% safe
-                        
-                        const statusClass = isNegative ? 'danger' : (isTight ? 'tight' : 'safe');
-                        const StatusIcon = isNegative ? AlertCircle : (isTight ? Info : ShieldCheck);
-                        
-                        // Percentage calculation for the bar visual
-                        let safePct = 0;
-                        let reservedPct = 0;
-                        if (netBal > 0) {
-                            reservedPct = Math.min(100, (reserved / netBal) * 100);
-                            safePct = Math.max(0, 100 - reservedPct);
-                        } else {
-                            reservedPct = 100;
-                        }
-                        
-                        let statusMsg = "Tudo certo! Sua margem está saudável. Que tal poupar ou investir o excedente?";
-                        if (isNegative) statusMsg = "Alerta: Saldo livre esgotado! Foque apenas em despesas essenciais.";
-                        else if (isTight) statusMsg = "Atenção: Sua margem de segurança está baixa. Cuidado com gastos extras!";
+                        {/* Safety Margin Visual Bar - Redesigned for "Financial Health" */}
+                        {(() => {
+                            const accBal = Number(data?.accumulatedBalance ?? data?.netBalance ?? 0);
+                            const safe = Number(data?.safeMoneyMargin || 0);
+                            const expectedTotal = Number(data?.expectedEssentialOutflow || 0);
+                            const reserved = Math.max(0, accBal - safe);
+                            const netBal = accBal; // alias so the rest of the block is unchanged
 
-                        return (
-                            <div className={`card safety-card ${statusClass}`} style={{ marginBottom: 24, padding: '24px' }}>
-                                <div className="safety-status-label" style={{ 
-                                    color: isNegative ? '#f43f5e' : (isTight ? '#f59e0b' : 'var(--text-primary)') 
-                                }}>
-                                    <StatusIcon size={18} className={isNegative ? 'danger-icon' : ''} />
-                                    <span>Saúde Financeira: Margem de Segurança</span>
-                                </div>
-                                    
-                                <div className="safety-stats-row">
-                                    <div className="safety-stat">
-                                        <div className="label">Margem Livre</div>
-                                        <div className="value" style={{ color: isNegative ? '#f43f5e' : 'var(--accent)' }}>
-                                            {formatCurrencyValue(safe, baseCurrency)}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="safety-divider" />
-                                    
-                                    <div className="safety-stat">
-                                        <div className="label">Reservado (Fixos)</div>
-                                        <div className="value" style={{ color: 'var(--text-secondary)' }}>
-                                            {formatCurrencyValue(reserved, baseCurrency)}
-                                        </div>
+                            const safePctCalc = netBal > 0 ? (safe / netBal) * 100 : 0;
+                            const isNegative = safe <= 0;
+                            const isTight = safe > 0 && safePctCalc < 20; // Less than 20% safe
+
+                            const statusClass = isNegative ? 'danger' : (isTight ? 'tight' : 'safe');
+                            const StatusIcon = isNegative ? AlertCircle : (isTight ? Info : ShieldCheck);
+
+                            // Percentage calculation for the bar visual
+                            let safePct = 0;
+                            let reservedPct = 0;
+                            if (netBal > 0) {
+                                reservedPct = Math.min(100, (reserved / netBal) * 100);
+                                safePct = Math.max(0, 100 - reservedPct);
+                            } else {
+                                reservedPct = 100;
+                            }
+
+                            let statusMsg = "Tudo certo! Sua margem está saudável. Que tal poupar ou investir o excedente?";
+                            if (isNegative) statusMsg = "Alerta: Saldo livre esgotado! Foque apenas em despesas essenciais.";
+                            else if (isTight) statusMsg = "Atenção: Sua margem de segurança está baixa. Cuidado com gastos extras!";
+
+                            return (
+                                <div className={`card safety-card ${statusClass}`} style={{ marginBottom: 24, padding: '24px' }}>
+                                    <div className="safety-status-label" style={{
+                                        color: isNegative ? '#f43f5e' : (isTight ? '#f59e0b' : 'var(--text-primary)')
+                                    }}>
+                                        <StatusIcon size={18} className={isNegative ? 'danger-icon' : ''} />
+                                        <span>Saúde Financeira: Margem de Segurança</span>
                                     </div>
 
-                                    <div className="safety-divider" />
-                                    
-                                    <div className="safety-stat">
-                                        <div className="label">Saldo Líquido Total</div>
-                                        <div className="value" style={{ color: 'var(--text-primary)' }}>
-                                            {formatCurrencyValue(netBal, baseCurrency)}
+                                    <div className="safety-stats-row">
+                                        <div className="safety-stat">
+                                            <div className="label">Margem Livre</div>
+                                            <div className="value" style={{ color: isNegative ? '#f43f5e' : 'var(--accent)' }}>
+                                                {formatCurrencyValue(safe, baseCurrency)}
+                                            </div>
+                                        </div>
+
+                                        <div className="safety-divider" />
+
+                                        <div className="safety-stat">
+                                            <div className="label">Reservado (Fixos)</div>
+                                            <div className="value" style={{ color: 'var(--text-secondary)' }}>
+                                                {formatCurrencyValue(reserved, baseCurrency)}
+                                            </div>
+                                        </div>
+
+                                        <div className="safety-divider" />
+
+                                        <div className="safety-stat">
+                                            <div className="label">Saldo Líquido Total</div>
+                                            <div className="value" style={{ color: 'var(--text-primary)' }}>
+                                                {formatCurrencyValue(netBal, baseCurrency)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <div className="safety-bar-container">
-                                    {netBal > 0 ? (
-                                        <>
-                                            <div className="safety-segment safe" style={{ width: `${safePct}%` }} title={`Margem Livre: ${formatCurrencyValue(safe, baseCurrency)}`} />
-                                            <div className="safety-segment reserved" style={{ width: `${reservedPct}%` }} title={`Reservado (Fixos): ${formatCurrencyValue(reserved, baseCurrency)}`} />
-                                        </>
-                                    ) : (
-                                        <div className="safety-segment danger" style={{ width: '100%' }} title="Sem saldo positivo" />
-                                    )}
-                                </div>
 
-                                <div className="safety-legend" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                                    <div style={{ display: 'flex', gap: 20 }}>
-                                        <div className="legend-item">
-                                            <div className="legend-dot" style={{ background: 'var(--accent)' }} />
-                                            <span>Margem Livre: {safePct.toFixed(0)}%</span>
-                                        </div>
-                                        <div className="legend-item">
-                                            <div className="legend-dot" style={{ background: 'var(--text-muted)' }} />
-                                            <span>Reservado (Fixos): {reservedPct.toFixed(0)}%</span>
-                                        </div>
+                                    <div className="safety-bar-container">
+                                        {netBal > 0 ? (
+                                            <>
+                                                <div className="safety-segment safe" style={{ width: `${safePct}%` }} title={`Margem Livre: ${formatCurrencyValue(safe, baseCurrency)}`} />
+                                                <div className="safety-segment reserved" style={{ width: `${reservedPct}%` }} title={`Reservado (Fixos): ${formatCurrencyValue(reserved, baseCurrency)}`} />
+                                            </>
+                                        ) : (
+                                            <div className="safety-segment danger" style={{ width: '100%' }} title="Sem saldo positivo" />
+                                        )}
                                     </div>
-                                    {isNegative && safe < 0 && (
-                                        <div className="legend-item" style={{ color: '#f43f5e' }}>
-                                            <TrendingDown size={14} />
-                                            <span>Excedido em {formatCurrencyValue(Math.abs(safe), baseCurrency)}</span>
-                                        </div>
-                                    )}
-                                </div>
 
-                                <div className="safety-tip">
-                                    <Target size={16} />
-                                    <span>
-                                        <strong>Dica:</strong> {statusMsg} (Previsão de essenciais: <strong>{formatCurrencyValue(expectedTotal, baseCurrency)}</strong>)
+                                    <div className="safety-legend" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                                        <div style={{ display: 'flex', gap: 20 }}>
+                                            <div className="legend-item">
+                                                <div className="legend-dot" style={{ background: 'var(--accent)' }} />
+                                                <span>Margem Livre: {safePct.toFixed(0)}%</span>
+                                            </div>
+                                            <div className="legend-item">
+                                                <div className="legend-dot" style={{ background: 'var(--text-muted)' }} />
+                                                <span>Reservado (Fixos): {reservedPct.toFixed(0)}%</span>
+                                            </div>
+                                        </div>
+                                        {isNegative && safe < 0 && (
+                                            <div className="legend-item" style={{ color: '#f43f5e' }}>
+                                                <TrendingDown size={14} />
+                                                <span>Excedido em {formatCurrencyValue(Math.abs(safe), baseCurrency)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="safety-tip">
+                                        <Target size={16} />
+                                        <span>
+                                            <strong>Dica:</strong> {statusMsg} (Previsão de essenciais: <strong>{formatCurrencyValue(expectedTotal, baseCurrency)}</strong>)
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Charts */}
+                        <div className="charts-grid">
+
+                            {/* ── Line Chart — Daily Expense Evolution ── */}
+                            <div className="card">
+                                <div className="card-header" style={{ marginBottom: 28 }}>
+                                    <h3 className="card-title">Evolução Diária de Gastos</h3>
+                                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                                        {MONTHS[month]} {year}
                                     </span>
                                 </div>
-                            </div>
-                        );
-                    })()}
+                                {!hasLineData ? (
+                                    <div className="table-empty" style={{ padding: '40px 0' }}>
+                                        <div className="empty-icon">📈</div>
+                                        <p>Sem dados para este período</p>
+                                        <span>Importe transações para ver a evolução diária</span>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <LineChart data={lineData} margin={{ left: 10, right: 30, top: 8, bottom: 15 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
 
-                    {/* Charts */}
-                    <div className="charts-grid">
-
-                        {/* ── Line Chart — Daily Expense Evolution ── */}
-                        <div className="card">
-                            <div className="card-header" style={{ marginBottom: 28 }}>
-                                <h3 className="card-title">Evolução Diária de Gastos</h3>
-                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                    {MONTHS[month]} {year}
-                                </span>
-                            </div>
-                            {!hasLineData ? (
-                                <div className="table-empty" style={{ padding: '40px 0' }}>
-                                    <div className="empty-icon">📈</div>
-                                    <p>Sem dados para este período</p>
-                                    <span>Importe transações para ver a evolução diária</span>
-                                </div>
-                            ) : (
-                                <ResponsiveContainer width="100%" height={280}>
-                                    <LineChart data={lineData} margin={{ left: 10, right: 30, top: 8, bottom: 15 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-
-                                        {/* Weekend highlight bands */}
-                                        {weekendDays.map((wd, i) => (
-                                            <ReferenceArea
-                                                key={i}
-                                                x1={wd.x1}
-                                                x2={wd.x2}
-                                                fill="var(--weekend-band-fill, rgba(99,102,241,0.06))"
-                                                strokeOpacity={0}
-                                            />
-                                        ))}
-
-                                        <XAxis
-                                            dataKey="day"
-                                            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tickFormatter={v => `${v}`}
-                                            label={{ value: 'Dia', position: 'insideBottomRight', offset: -10, fill: 'var(--text-muted)', fontSize: 11 }}
-                                        />
-                                        <YAxis
-                                            tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tickFormatter={v => {
-                                                const sym = ({ 'EUR': '€', 'BRL': 'R$', 'USD': '$' })[baseCurrency] || '€';
-                                                if (v === 0) return `${sym}0`;
-                                                if (v >= 1000) return `${sym}${(v / 1000).toFixed(1).replace('.0', '')}k`;
-                                                return `${sym}${v}`;
-                                            }}
-                                            width={52}
-                                        />
-                                        <Tooltip content={<LineTooltip baseCurrency={baseCurrency} />} cursor={{ stroke: 'var(--border-color)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-
-                                        <Line
-                                            type="monotone"
-                                            dataKey="total"
-                                            stroke="var(--accent)"
-                                            strokeWidth={2.5}
-                                            dot={{ r: 3, fill: 'var(--accent)', strokeWidth: 0 }}
-                                            activeDot={{ r: 5, fill: 'var(--accent-hover)', strokeWidth: 0 }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
-
-                        {/* ── Horizontal Bar Chart — Category Breakdown ── */}
-                        <div className="card">
-                            <div className="card-header" style={{ marginBottom: 28 }}>
-                                <h3 className="card-title">Detalhamento por Categoria</h3>
-                            </div>
-                            {!hasBarData ? (
-                                <div className="table-empty" style={{ padding: '40px 0' }}>
-                                    <div className="empty-icon">📊</div>
-                                    <p>Sem dados para este período</p>
-                                </div>
-                            ) : (
-                                <ResponsiveContainer width="100%" height={barChartHeight}>
-                                    <BarChart
-                                        data={barData}
-                                        layout="vertical"
-                                        margin={{ left: 0, right: 120, top: 4, bottom: 4 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
-                                        <XAxis
-                                            type="number"
-                                            tick={false}
-                                            axisLine={false}
-                                            tickLine={false}
-                                        />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="name"
-                                            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                                            width={110}
-                                            axisLine={false}
-                                            tickLine={false}
-                                        />
-                                        <Tooltip content={<BarTooltip baseCurrency={baseCurrency} />} cursor={{ fill: 'var(--bg-hover)' }} />
-
-                                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14}>
-                                            {barData.map((entry, i) => (
-                                                <Cell key={i} fill={entry.color} />
+                                            {/* Weekend highlight bands */}
+                                            {weekendDays.map((wd, i) => (
+                                                <ReferenceArea
+                                                    key={i}
+                                                    x1={wd.x1}
+                                                    x2={wd.x2}
+                                                    fill="var(--weekend-band-fill, rgba(99,102,241,0.06))"
+                                                    strokeOpacity={0}
+                                                />
                                             ))}
-                                            <LabelList
-                                                dataKey="value"
-                                                position="right"
-                                                content={(props) => {
-                                                    const pct = totalExpense > 0
-                                                        ? ((props.value / totalExpense) * 100).toFixed(1)
-                                                        : '0.0';
-                                                    return (
-                                                        <BarValueLabel
-                                                            {...props}
-                                                            pct={pct}
-                                                            baseCurrency={baseCurrency}
-                                                        />
-                                                    );
-                                                }}
-                                            />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
 
-                    </div>
-                </>
-            )}
+                                            <XAxis
+                                                dataKey="day"
+                                                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tickFormatter={v => `${v}`}
+                                                label={{ value: 'Dia', position: 'insideBottomRight', offset: -10, fill: 'var(--text-muted)', fontSize: 11 }}
+                                            />
+                                            <YAxis
+                                                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tickFormatter={v => {
+                                                    const sym = ({ 'EUR': '€', 'BRL': 'R$', 'USD': '$' })[baseCurrency] || '€';
+                                                    if (v === 0) return `${sym}0`;
+                                                    if (v >= 1000) return `${sym}${(v / 1000).toFixed(1).replace('.0', '')}k`;
+                                                    return `${sym}${v}`;
+                                                }}
+                                                width={52}
+                                            />
+                                            <Tooltip content={<LineTooltip baseCurrency={baseCurrency} />} cursor={{ stroke: 'var(--border-color)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+
+                                            <Line
+                                                type="monotone"
+                                                dataKey="total"
+                                                stroke="var(--accent)"
+                                                strokeWidth={2.5}
+                                                dot={{ r: 3, fill: 'var(--accent)', strokeWidth: 0 }}
+                                                activeDot={{ r: 5, fill: 'var(--accent-hover)', strokeWidth: 0 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+
+                            {/* ── Horizontal Bar Chart — Category Breakdown ── */}
+                            <div className="card">
+                                <div className="card-header" style={{ marginBottom: 28 }}>
+                                    <h3 className="card-title">Detalhamento por Categoria</h3>
+                                </div>
+                                {!hasBarData ? (
+                                    <div className="table-empty" style={{ padding: '40px 0' }}>
+                                        <div className="empty-icon">📊</div>
+                                        <p>Sem dados para este período</p>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={barChartHeight}>
+                                        <BarChart
+                                            data={barData}
+                                            layout="vertical"
+                                            margin={{ left: 0, right: 120, top: 4, bottom: 4 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
+                                            <XAxis
+                                                type="number"
+                                                tick={false}
+                                                axisLine={false}
+                                                tickLine={false}
+                                            />
+                                            <YAxis
+                                                type="category"
+                                                dataKey="name"
+                                                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                                                width={110}
+                                                axisLine={false}
+                                                tickLine={false}
+                                            />
+                                            <Tooltip content={<BarTooltip baseCurrency={baseCurrency} />} cursor={{ fill: 'var(--bg-hover)' }} />
+
+                                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14}>
+                                                {barData.map((entry, i) => (
+                                                    <Cell key={i} fill={entry.color} />
+                                                ))}
+                                                <LabelList
+                                                    dataKey="value"
+                                                    position="right"
+                                                    content={(props) => {
+                                                        const pct = totalExpense > 0
+                                                            ? ((Number(props.value) / totalExpense) * 100).toFixed(1)
+                                                            : '0.0';
+                                                        return (
+                                                            <BarValueLabel
+                                                                x={Number(props.x)}
+                                                                y={Number(props.y)}
+                                                                width={Number(props.width)}
+                                                                height={Number(props.height)}
+                                                                value={Number(props.value)}
+                                                                pct={pct}
+                                                                baseCurrency={baseCurrency}
+                                                            />
+                                                        );
+                                                    }}
+                                                />
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

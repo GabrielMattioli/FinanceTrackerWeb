@@ -1,7 +1,11 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { getSettings, updateCurrency as apiUpdateCurrency } from '../api/api';
 
-const SettingsContext = createContext({});
+const SettingsContext = createContext({
+    baseCurrency: 'EUR',
+    updateBaseCurrency: async (_currency) => {},
+    loadingSettings: true
+});
 
 export function SettingsProvider({ children }) {
     const [settings, setSettings] = useState({ baseCurrency: 'EUR' });
@@ -10,8 +14,9 @@ export function SettingsProvider({ children }) {
     useEffect(() => {
         getSettings()
             .then(data => {
-                if (data.baseCurrency) {
-                    setSettings(prev => ({ ...prev, baseCurrency: data.baseCurrency }));
+                const currency = data.baseCurrency || data.base_currency;
+                if (currency) {
+                    setSettings(prev => ({ ...prev, baseCurrency: currency }));
                 }
             })
             .catch(err => console.error('Failed to load settings', err))

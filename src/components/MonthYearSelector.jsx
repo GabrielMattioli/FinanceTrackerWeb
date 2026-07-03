@@ -53,10 +53,8 @@ export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
                 if (isActive) tabClass += ' active';
 
                 if (!m.hasData) tabClass += ' no-data';
-                else if (isPositive && !isActive) tabClass += ' income-style';
-                else if (!isPositive && !isActive) tabClass += ' expense-style';
-                else if (isPositive && isActive) tabClass += ' income-style active';
-                else if (!isPositive && isActive) tabClass += ' expense-style active';
+                else if (isPositive) tabClass += ' income-style';
+                else tabClass += ' expense-style';
 
                 return (
                     <button

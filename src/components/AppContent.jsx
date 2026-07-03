@@ -35,8 +35,6 @@ export default function AppContent() {
     }
   }, []);
 
-  // Backend local removido: Heartbeat e desconexão não são mais necessários
-
   useEffect(() => {
     refreshPendingCount();
   }, [refreshPendingCount]);
@@ -70,7 +68,7 @@ export default function AppContent() {
             <Route path="/dashboard" element={<DashboardPage key={refreshKey} />} />
             <Route
               path="/pending"
-              element={<PendingPage key={refreshKey} onCountChange={setPendingCount} onRefreshCount={refreshPendingCount} />}
+              element={<PendingPage key={refreshKey} onCountChange={setPendingCount} />}
             />
             <Route path="/history" element={<HistoryPage key={refreshKey} />} />
             <Route path="/categories" element={<CategoriesPage />} />

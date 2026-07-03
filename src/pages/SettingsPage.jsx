@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Database, Info, Coins } from 'lucide-react';
-import { getSettings } from '../api/api';
+import { getSettings, generateTestData } from '../api/api';
 import { useSettings } from '../context/SettingsContext';
 
 export default function SettingsPage() {
@@ -116,8 +116,7 @@ export default function SettingsPage() {
                             className="btn btn-primary" 
                             onClick={async () => {
                                 try {
-                                    const api = await import('../api/api');
-                                    await api.generateTestData();
+                                    await generateTestData();
                                     alert('Dados de teste gerados com sucesso!');
                                     window.location.reload();
                                 } catch (e) {

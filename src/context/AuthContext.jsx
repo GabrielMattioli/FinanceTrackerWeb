@@ -1,7 +1,11 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../supabaseClient';
 
-const AuthContext = createContext();
+const AuthContext = createContext({
+  session: null,
+  user: null,
+  signOut: async () => { },
+});
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
@@ -25,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     session,
     user: session?.user,
-    signOut: () => supabase.auth.signOut(),
+    signOut: async () => { await supabase.auth.signOut(); },
   };
 
   return (

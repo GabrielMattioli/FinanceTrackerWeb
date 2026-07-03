@@ -13,7 +13,7 @@ export default function ImportModal({ onClose, onSuccess }) {
     const [manualMapping, setManualMapping] = useState(null); // { headers, previewRows }
     const [manualCols, setManualCols] = useState({ dateColumn: '', descColumn: '', amountColumn: '' });
 
-    const fileInputRef = useRef();
+    const fileInputRef = useRef(null);
 
     const handleFile = (f) => {
         if (f && f.name.toLowerCase().endsWith('.csv')) {
@@ -57,7 +57,7 @@ export default function ImportModal({ onClose, onSuccess }) {
                 toast(res.message || 'Nenhuma transação nova encontrada.');
             }
         } catch (err) {
-            toast.error('Erro ao importar: ' + (err.response?.data?.message || err.message));
+            toast.error('Erro ao importar: ' + (err.message || 'Erro desconhecido'));
         } finally {
             setLoading(false);
         }

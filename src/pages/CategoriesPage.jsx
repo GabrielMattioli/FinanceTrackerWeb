@@ -28,7 +28,7 @@ export default function CategoriesPage() {
     const [expectedAmount, setExpectedAmount] = useState('');
     const [saving, setSaving] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
-    const colorRef = useRef();
+    const colorRef = useRef(null);
 
     const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
 
@@ -91,9 +91,7 @@ export default function CategoriesPage() {
             setEditingCategoryId(null);
             await loadCategories();
         } catch (err) {
-            const errorData = err.response?.data;
-            const msg = typeof errorData === 'string' ? errorData : (errorData?.message || 'Erro ao salvar categoria.');
-            toast.error(msg);
+            toast.error(err?.message || 'Erro ao salvar categoria.');
         } finally {
             setSaving(false);
         }
@@ -164,9 +162,7 @@ export default function CategoriesPage() {
             setRuleCategoryId('');
             await loadRules();
         } catch (err) {
-            const errorData = err.response?.data;
-            const msg = typeof errorData === 'string' ? errorData : (errorData?.message || 'Erro ao salvar regra.');
-            toast.error(msg);
+            toast.error(err?.message || 'Erro ao salvar regra.');
         } finally {
             setSavingRule(false);
         }
@@ -225,8 +221,8 @@ export default function CategoriesPage() {
                                         boxShadow: color === c ? `0 0 0 2px ${c}` : 'none',
                                         transition: 'transform 0.15s',
                                     }}
-                                    onMouseEnter={e => e.target.style.transform = 'scale(1.15)'}
-                                    onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                                 />
                             ))}
                             <button
