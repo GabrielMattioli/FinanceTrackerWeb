@@ -15,6 +15,10 @@ vi.mock('../api/api', () => ({
     default: { post: vi.fn() } // For sidebar shutdown
 }));
 
+vi.mock('../context/AuthContext', () => ({
+    useAuth: () => ({ signOut: vi.fn() })
+}));
+
 describe('AppContent Layout & Routing', () => {
     it('redirects to dashboard by default', async () => {
         render(

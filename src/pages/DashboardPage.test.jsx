@@ -7,7 +7,15 @@ import { SettingsProvider } from '../context/SettingsContext';
 vi.mock('../api/api', () => ({
     getSettings: vi.fn().mockResolvedValue({ baseCurrency: 'EUR' }),
     getLatestDashboardMonth: vi.fn().mockResolvedValue({ year: 2024, month: 1 }),
-    getDashboardSummary: vi.fn().mockResolvedValue({ income: 0, expense: 0, netBalance: 0, expensesByCategory: [] }),
+    getDashboardSummary: vi.fn().mockResolvedValue({
+        totalIncome: 0,
+        totalExpense: 0,
+        netBalance: 0,
+        categoryBreakdown: [],
+        dailyExpenses: [],
+        safeMoneyMargin: 0,
+        expectedEssentialOutflow: 0
+    }),
     getYearlySummary: vi.fn().mockResolvedValue({ months: [] }),
 }));
 
@@ -20,10 +28,13 @@ describe('DashboardPage', () => {
         api.getSettings.mockResolvedValue({ baseCurrency: 'EUR' });
         api.getLatestDashboardMonth.mockResolvedValue({ year: 2024, month: 1 });
         api.getDashboardSummary.mockResolvedValue({
-            income: 5000,
-            expense: 2000,
+            totalIncome: 5000,
+            totalExpense: 2000,
             netBalance: 3000,
-            expensesByCategory: []
+            categoryBreakdown: [],
+            dailyExpenses: [],
+            safeMoneyMargin: 0,
+            expectedEssentialOutflow: 0
         });
 
         render(
@@ -34,8 +45,8 @@ describe('DashboardPage', () => {
 
         await waitFor(() => {
             expect(api.getDashboardSummary).toHaveBeenCalledWith(2024, 1);
-            expect(screen.getByText('Receitas')).toBeInTheDocument();
-            expect(screen.getByText('Despesas')).toBeInTheDocument();
+            expect(screen.getByText('Total de Entradas')).toBeInTheDocument();
+            expect(screen.getByText('Total de Saídas')).toBeInTheDocument();
             expect(screen.getByText('Saldo Líquido')).toBeInTheDocument();
         });
     });

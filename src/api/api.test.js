@@ -17,7 +17,8 @@ describe('api', () => {
 
     describe('getCategories', () => {
         it('returns data when successful', async () => {
-            const mockData = [{ id: 1, name: 'Food' }];
+            const mockData = [{ id: 1, name: 'Food', is_essential: false, expected_amount: null }];
+            const expectedData = [{ id: 1, name: 'Food', is_essential: false, expected_amount: null, isEssential: false, expectedAmount: null }];
             const mockOrder = vi.fn().mockResolvedValue({ data: mockData, error: null });
             const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
             supabase.from.mockReturnValue({ select: mockSelect });
@@ -26,7 +27,7 @@ describe('api', () => {
             expect(supabase.from).toHaveBeenCalledWith('categories');
             expect(mockSelect).toHaveBeenCalledWith('*');
             expect(mockOrder).toHaveBeenCalledWith('name');
-            expect(result).toEqual(mockData);
+            expect(result).toEqual(expectedData);
         });
 
         it('throws error when unsuccessful', async () => {
