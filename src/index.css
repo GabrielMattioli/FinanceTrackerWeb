@@ -1589,6 +1589,12 @@ input[type="color"] {
   margin-bottom: 8px;
 }
 
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 /* ===== RESPONSIVE DESIGN (MOBILE) ===== */
 .topbar-menu-btn {
   display: none;

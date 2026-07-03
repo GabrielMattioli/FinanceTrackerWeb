@@ -182,7 +182,7 @@ export default function CategoriesPage() {
 
     // --- RENDERS ---
     const renderCategories = () => (
-        <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="settings-layout">
             <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h3 className="card-title" style={{ marginBottom: 0 }}>
@@ -359,7 +359,7 @@ export default function CategoriesPage() {
     );
 
     const renderRules = () => (
-        <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="settings-layout">
             <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h3 className="card-title" style={{ marginBottom: 0 }}>Nova Regra</h3>
