@@ -4,20 +4,24 @@ import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
     pendingCount?: number;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
-export default function Sidebar({ pendingCount = 0 }: SidebarProps) {
+export default function Sidebar({ pendingCount = 0, isOpen = false, onClose }: SidebarProps) {
     const { signOut } = useAuth();
 
     return (
-        <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-            <div className="sidebar-logo">
+        <>
+            {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+            <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+                <div className="sidebar-logo">
                 <div className="logo-icon">💰</div>
                 <h1>FinanceTracker</h1>
                 <p>Controle Financeiro Pessoal</p>
             </div>
 
-            <nav className="sidebar-nav" style={{ flex: 1 }}>
+            <nav className="sidebar-nav" style={{ flex: 1 }} onClick={onClose}>
                 <span className="sidebar-section-label">Visão Geral</span>
 
                 <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -62,6 +66,7 @@ export default function Sidebar({ pendingCount = 0 }: SidebarProps) {
                 </button>
             </div>
         </aside>
+        </>
     );
 }
 

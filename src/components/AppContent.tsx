@@ -23,6 +23,7 @@ const PAGE_TITLES = {
 export default function AppContent() {
   const location = useLocation();
   const [showImport, setShowImport] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -58,10 +59,10 @@ export default function AppContent() {
 
   return (
     <div className="app-layout">
-      <Sidebar pendingCount={pendingCount} />
+      <Sidebar pendingCount={pendingCount} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="main-content">
-        <Topbar title={title} onImportClick={() => setShowImport(true)} theme={theme} toggleTheme={toggleTheme} />
+        <Topbar title={title} onImportClick={() => setShowImport(true)} theme={theme} toggleTheme={toggleTheme} onMenuClick={() => setIsSidebarOpen(true)} />
 
         <main className="page-content">
           <Routes>
