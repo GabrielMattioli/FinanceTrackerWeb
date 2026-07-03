@@ -12,6 +12,9 @@ import HistoryPage from './pages/HistoryPage';
 import DashboardPage from './pages/DashboardPage';
 import CategoriesPage from './pages/CategoriesPage';
 import SettingsPage from './pages/SettingsPage';
+import Login from './pages/Login';
+import { SettingsProvider } from './context/SettingsContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 import './index.css';
 
@@ -112,9 +115,6 @@ function AppContent() {
   );
 }
 
-import { SettingsProvider } from './context/SettingsContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
 
 const ProtectedRoute = ({ children }) => {
   const { session } = useAuth();
