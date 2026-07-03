@@ -72,12 +72,11 @@ export default function SettingsPage() {
                 </div>
 
                 <p className="settings-desc">
-                    O banco de dados é gerenciado automaticamente pelo aplicativo e salvo
-                    no diretório padrão do sistema operacional.
+                    O banco de dados é gerenciado na nuvem e salvo de forma segura.
                 </p>
 
                 <div className="form-group">
-                    <label>Local do banco de dados</label>
+                    <label>Provedor de Banco de Dados</label>
                     <div
                         className="form-control"
                         style={{
@@ -90,18 +89,14 @@ export default function SettingsPage() {
                             userSelect: 'text',
                             opacity: 0.85,
                         }}
-                        title={dbDir}
                     >
                         <Database size={14} style={{ flexShrink: 0, opacity: 0.6 }} />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {dbDir || '—'}
+                            Supabase (Nuvem)
                         </span>
                     </div>
                     <p className="form-hint">
-                        O arquivo <code>financedb.mv.db</code> é salvo nesta pasta automaticamente.
-                        Este caminho não pode ser alterado pelo usuário. Em caso de exclusão do arquivo
-                        <code>financedb.mv.db</code>, o aplicativo irá recriá-lo automaticamente e todos os dados
-                        serão perdidos.
+                        Seus dados são sincronizados automaticamente e não correm risco de serem perdidos localmente.
                     </p>
                 </div>
             </div>
@@ -113,8 +108,25 @@ export default function SettingsPage() {
                     <span>Sobre</span>
                 </div>
                 <div className="settings-about">
-                    <div className="about-row"><span>Versão</span><span>{version}</span></div>
-                    <div className="about-row"><span>Banco de dados</span><span>H2 (arquivo local)</span></div>
+                    <div className="about-row"><span>Versão</span><span>{version || '1.0.0'}</span></div>
+                    <div className="about-row"><span>Banco de dados</span><span>Supabase (PostgreSQL)</span></div>
+                    <div style={{ marginTop: 16 }}>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={async () => {
+                                try {
+                                    const api = await import('../api/api');
+                                    await api.generateTestData();
+                                    alert('Dados de teste gerados com sucesso!');
+                                    window.location.reload();
+                                } catch (e) {
+                                    alert('Erro ao gerar dados: ' + e.message);
+                                }
+                            }}
+                        >
+                            Gerar Dados de Teste
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

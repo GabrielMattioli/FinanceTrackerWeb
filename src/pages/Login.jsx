@@ -53,7 +53,7 @@ export const Login = () => {
       color: 'var(--text-primary)'
     }}>
       <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '40px 30px' }}>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
           <div style={{
             width: '48px',
@@ -120,7 +120,7 @@ export const Login = () => {
               disabled={loading}
               style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
             >
-              {loading ? 'Carregando...' : 'Criar Conta Grátis'}
+              {loading ? 'Carregando...' : 'Criar Conta'}
             </button>
           </div>
         </form>
