@@ -206,7 +206,105 @@ export const updateCurrency = async (baseCurrency) => {
 };
 
 export const importCsv = async (file, options = {}) => {
-  throw new Error('CSV Import must be handled directly on the frontend or via Edge Functions in Supabase.');
+  const text = await file.text();
+  const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
+  
+  if (rows.length === 0) return { imported: 0, skipped: 0, errors: 0 };
+  
+  const headers = rows[0];
+  const dataRows = rows.slice(1).filter(r => r.some(cell => cell));
+
+  let dateCol = options.dateColumn;
+  let descCol = options.descColumn;
+  let amountCol = options.amountColumn;
+
+  if (dateCol === undefined || descCol === undefined || amountCol === undefined) {
+    // Attempt auto-detect
+    dateCol = headers.findIndex(h => /data|date/i.test(h));
+    descCol = headers.findIndex(h => /descrição|description|nome|histórico|history/i.test(h));
+    amountCol = headers.findIndex(h => /valor|amount/i.test(h));
+
+    if (dateCol === -1 || descCol === -1 || amountCol === -1) {
+      return {
+        requiresManualMapping: true,
+        headers,
+        previewRows: dataRows.slice(0, 3)
+      };
+    }
+  }
+
+  // Fetch rules for auto-categorization
+  let rules = [];
+  try {
+    const { data } = await supabase.from('category_rules').select('keyword, category_id');
+    if (data) rules = data;
+  } catch (e) {
+    // Ignore error, rules are optional
+  }
+
+  const transactions = [];
+  for (const row of dataRows) {
+    let dateStr = row[dateCol];
+    const desc = row[descCol];
+    let amountStr = row[amountCol];
+
+    if (!dateStr || !desc || !amountStr) continue;
+
+    // Convert DD/MM/YYYY to YYYY-MM-DD if needed
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        if (parts[2].length === 4) { // DD/MM/YYYY
+          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+    }
+
+    // Convert amount string to number. Ex: "1.234,56" or "1,234.56"
+    amountStr = amountStr.replace(/R\$|\$|€/g, '').trim();
+    if (amountStr.includes(',') && amountStr.includes('.')) {
+      if (amountStr.indexOf(',') < amountStr.indexOf('.')) {
+        amountStr = amountStr.replace(/,/g, '');
+      } else {
+        amountStr = amountStr.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (amountStr.includes(',')) {
+      amountStr = amountStr.replace(',', '.');
+    }
+    
+    const amount = Number(amountStr);
+    
+    // Quick validate date YYYY-MM-DD
+    const dateMatch = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (isNaN(amount) || !dateMatch) continue;
+    
+    // Format to strict YYYY-MM-DD for PG
+    const cleanDate = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+
+    // Apply auto-categorization
+    let category_id = null;
+    const lowerDesc = desc.toLowerCase();
+    for (const rule of rules) {
+      if (lowerDesc.includes(rule.keyword.toLowerCase())) {
+        category_id = rule.category_id;
+        break;
+      }
+    }
+
+    transactions.push({
+      date: cleanDate,
+      description: desc,
+      amount: amount,
+      category_id: category_id
+    });
+  }
+
+  if (transactions.length > 0) {
+    const { error } = await supabase.from('transactions').insert(transactions);
+    if (error) throw error;
+  }
+
+  return { imported: transactions.length, skipped: dataRows.length - transactions.length, errors: 0 };
 };
 
 export const getDashboardSummary = async (year, month) => {
@@ -269,7 +367,17 @@ export const getDashboardSummary = async (year, month) => {
   const categoryBreakdown = Object.values(categoryMap);
   const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
 
-  const expectedEssentialOutflow = totalExpense > 0 ? totalExpense * 0.8 : 0;
+  // Fetch true expected essential outflow from categories
+  let expectedEssentialOutflow = 0;
+  try {
+    const { data: essentialCats } = await supabase.from('categories').select('expected_amount').eq('is_essential', true);
+    if (essentialCats) {
+      expectedEssentialOutflow = essentialCats.reduce((acc, c) => acc + Number(c.expected_amount || 0), 0);
+    }
+  } catch(e) {
+    // Ignore error and leave it 0
+  }
+
   const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
 
   return {
