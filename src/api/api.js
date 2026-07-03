@@ -165,9 +165,80 @@ export const importCsv = async (file, options = {}) => {
 };
 
 export const getDashboardSummary = async (year, month) => {
-    // This requires aggregation. We should fetch transactions and aggregate on the frontend for now,
-    // or create a Supabase RPC. Let's do frontend aggregation for simplicity.
-    throw new Error('Dashboard summary requires a custom RPC or frontend aggregation.');
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+    const { data: txs, error } = await supabase
+        .from('transactions')
+        .select('*, categories(id, name, color)')
+        .lte('date', endDate);
+
+    if (error) throw error;
+
+    let previousMonthBalance = 0;
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let uncategorizedTotal = 0;
+    
+    const categoryMap = {};
+    const dailyMap = {};
+
+    for (const tx of txs) {
+        if (tx.date < startDate) {
+            previousMonthBalance += Number(tx.amount);
+        } else {
+            const amount = Number(tx.amount);
+            if (amount >= 0) {
+                totalIncome += amount;
+            } else {
+                const expense = Math.abs(amount);
+                totalExpense += expense;
+                
+                if (!tx.categories) {
+                    uncategorizedTotal += expense;
+                } else {
+                    const catId = tx.categories.id;
+                    if (!categoryMap[catId]) {
+                        categoryMap[catId] = {
+                            name: tx.categories.name,
+                            color: tx.categories.color,
+                            total: 0
+                        };
+                    }
+                    categoryMap[catId].total += expense;
+                }
+
+                // Daily expenses
+                const day = parseInt(tx.date.split('-')[2], 10);
+                if (!dailyMap[day]) {
+                    dailyMap[day] = { day, total: 0, transactions: [] };
+                }
+                dailyMap[day].total += expense;
+                dailyMap[day].transactions.push(tx);
+            }
+        }
+    }
+
+    const netBalance = totalIncome - totalExpense;
+    const accumulatedBalance = previousMonthBalance + netBalance;
+    const categoryBreakdown = Object.values(categoryMap);
+    const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
+
+    const expectedEssentialOutflow = totalExpense > 0 ? totalExpense * 0.8 : 0; 
+    const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
+
+    return {
+        totalIncome,
+        totalExpense,
+        netBalance,
+        accumulatedBalance,
+        previousMonthBalance,
+        safeMoneyMargin,
+        expectedEssentialOutflow,
+        categoryBreakdown,
+        uncategorizedTotal,
+        dailyExpenses
+    };
 };
 
 export const getLatestDashboardMonth = async () => {
