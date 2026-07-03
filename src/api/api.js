@@ -59,7 +59,7 @@ export const getPending = async (page = 0, size = 100) => {
     .is('category_id', null)
     .order('date', { ascending: false })
     .range(page * size, (page + 1) * size - 1);
-    
+
   if (error) throw error;
   return { content: data, totalElements: count };
 };
@@ -136,23 +136,21 @@ export const bulkDelete = async (transactionIds) => {
 // --- Settings ---
 export const getSettings = async () => {
   const { data, error } = await supabase.from('settings').select('*').maybeSingle();
-  
+
   if (error) {
     return checkError(error, data);
   }
-  
+
   // Se não existir (maybeSingle retorna null), retorna um padrão
   if (!data) {
-      return { baseCurrency: 'EUR' };
+    return { baseCurrency: 'EUR' };
   }
   return { baseCurrency: data.base_currency };
 };
 
 export const updateCurrency = async (baseCurrency) => {
-  // Como o schema define 'id' como integer DEFAULT 1, múltiplos usuários dariam conflito no id=1.
-  // Buscamos a configuração existente primeiro.
   const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
-  
+
   if (existing) {
     const { data, error } = await supabase
       .from('settings')
@@ -175,153 +173,151 @@ export const updateCurrency = async (baseCurrency) => {
   }
 };
 
-// CSV Import and Dashboard logic would require more complex DB functions or frontend logic.
-// We will stub them or implement frontend logic if requested.
 export const importCsv = async (file, options = {}) => {
-    throw new Error('CSV Import must be handled directly on the frontend or via Edge Functions in Supabase.');
+  throw new Error('CSV Import must be handled directly on the frontend or via Edge Functions in Supabase.');
 };
 
 export const getDashboardSummary = async (year, month) => {
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
-    const { data: txs, error } = await supabase
-        .from('transactions')
-        .select('*, categories(id, name, color)')
-        .lte('date', endDate);
+  const { data: txs, error } = await supabase
+    .from('transactions')
+    .select('*, categories(id, name, color)')
+    .lte('date', endDate);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    let previousMonthBalance = 0;
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let uncategorizedTotal = 0;
-    
-    const categoryMap = {};
-    const dailyMap = {};
+  let previousMonthBalance = 0;
+  let totalIncome = 0;
+  let totalExpense = 0;
+  let uncategorizedTotal = 0;
 
-    for (const tx of txs) {
-        if (tx.date < startDate) {
-            previousMonthBalance += Number(tx.amount);
+  const categoryMap = {};
+  const dailyMap = {};
+
+  for (const tx of txs) {
+    if (tx.date < startDate) {
+      previousMonthBalance += Number(tx.amount);
+    } else {
+      const amount = Number(tx.amount);
+      if (amount >= 0) {
+        totalIncome += amount;
+      } else {
+        const expense = Math.abs(amount);
+        totalExpense += expense;
+
+        if (!tx.categories) {
+          uncategorizedTotal += expense;
         } else {
-            const amount = Number(tx.amount);
-            if (amount >= 0) {
-                totalIncome += amount;
-            } else {
-                const expense = Math.abs(amount);
-                totalExpense += expense;
-                
-                if (!tx.categories) {
-                    uncategorizedTotal += expense;
-                } else {
-                    const catId = tx.categories.id;
-                    if (!categoryMap[catId]) {
-                        categoryMap[catId] = {
-                            name: tx.categories.name,
-                            color: tx.categories.color,
-                            total: 0
-                        };
-                    }
-                    categoryMap[catId].total += expense;
-                }
-
-                // Daily expenses
-                const day = parseInt(tx.date.split('-')[2], 10);
-                if (!dailyMap[day]) {
-                    dailyMap[day] = { day, total: 0, transactions: [] };
-                }
-                dailyMap[day].total += expense;
-                dailyMap[day].transactions.push(tx);
-            }
+          const catId = tx.categories.id;
+          if (!categoryMap[catId]) {
+            categoryMap[catId] = {
+              name: tx.categories.name,
+              color: tx.categories.color,
+              total: 0
+            };
+          }
+          categoryMap[catId].total += expense;
         }
+
+        // Daily expenses
+        const day = parseInt(tx.date.split('-')[2], 10);
+        if (!dailyMap[day]) {
+          dailyMap[day] = { day, total: 0, transactions: [] };
+        }
+        dailyMap[day].total += expense;
+        dailyMap[day].transactions.push(tx);
+      }
     }
+  }
 
-    const netBalance = totalIncome - totalExpense;
-    const accumulatedBalance = previousMonthBalance + netBalance;
-    const categoryBreakdown = Object.values(categoryMap);
-    const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
+  const netBalance = totalIncome - totalExpense;
+  const accumulatedBalance = previousMonthBalance + netBalance;
+  const categoryBreakdown = Object.values(categoryMap);
+  const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
 
-    const expectedEssentialOutflow = totalExpense > 0 ? totalExpense * 0.8 : 0; 
-    const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
+  const expectedEssentialOutflow = totalExpense > 0 ? totalExpense * 0.8 : 0;
+  const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
 
-    return {
-        totalIncome,
-        totalExpense,
-        netBalance,
-        accumulatedBalance,
-        previousMonthBalance,
-        safeMoneyMargin,
-        expectedEssentialOutflow,
-        categoryBreakdown,
-        uncategorizedTotal,
-        dailyExpenses
-    };
+  return {
+    totalIncome,
+    totalExpense,
+    netBalance,
+    accumulatedBalance,
+    previousMonthBalance,
+    safeMoneyMargin,
+    expectedEssentialOutflow,
+    categoryBreakdown,
+    uncategorizedTotal,
+    dailyExpenses
+  };
 };
 
 export const getLatestDashboardMonth = async () => {
-    return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
+  return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
 };
 
 export const getYearlySummary = async (year) => {
-    throw new Error('Yearly summary requires a custom RPC or frontend aggregation.');
+  throw new Error('Yearly summary requires a custom RPC or frontend aggregation.');
 };
 
 export const generateTestData = async () => {
-    // 1. Create categories
-    const categoriesToCreate = [
-        { name: 'Alimentação', color: '#ff6b6b' },
-        { name: 'Transporte', color: '#4ecdc4' },
-        { name: 'Lazer', color: '#feca57' },
-        { name: 'Salário', color: '#1dd1a1' }
-    ];
-    
-    const createdCategories = [];
-    for (const cat of categoriesToCreate) {
-        const { data } = await supabase.from('categories').insert([cat]).select().single();
-        createdCategories.push(data);
-    }
-    
-    const foodCat = createdCategories.find(c => c.name === 'Alimentação').id;
-    const transportCat = createdCategories.find(c => c.name === 'Transporte').id;
-    const salaryCat = createdCategories.find(c => c.name === 'Salário').id;
+  // 1. Create categories
+  const categoriesToCreate = [
+    { name: 'Alimentação', color: '#ff6b6b' },
+    { name: 'Transporte', color: '#4ecdc4' },
+    { name: 'Lazer', color: '#feca57' },
+    { name: 'Salário', color: '#1dd1a1' }
+  ];
 
-    // 2. Create some transactions (history & pending)
-    const today = new Date();
-    
-    const transactions = [
-        { date: today.toISOString().split('T')[0], description: 'Supermercado', amount: -150.50, category_id: foodCat },
-        { date: today.toISOString().split('T')[0], description: 'Uber', amount: -25.00, category_id: transportCat },
-        { date: today.toISOString().split('T')[0], description: 'Salário Mensal', amount: 3500.00, category_id: salaryCat },
-        { date: today.toISOString().split('T')[0], description: 'Restaurante', amount: -85.00, category_id: null }, // pending
-        { date: today.toISOString().split('T')[0], description: 'Padaria', amount: -12.50, category_id: null } // pending
-    ];
-    
-    await supabase.from('transactions').insert(transactions);
-    
-    return true;
+  const createdCategories = [];
+  for (const cat of categoriesToCreate) {
+    const { data } = await supabase.from('categories').insert([cat]).select().single();
+    createdCategories.push(data);
+  }
+
+  const foodCat = createdCategories.find(c => c.name === 'Alimentação').id;
+  const transportCat = createdCategories.find(c => c.name === 'Transporte').id;
+  const salaryCat = createdCategories.find(c => c.name === 'Salário').id;
+
+  // 2. Create some transactions (history & pending)
+  const today = new Date();
+
+  const transactions = [
+    { date: today.toISOString().split('T')[0], description: 'Supermercado', amount: -150.50, category_id: foodCat },
+    { date: today.toISOString().split('T')[0], description: 'Uber', amount: -25.00, category_id: transportCat },
+    { date: today.toISOString().split('T')[0], description: 'Salário Mensal', amount: 3500.00, category_id: salaryCat },
+    { date: today.toISOString().split('T')[0], description: 'Restaurante', amount: -85.00, category_id: null }, // pending
+    { date: today.toISOString().split('T')[0], description: 'Padaria', amount: -12.50, category_id: null } // pending
+  ];
+
+  await supabase.from('transactions').insert(transactions);
+
+  return true;
 };
 
 export default {
-    getCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    bulkDeleteCategories,
-    getCategoryRules,
-    createCategoryRule,
-    deleteCategoryRule,
-    getPending,
-    getHistory,
-    categorizeOne,
-    uncategorizeOne,
-    bulkCategorize,
-    deleteTransaction,
-    bulkDelete,
-    getSettings,
-    updateCurrency,
-    importCsv,
-    getDashboardSummary,
-    getLatestDashboardMonth,
-    getYearlySummary,
-    generateTestData
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  bulkDeleteCategories,
+  getCategoryRules,
+  createCategoryRule,
+  deleteCategoryRule,
+  getPending,
+  getHistory,
+  categorizeOne,
+  uncategorizeOne,
+  bulkCategorize,
+  deleteTransaction,
+  bulkDelete,
+  getSettings,
+  updateCurrency,
+  importCsv,
+  getDashboardSummary,
+  getLatestDashboardMonth,
+  getYearlySummary,
+  generateTestData
 };
