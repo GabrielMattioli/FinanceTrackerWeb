@@ -3,12 +3,13 @@
  * Centralizes logic that was duplicated across PendingPage and HistoryPage.
  */
 
-export function formatAmount(amount, type, currencyCode = 'EUR') {
-    const isExpense = type === 'EXPENSE';
+export function formatAmount(amount, currencyCode = 'EUR') {
+    const numAmount = Number(amount);
+    const isExpense = numAmount < 0;
     const sign = isExpense ? '-' : '+';
     const cls = isExpense ? 'amount-expense' : 'amount-income';
     
-    const formattedNum = Number(amount).toLocaleString('pt-BR', { 
+    const formattedNum = Math.abs(numAmount).toLocaleString('pt-BR', { 
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });

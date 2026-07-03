@@ -201,12 +201,12 @@ export default function PendingPage({ onCountChange }) {
                                             {tx.description}
                                         </td>
                                         <td>
-                                            <span className={`badge badge-${tx.type.toLowerCase()}`}>
-                                                {tx.type === 'INCOME' ? '↑ Entrada' : '↓ Saída'}
+                                            <span className={`badge badge-${tx.amount >= 0 ? 'income' : 'expense'}`}>
+                                                {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
                                             </span>
                                         </td>
                                         <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                                            {formatAmount(tx.amount, tx.type, baseCurrency)}
+                                            {formatAmount(tx.amount, baseCurrency)}
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

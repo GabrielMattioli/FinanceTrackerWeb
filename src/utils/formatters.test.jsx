@@ -5,21 +5,21 @@ import { formatAmount, formatCurrencyValue, formatDate } from './formatters';
 describe('formatters', () => {
     describe('formatAmount', () => {
         it('formats an EXPENSE correctly', () => {
-            render(formatAmount(1500.5, 'EXPENSE', 'EUR'));
+            render(formatAmount(-1500.5, 'EUR'));
             const span = screen.getByText('- € 1.500,50');
             expect(span).toBeInTheDocument();
             expect(span).toHaveClass('amount-expense');
         });
 
         it('formats an INCOME correctly', () => {
-            render(formatAmount(2000, 'INCOME', 'BRL'));
+            render(formatAmount(2000, 'BRL'));
             const span = screen.getByText('+ R$ 2.000,00');
             expect(span).toBeInTheDocument();
             expect(span).toHaveClass('amount-income');
         });
         
         it('defaults to EUR when no currency is provided', () => {
-            render(formatAmount(10, 'INCOME'));
+            render(formatAmount(10));
             const span = screen.getByText('+ € 10,00');
             expect(span).toBeInTheDocument();
         });
