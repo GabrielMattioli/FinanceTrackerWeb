@@ -9,16 +9,33 @@ const checkError = (error, data) => {
 // --- Categories ---
 export const getCategories = async () => {
   const { data, error } = await supabase.from('categories').select('*').order('name');
-  return checkError(error, data);
+  if (error) throw error;
+  return data.map(c => ({
+    ...c,
+    isEssential: c.is_essential || false,
+    expectedAmount: c.expected_amount || null
+  }));
 };
 
 export const createCategory = async (dto) => {
-  const { data, error } = await supabase.from('categories').insert([dto]).select().single();
+  const payload = {
+    name: dto.name,
+    color: dto.color,
+    is_essential: dto.isEssential,
+    expected_amount: dto.expectedAmount
+  };
+  const { data, error } = await supabase.from('categories').insert([payload]).select().single();
   return checkError(error, data);
 };
 
 export const updateCategory = async (id, dto) => {
-  const { data, error } = await supabase.from('categories').update(dto).eq('id', id).select().single();
+  const payload = {
+    name: dto.name,
+    color: dto.color,
+    is_essential: dto.isEssential,
+    expected_amount: dto.expectedAmount
+  };
+  const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select().single();
   return checkError(error, data);
 };
 
