@@ -86,7 +86,10 @@ export const getPending = async (page = 0, size = 100) => {
     .range(page * size, (page + 1) * size - 1);
 
   if (error) throw error;
-  return { content: data, totalElements: count };
+  return { 
+    content: data.map(tx => ({ ...tx, category: tx.categories })), 
+    totalElements: count 
+  };
 };
 
 export const getHistory = async (params = {}) => {
@@ -116,7 +119,11 @@ export const getHistory = async (params = {}) => {
 
   const { data, error, count } = await query;
   if (error) throw error;
-  return { content: data, totalElements: count, totalPages: Math.ceil((count || 0) / size) };
+  return { 
+    content: data.map(tx => ({ ...tx, category: tx.categories })), 
+    totalElements: count, 
+    totalPages: Math.ceil((count || 0) / size) 
+  };
 };
 
 export const categorizeOne = async (id, categoryId) => {
