@@ -902,6 +902,13 @@ tbody tr.selected {
   line-height: 1;
 }
 
+@media (max-width: 768px) {
+  .safety-stat .value {
+    font-size: 16px;
+    letter-spacing: -0.5px;
+  }
+}
+
 .safety-divider {
   width: 1px;
   height: 32px;
