@@ -1,23 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Clock, History, Tag, Settings, Power } from 'lucide-react';
-import toast from 'react-hot-toast';
-import api from '../api/api';
+import { LayoutDashboard, Clock, History, Tag, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ pendingCount }) {
-    const handleShutdown = async () => {
-        if (window.confirm("Deseja realmente desligar o servidor e encerrar o aplicativo?")) {
-            try {
-                await api.post('/system/shutdown');
-                toast.success("Servidor desligado.");
-                // Tentativa de fechar a aba
-                setTimeout(() => {
-                    document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;background:#1a1a1a;color:white;font-family:sans-serif;'><h1>O servidor foi encerrado. Pode fechar esta página com segurança.</h1></div>";
-                }, 1000);
-            } catch (error) {
-                toast.error("Erro ao desligar servidor: " + error.message);
-            }
-        }
-    };
+    const { signOut } = useAuth();
 
     return (
         <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -63,12 +49,12 @@ export default function Sidebar({ pendingCount }) {
 
             <div style={{ padding: '20px' }}>
                 <button
-                    onClick={handleShutdown}
+                    onClick={signOut}
                     className="nav-link"
                     style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', color: '#ff4d4f' }}
                 >
-                    <Power size={16} />
-                    Desligar Servidor
+                    <LogOut size={16} />
+                    Log out
                 </button>
             </div>
         </aside>
