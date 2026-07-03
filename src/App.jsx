@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import api from './api/api';
 import { getPending } from './api/api';
 import { Toaster } from 'react-hot-toast';
 
@@ -32,7 +31,6 @@ function AppContent() {
   const [pendingCount, setPendingCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const [isDisconnected, setIsDisconnected] = useState(false);
 
   const refreshPendingCount = useCallback(async () => {
     try {
@@ -97,20 +95,6 @@ function AppContent() {
         />
       )}
 
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          style: {
-            background: 'var(--bg-card)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 10,
-            fontSize: 13.5,
-          },
-          success: { iconTheme: { primary: '#10b981', secondary: 'white' } },
-          error: { iconTheme: { primary: '#f43f5e', secondary: 'white' } },
-        }}
-      />
     </div>
   );
 }
@@ -129,6 +113,20 @@ export default function App() {
     <AuthProvider>
       <SettingsProvider>
         <BrowserRouter>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 10,
+                fontSize: 13.5,
+              },
+              success: { iconTheme: { primary: '#10b981', secondary: 'white' } },
+              error: { iconTheme: { primary: '#f43f5e', secondary: 'white' } },
+            }}
+          />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route

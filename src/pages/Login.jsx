@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Wallet } from 'lucide-react';
@@ -120,7 +120,7 @@ export const Login = () => {
               disabled={loading}
               style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
             >
-              Criar Conta Grátis
+              {loading ? 'Carregando...' : 'Criar Conta Grátis'}
             </button>
           </div>
         </form>
