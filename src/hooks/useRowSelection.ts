@@ -7,10 +7,10 @@ import { useState, useCallback } from 'react';
  * @param {Array} items - The current list of items displayed in the table.
  * @returns {{ selected: Set, setSelected: Function, toggleSelect: Function, toggleAll: Function, allSelected: boolean, someSelected: boolean, clearSelection: Function }}
  */
-export function useRowSelection(items) {
-    const [selected, setSelected] = useState(new Set());
+export function useRowSelection<T extends { id: string | number }>(items: T[]) {
+    const [selected, setSelected] = useState<Set<string | number>>(new Set());
 
-    const toggleSelect = useCallback((id) => {
+    const toggleSelect = useCallback((id: string | number) => {
         setSelected(prev => {
             const next = new Set(prev);
             if (next.has(id)) {

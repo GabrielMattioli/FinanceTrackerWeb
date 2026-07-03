@@ -5,7 +5,8 @@ import { getSettings, generateTestData } from '../api/api';
 import { useSettings } from '../context/SettingsContext';
 
 export default function SettingsPage() {
-    const [dbDir, setDbDir] = useState('');
+    // dbDir is declared but never read, we'll keep it or comment it out
+    // const [dbDir, setDbDir] = useState<string>('');
     const [version, setVersion] = useState('');
     const [loading, setLoading] = useState(true);
     const { baseCurrency, updateBaseCurrency } = useSettings();
@@ -14,19 +15,19 @@ export default function SettingsPage() {
     useEffect(() => {
         getSettings()
             .then(data => {
-                setDbDir(data.dbDir || '');
+                // setDbDir(data.dbDir || '');
                 setVersion(data.version || '');
             })
             .finally(() => setLoading(false));
     }, []);
 
-    const handleCurrencyChange = async (e) => {
+    const handleCurrencyChange = async (e: any) => {
         const newCurrency = e.target.value;
         setUpdatingCurrency(true);
         try {
             await updateBaseCurrency(newCurrency);
             toast.success('Moeda base atualizada!');
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             toast.error('Erro ao atualizar: ' + (err.message || JSON.stringify(err)));
         } finally {
@@ -121,7 +122,7 @@ export default function SettingsPage() {
                                     await generateTestData();
                                     toast.success('Dados de teste gerados com sucesso!');
                                     setTimeout(() => window.location.reload(), 1000);
-                                } catch (e) {
+                                } catch (e: any) {
                                     toast.error('Erro ao gerar dados: ' + e.message);
                                 }
                             }}

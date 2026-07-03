@@ -1,10 +1,19 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import PropTypes from 'prop-types';
 import { getSettings, updateCurrency as apiUpdateCurrency } from '../api/api';
 
-const SettingsContext = createContext(undefined);
+interface SettingsContextType {
+    baseCurrency: string;
+    updateBaseCurrency: (newCurrency: string) => Promise<void>;
+    loadingSettings: boolean;
+}
 
-export function SettingsProvider({ children }) {
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+interface SettingsProviderProps {
+    children: React.ReactNode;
+}
+
+export function SettingsProvider({ children }: SettingsProviderProps) {
     const [settings, setSettings] = useState({ baseCurrency: 'EUR' });
     const [loading, setLoading] = useState(true);
 
@@ -28,7 +37,7 @@ export function SettingsProvider({ children }) {
         };
     }, []);
 
-    const updateBaseCurrency = async (newCurrency) => {
+    const updateBaseCurrency = async (newCurrency: string) => {
         try {
             const data = await apiUpdateCurrency(newCurrency);
             if (data?.baseCurrency) {
@@ -52,10 +61,6 @@ export function SettingsProvider({ children }) {
         </SettingsContext.Provider>
     );
 }
-
-SettingsProvider.propTypes = {
-    children: PropTypes.node.isRequired,
-};
 
 export function useSettings() {
     const context = useContext(SettingsContext);

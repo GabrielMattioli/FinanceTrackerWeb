@@ -3,15 +3,9 @@
  * Centralizes logic that was duplicated across PendingPage and HistoryPage.
  */
 
-const CURRENCY_SYMBOLS = { 'EUR': '€', 'BRL': 'R$', 'USD': '$' };
+const CURRENCY_SYMBOLS: Record<string, string> = { 'EUR': '€', 'BRL': 'R$', 'USD': '$' };
 
-/**
- * Formats a transaction amount with its currency symbol and applies CSS classes based on income/expense.
- * @param {number|string} amount - The amount to format.
- * @param {string} [currencyCode='EUR'] - The 3-letter currency code.
- * @returns {import('react').ReactNode} The formatted amount wrapped in a span.
- */
-export function formatAmount(amount, currencyCode = 'EUR') {
+export function formatAmount(amount: number | string, currencyCode: string = 'EUR') {
     const numAmount = Number(amount);
     
     if (isNaN(numAmount)) {
@@ -36,13 +30,7 @@ export function formatAmount(amount, currencyCode = 'EUR') {
     );
 }
 
-/**
- * Formats a currency value to string without CSS classes.
- * @param {number|string} amount - The amount to format.
- * @param {string} [currencyCode='EUR'] - The 3-letter currency code.
- * @returns {string} The formatted string.
- */
-export function formatCurrencyValue(amount, currencyCode = 'EUR') {
+export function formatCurrencyValue(amount: number | string, currencyCode: string = 'EUR') {
     const numAmount = Number(amount);
     
     if (isNaN(numAmount)) {
@@ -58,12 +46,7 @@ export function formatCurrencyValue(amount, currencyCode = 'EUR') {
     return `${symbol} ${formattedNum}`;
 }
 
-/**
- * Converts an ISO date string (yyyy-MM-dd) to Portuguese display format (dd/MM/yyyy).
- * @param {string} dateStr - The ISO date string.
- * @returns {string} The formatted date string.
- */
-export function formatDate(dateStr) {
+export function formatDate(dateStr: string | undefined | null) {
     if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) return dateStr;
     const [y, m, d] = dateStr.split('-');
     return `${d}/${m}/${y}`;

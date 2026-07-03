@@ -1,15 +1,25 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import PropTypes from 'prop-types';
 import { supabase } from '../supabaseClient';
+import type { Session, User } from '@supabase/supabase-js';
 
-const AuthContext = createContext({
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   signOut: async () => {},
 });
 
-export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,10 +61,6 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
 export const useAuth = () => {

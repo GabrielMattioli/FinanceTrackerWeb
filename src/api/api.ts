@@ -1,7 +1,7 @@
 import { supabase } from '../supabaseClient';
 
 // Helper for throwing errors
-const checkError = (error, data) => {
+const checkError = (error: any, data: any) => {
   if (error) throw error;
   return data;
 };
@@ -17,7 +17,7 @@ export const getCategories = async () => {
   }));
 };
 
-export const createCategory = async (dto) => {
+export const createCategory = async (dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
@@ -28,7 +28,7 @@ export const createCategory = async (dto) => {
   return checkError(error, data);
 };
 
-export const updateCategory = async (id, dto) => {
+export const updateCategory = async (id: any, dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
@@ -39,12 +39,12 @@ export const updateCategory = async (id, dto) => {
   return checkError(error, data);
 };
 
-export const deleteCategory = async (id) => {
+export const deleteCategory = async (id: any) => {
   const { error } = await supabase.from('categories').delete().eq('id', id);
   if (error) throw error;
 };
 
-export const bulkDeleteCategories = async (categoryIds) => {
+export const bulkDeleteCategories = async (categoryIds: any[]) => {
   const { error } = await supabase.from('categories').delete().in('id', categoryIds);
   if (error) throw error;
 };
@@ -62,7 +62,7 @@ export const getCategoryRules = async () => {
   }));
 };
 
-export const createCategoryRule = async (dto) => {
+export const createCategoryRule = async (dto: any) => {
   const payload = {
     keyword: dto.keyword,
     category_id: dto.categoryId
@@ -71,13 +71,13 @@ export const createCategoryRule = async (dto) => {
   return checkError(error, data);
 };
 
-export const deleteCategoryRule = async (id) => {
+export const deleteCategoryRule = async (id: any) => {
   const { error } = await supabase.from('category_rules').delete().eq('id', id);
   if (error) throw error;
 };
 
 // --- Transactions ---
-export const getPending = async (page = 0, size = 100) => {
+export const getPending = async (page: number = 0, size: number = 100) => {
   const { data, error, count } = await supabase
     .from('transactions')
     .select('*, categories(id, name, color)', { count: 'exact' })
@@ -92,7 +92,7 @@ export const getPending = async (page = 0, size = 100) => {
   };
 };
 
-export const getHistory = async (params = {}) => {
+export const getHistory = async (params: any = {}) => {
   let query = supabase
     .from('transactions')
     .select('*, categories(id, name, color)', { count: 'exact' })
@@ -125,7 +125,7 @@ export const getHistory = async (params = {}) => {
   };
 };
 
-export const categorizeOne = async (id, categoryId) => {
+export const categorizeOne = async (id: any, categoryId: any) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
@@ -135,7 +135,7 @@ export const categorizeOne = async (id, categoryId) => {
   return checkError(error, data);
 };
 
-export const uncategorizeOne = async (id) => {
+export const uncategorizeOne = async (id: any) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: null })
@@ -145,7 +145,7 @@ export const uncategorizeOne = async (id) => {
   return checkError(error, data);
 };
 
-export const bulkCategorize = async (transactionIds, categoryId) => {
+export const bulkCategorize = async (transactionIds: any[], categoryId: any) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
@@ -154,12 +154,12 @@ export const bulkCategorize = async (transactionIds, categoryId) => {
   return checkError(error, data);
 };
 
-export const deleteTransaction = async (id) => {
+export const deleteTransaction = async (id: any) => {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
 };
 
-export const bulkDelete = async (transactionIds) => {
+export const bulkDelete = async (transactionIds: any[]) => {
   const { error } = await supabase.from('transactions').delete().in('id', transactionIds);
   if (error) throw error;
 };
@@ -183,7 +183,7 @@ export const getSettings = async () => {
   };
 };
 
-export const updateCurrency = async (baseCurrency) => {
+export const updateCurrency = async (baseCurrency: string) => {
   const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
 
   if (existing) {
@@ -208,7 +208,7 @@ export const updateCurrency = async (baseCurrency) => {
   }
 };
 
-export const importCsv = async (file, options = {}) => {
+export const importCsv = async (file: File, options: any = {}) => {
   const text = await file.text();
   const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
   
@@ -237,7 +237,7 @@ export const importCsv = async (file, options = {}) => {
   }
 
   // Fetch rules for auto-categorization
-  let rules = [];
+  let rules: any[] = [];
   try {
     const { data } = await supabase.from('category_rules').select('keyword, category_id');
     if (data) rules = data;
@@ -310,7 +310,7 @@ export const importCsv = async (file, options = {}) => {
   return { imported: transactions.length, skipped: dataRows.length - transactions.length, errors: 0 };
 };
 
-export const getDashboardSummary = async (year, month) => {
+export const getDashboardSummary = async (year: number, month: number) => {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
   const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
@@ -326,8 +326,8 @@ export const getDashboardSummary = async (year, month) => {
   let totalExpense = 0;
   let uncategorizedTotal = 0;
 
-  const categoryMap = {};
-  const dailyMap = {};
+  const categoryMap: Record<string, any> = {};
+  const dailyMap: Record<number, any> = {};
 
   for (const tx of txs) {
     if (tx.date < startDate) {
@@ -368,7 +368,7 @@ export const getDashboardSummary = async (year, month) => {
   const netBalance = totalIncome - totalExpense;
   const accumulatedBalance = previousMonthBalance + netBalance;
   const categoryBreakdown = Object.values(categoryMap);
-  const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
+  const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
 
   // Fetch true expected essential outflow from categories
   let expectedEssentialOutflow = 0;
@@ -401,7 +401,7 @@ export const getLatestDashboardMonth = async () => {
   return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
 };
 
-export const getYearlySummary = async (year) => {
+export const getYearlySummary = async (year: number) => {
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
 

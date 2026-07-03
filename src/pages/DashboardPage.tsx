@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// @ts-nocheck
+import { useState, useEffect, useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
     LineChart, Line, Tooltip, ResponsiveContainer, LabelList,
@@ -89,7 +90,7 @@ export default function DashboardPage() {
     const now = new Date();
     const [year, setYear] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth() + 1);
-    const [data, setData] = useState(null);
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [slideClass, setSlideClass] = useState('');
     const [initialised, setInitialised] = useState(false);

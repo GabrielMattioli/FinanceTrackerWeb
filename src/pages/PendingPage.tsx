@@ -1,16 +1,16 @@
+// @ts-nocheck
 import { useState, useEffect, useMemo } from 'react';
 import { Search, CheckSquare, Tag, Trash2 } from 'lucide-react';
-import PropTypes from 'prop-types';
 import { getPending, getCategories, bulkCategorize, categorizeOne, deleteTransaction, bulkDelete } from '../api/api';
 import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
 import { useSettings } from '../context/SettingsContext';
 
-export default function PendingPage({ onCountChange }) {
+export default function PendingPage({ onCountChange }: any) {
     const { baseCurrency } = useSettings();
-    const [transactions, setTransactions] = useState([]);
-    const [categories, setCategories] = useState([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
     const [bulkCategory, setBulkCategory] = useState('');
@@ -76,7 +76,7 @@ export default function PendingPage({ onCountChange }) {
         }
     };
 
-    const handleQuickCategory = async (id, categoryId) => {
+    const handleQuickCategory = async (id: any, categoryId: any) => {
         try {
             await categorizeOne(id, categoryId);
             await load(false);
@@ -85,7 +85,7 @@ export default function PendingPage({ onCountChange }) {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: any) => {
         if (!window.confirm('Excluir esta transação pendente?')) return;
         try {
             await deleteTransaction(id);
@@ -242,7 +242,3 @@ export default function PendingPage({ onCountChange }) {
         </div>
     );
 }
-
-PendingPage.propTypes = {
-    onCountChange: PropTypes.func,
-};

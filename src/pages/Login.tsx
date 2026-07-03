@@ -10,7 +10,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: any) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
@@ -27,7 +27,7 @@ export const Login = () => {
     setLoading(false);
   };
 
-  const handleSignUp = async (e) => {
+  const handleSignUp = async (e: any) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signUp({

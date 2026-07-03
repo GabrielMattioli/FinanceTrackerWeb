@@ -1,6 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { getYearlySummary } from '../api/api';
 
 const ABBR_MONTHS = [
@@ -8,7 +7,12 @@ const ABBR_MONTHS = [
     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
 ];
 
-export function YearSelector({ year, onYearChange }) {
+interface YearSelectorProps {
+    year: number;
+    onYearChange: (year: number) => void;
+}
+
+export function YearSelector({ year, onYearChange }: YearSelectorProps) {
     return (
         <div className="year-selector">
             <button className="btn-icon" onClick={() => onYearChange(year - 1)}>
@@ -22,13 +26,15 @@ export function YearSelector({ year, onYearChange }) {
     );
 }
 
-YearSelector.propTypes = {
-    year: PropTypes.number.isRequired,
-    onYearChange: PropTypes.func.isRequired,
-};
+interface MonthBarProps {
+    year: number;
+    month?: number | string | null;
+    onMonthChange: (month: number | string) => void;
+    allowAllMonths?: boolean;
+}
 
-export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
-    const [yearlyData, setYearlyData] = useState([]);
+export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = false }: MonthBarProps) {
+    const [yearlyData, setYearlyData] = useState<any[]>([]);
     const now = new Date();
     const currentRealMonth = now.getMonth() + 1;
     const currentRealYear = now.getFullYear();
@@ -94,14 +100,4 @@ export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
     );
 }
 
-MonthBar.propTypes = {
-    year: PropTypes.number.isRequired,
-    month: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    onMonthChange: PropTypes.func.isRequired,
-    allowAllMonths: PropTypes.bool,
-};
 
-MonthBar.defaultProps = {
-    month: null,
-    allowAllMonths: false,
-};

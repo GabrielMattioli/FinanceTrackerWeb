@@ -1,9 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { LayoutDashboard, Clock, History, Tag, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export default function Sidebar({ pendingCount }) {
+interface SidebarProps {
+    pendingCount?: number;
+}
+
+export default function Sidebar({ pendingCount = 0 }: SidebarProps) {
     const { signOut } = useAuth();
 
     return (
@@ -62,10 +65,4 @@ export default function Sidebar({ pendingCount }) {
     );
 }
 
-Sidebar.propTypes = {
-    pendingCount: PropTypes.number,
-};
 
-Sidebar.defaultProps = {
-    pendingCount: 0,
-};
