@@ -145,7 +145,7 @@ export const getSettings = async () => {
   if (!data) {
       return { baseCurrency: 'EUR' };
   }
-  return data;
+  return { baseCurrency: data.base_currency };
 };
 
 export const updateCurrency = async (baseCurrency) => {
@@ -156,20 +156,22 @@ export const updateCurrency = async (baseCurrency) => {
   if (existing) {
     const { data, error } = await supabase
       .from('settings')
-      .update({ baseCurrency })
+      .update({ base_currency: baseCurrency })
       .eq('id', existing.id)
       .select()
       .single();
-    return checkError(error, data);
+    if (error) throw error;
+    return { baseCurrency: data.base_currency };
   } else {
     // Cria com um ID aleatório para evitar colisão com outros usuários
     const randomId = Math.floor(Math.random() * 1000000000) + 2;
     const { data, error } = await supabase
       .from('settings')
-      .insert({ id: randomId, baseCurrency })
+      .insert({ id: randomId, base_currency: baseCurrency })
       .select()
       .single();
-    return checkError(error, data);
+    if (error) throw error;
+    return { baseCurrency: data.base_currency };
   }
 };
 
