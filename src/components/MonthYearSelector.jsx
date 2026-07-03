@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { getYearlySummary } from '../api/api';
 
 const ABBR_MONTHS = [
@@ -21,6 +22,11 @@ export function YearSelector({ year, onYearChange }) {
     );
 }
 
+YearSelector.propTypes = {
+    year: PropTypes.number.isRequired,
+    onYearChange: PropTypes.func.isRequired,
+};
+
 export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
     const [yearlyData, setYearlyData] = useState([]);
     const now = new Date();
@@ -28,9 +34,18 @@ export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
     const currentRealYear = now.getFullYear();
 
     useEffect(() => {
+        let isMounted = true;
         getYearlySummary(year)
-            .then(res => setYearlyData(res.months || []))
-            .catch(() => setYearlyData([]));
+            .then(res => {
+                if (isMounted) setYearlyData(res.months || []);
+            })
+            .catch(() => {
+                if (isMounted) setYearlyData([]);
+            });
+            
+        return () => {
+            isMounted = false;
+        };
     }, [year]);
 
     return (
@@ -78,3 +93,15 @@ export function MonthBar({ year, month, onMonthChange, allowAllMonths }) {
         </div>
     );
 }
+
+MonthBar.propTypes = {
+    year: PropTypes.number.isRequired,
+    month: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    onMonthChange: PropTypes.func.isRequired,
+    allowAllMonths: PropTypes.bool,
+};
+
+MonthBar.defaultProps = {
+    month: null,
+    allowAllMonths: false,
+};

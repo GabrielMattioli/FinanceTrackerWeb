@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { LayoutDashboard, Clock, History, Tag, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,9 +55,17 @@ export default function Sidebar({ pendingCount }) {
                     style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', color: '#ff4d4f' }}
                 >
                     <LogOut size={16} />
-                    Log out
+                    Deslogar
                 </button>
             </div>
         </aside>
     );
 }
+
+Sidebar.propTypes = {
+    pendingCount: PropTypes.number,
+};
+
+Sidebar.defaultProps = {
+    pendingCount: 0,
+};

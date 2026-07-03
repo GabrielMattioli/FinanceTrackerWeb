@@ -1,4 +1,5 @@
 import { Upload, Sun, Moon } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 export default function Topbar({ title, onImportClick, theme, toggleTheme }) {
     return (
@@ -16,3 +17,10 @@ export default function Topbar({ title, onImportClick, theme, toggleTheme }) {
         </header>
     );
 }
+
+Topbar.propTypes = {
+    title: PropTypes.string.isRequired,
+    onImportClick: PropTypes.func.isRequired,
+    theme: PropTypes.oneOf(['light', 'dark']).isRequired,
+    toggleTheme: PropTypes.func.isRequired,
+};

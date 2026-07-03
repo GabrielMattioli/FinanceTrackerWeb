@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, CheckSquare, Tag, Trash2 } from 'lucide-react';
+import PropTypes from 'prop-types';
 import { getPending, getCategories, bulkCategorize, categorizeOne, deleteTransaction, bulkDelete } from '../api/api';
 import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
@@ -61,7 +62,7 @@ export default function PendingPage({ onCountChange }) {
 
     const handleBulkDelete = async () => {
         if (selected.size === 0) return;
-        if (!confirm(`Excluir ${selected.size} transições selecionadas?`)) return;
+        if (!window.confirm(`Excluir ${selected.size} transições selecionadas?`)) return;
         setApplying(true);
         try {
             await bulkDelete([...selected]);
@@ -85,7 +86,7 @@ export default function PendingPage({ onCountChange }) {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Excluir esta transação pendente?')) return;
+        if (!window.confirm('Excluir esta transação pendente?')) return;
         try {
             await deleteTransaction(id);
             toast.success('Transação excluída.');
@@ -241,3 +242,7 @@ export default function PendingPage({ onCountChange }) {
         </div>
     );
 }
+
+PendingPage.propTypes = {
+    onCountChange: PropTypes.func,
+};

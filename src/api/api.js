@@ -176,7 +176,11 @@ export const getSettings = async () => {
   if (!data) {
     return { baseCurrency: 'EUR' };
   }
-  return data;
+  
+  return {
+    ...data,
+    baseCurrency: data.base_currency || 'EUR'
+  };
 };
 
 export const updateCurrency = async (baseCurrency) => {

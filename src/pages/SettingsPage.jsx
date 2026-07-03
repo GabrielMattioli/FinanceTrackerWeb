@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Database, Info, Coins } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getSettings, generateTestData } from '../api/api';
 import { useSettings } from '../context/SettingsContext';
 
@@ -24,9 +25,10 @@ export default function SettingsPage() {
         setUpdatingCurrency(true);
         try {
             await updateBaseCurrency(newCurrency);
+            toast.success('Moeda base atualizada!');
         } catch (err) {
             console.error(err);
-            alert('Erro ao atualizar: ' + (err.message || JSON.stringify(err)));
+            toast.error('Erro ao atualizar: ' + (err.message || JSON.stringify(err)));
         } finally {
             setUpdatingCurrency(false);
         }
@@ -117,10 +119,10 @@ export default function SettingsPage() {
                             onClick={async () => {
                                 try {
                                     await generateTestData();
-                                    alert('Dados de teste gerados com sucesso!');
-                                    window.location.reload();
+                                    toast.success('Dados de teste gerados com sucesso!');
+                                    setTimeout(() => window.location.reload(), 1000);
                                 } catch (e) {
-                                    alert('Erro ao gerar dados: ' + e.message);
+                                    toast.error('Erro ao gerar dados: ' + e.message);
                                 }
                             }}
                         >

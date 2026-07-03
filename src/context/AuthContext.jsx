@@ -1,10 +1,11 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types';
 import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext({
   session: null,
   user: null,
-  signOut: async () => { },
+  signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }) => {
@@ -12,7 +13,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error fetching session:', error);
+      }
       setSession(session);
       setLoading(false);
     });
@@ -23,13 +27,23 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  };
 
   const value = {
     session,
-    user: session?.user,
-    signOut: async () => { await supabase.auth.signOut(); },
+    user: session?.user || null,
+    signOut,
   };
 
   return (
@@ -39,6 +53,14 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

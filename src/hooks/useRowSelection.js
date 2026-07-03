@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 /**
  * Custom hook for managing row selection state in tables.
@@ -10,25 +10,35 @@ import { useState } from 'react';
 export function useRowSelection(items) {
     const [selected, setSelected] = useState(new Set());
 
-    const toggleSelect = (id) => {
+    const toggleSelect = useCallback((id) => {
         setSelected(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
             return next;
         });
-    };
+    }, []);
 
-    const toggleAll = () => {
-        if (selected.size === items.length) {
-            setSelected(new Set());
-        } else {
-            setSelected(new Set(items.map(t => t.id)));
-        }
-    };
+    const toggleAll = useCallback(() => {
+        if (!items || !Array.isArray(items)) return;
+        
+        setSelected(prevSelected => {
+            if (prevSelected.size === items.length) {
+                return new Set();
+            } else {
+                return new Set(items.map(t => t.id));
+            }
+        });
+    }, [items]);
 
-    const clearSelection = () => setSelected(new Set());
+    const clearSelection = useCallback(() => {
+        setSelected(new Set());
+    }, []);
 
-    const allSelected = items.length > 0 && selected.size === items.length;
+    const allSelected = Array.isArray(items) && items.length > 0 && selected.size === items.length;
     const someSelected = selected.size > 0;
 
     return { selected, setSelected, toggleSelect, toggleAll, clearSelection, allSelected, someSelected };
