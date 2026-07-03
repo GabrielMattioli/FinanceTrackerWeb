@@ -291,7 +291,53 @@ export const getLatestDashboardMonth = async () => {
 };
 
 export const getYearlySummary = async (year) => {
-  throw new Error('Yearly summary requires a custom RPC or frontend aggregation.');
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const { data: txs, error } = await supabase
+        .from('transactions')
+        .select('date, amount')
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+    if (error) throw error;
+
+    // Initialize 12 months
+    const months = Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1,
+        hasData: false,
+        totalIncome: 0,
+        totalExpense: 0,
+        netBalance: 0
+    }));
+
+    for (const tx of txs) {
+        const monthIndex = parseInt(tx.date.split('-')[1], 10) - 1;
+        const amount = Number(tx.amount);
+        
+        months[monthIndex].hasData = true;
+        
+        if (amount >= 0) {
+            months[monthIndex].totalIncome += amount;
+            months[monthIndex].netBalance += amount;
+        } else {
+            months[monthIndex].totalExpense += Math.abs(amount);
+            months[monthIndex].netBalance += amount;
+        }
+    }
+
+    // Current logic expects months to just be a property, but wait, usually it's just an array 
+    // of all 12 months, and if there's no data, it's fine.
+    // However, the fallback in MonthBar also looks for months that are not in the future?
+    // Actually, `hasData` true/false is exactly what the component uses to disable it.
+    // Let's make the current month available even if hasData is false, so user can click the current month.
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    if (year === currentYear) {
+        months[currentMonth - 1].hasData = true; // Always allow clicking current month
+    }
+
+    return { months };
 };
 
 export const generateTestData = async () => {
