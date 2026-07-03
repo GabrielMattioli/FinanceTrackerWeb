@@ -55,7 +55,11 @@ export const getCategoryRules = async () => {
     .from('category_rules')
     .select(`*, categories (id, name, color)`)
     .order('keyword');
-  return checkError(error, data);
+  if (error) throw error;
+  return data.map(rule => ({
+    ...rule,
+    category: rule.categories
+  }));
 };
 
 export const createCategoryRule = async (dto) => {
