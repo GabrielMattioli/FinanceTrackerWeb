@@ -70,7 +70,7 @@ export default function HistoryPage() {
 
     const handleQuickCategory = async (id, catId) => {
         try {
-            await categorizeOne(id, Number(catId));
+            await categorizeOne(id, catId);
             load(page, false);
         } catch {
             toast.error('Erro ao categorizar.');

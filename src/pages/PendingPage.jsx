@@ -47,7 +47,7 @@ export default function PendingPage({ onCountChange }) {
         if (!bulkCategory || selected.size === 0) return;
         setApplying(true);
         try {
-            await bulkCategorize([...selected], Number(bulkCategory));
+            await bulkCategorize([...selected], bulkCategory);
             toast.success(`${selected.size} transações categorizadas!`);
             clearSelection();
             setBulkCategory('');
@@ -77,7 +77,7 @@ export default function PendingPage({ onCountChange }) {
 
     const handleQuickCategory = async (id, categoryId) => {
         try {
-            await categorizeOne(id, Number(categoryId));
+            await categorizeOne(id, categoryId);
             await load(false);
         } catch {
             toast.error('Erro ao categorizar.');

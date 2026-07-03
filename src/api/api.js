@@ -149,13 +149,28 @@ export const getSettings = async () => {
 };
 
 export const updateCurrency = async (baseCurrency) => {
-  // Para simplificar, assumimos que há apenas uma linha de settings por user (tratado por RLS)
-  const { data, error } = await supabase
-    .from('settings')
-    .upsert({ id: 1, baseCurrency })
-    .select()
-    .single();
-  return checkError(error, data);
+  // Como o schema define 'id' como integer DEFAULT 1, múltiplos usuários dariam conflito no id=1.
+  // Buscamos a configuração existente primeiro.
+  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+  
+  if (existing) {
+    const { data, error } = await supabase
+      .from('settings')
+      .update({ baseCurrency })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    return checkError(error, data);
+  } else {
+    // Cria com um ID aleatório para evitar colisão com outros usuários
+    const randomId = Math.floor(Math.random() * 1000000000) + 2;
+    const { data, error } = await supabase
+      .from('settings')
+      .insert({ id: randomId, baseCurrency })
+      .select()
+      .single();
+    return checkError(error, data);
+  }
 };
 
 // CSV Import and Dashboard logic would require more complex DB functions or frontend logic.
