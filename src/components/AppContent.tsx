@@ -11,6 +11,7 @@ import HistoryPage from '../pages/HistoryPage';
 import DashboardPage from '../pages/DashboardPage';
 import CategoriesPage from '../pages/CategoriesPage';
 import SettingsPage from '../pages/SettingsPage';
+import HelpPage from '../pages/HelpPage';
 
 const PAGE_TITLES = {
   '/dashboard': 'Dashboard',
@@ -18,6 +19,7 @@ const PAGE_TITLES = {
   '/history': 'Histórico',
   '/categories': 'Categorias',
   '/settings': 'Configurações',
+  '/help': 'Ajuda',
 };
 
 export default function AppContent() {
@@ -75,6 +77,7 @@ export default function AppContent() {
             <Route path="/history" element={<HistoryPage key={refreshKey} />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help" element={<HelpPage />} />
           </Routes>
         </main>
       </div>

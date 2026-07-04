@@ -23,7 +23,7 @@ export default function Topbar({ title, onImportClick, theme, toggleTheme, onMen
                 </button>
                 <button className="btn btn-primary" onClick={onImportClick}>
                     <Upload size={15} />
-                    Adicionar Gastos
+                    Importar
                 </button>
             </div>
         </header>

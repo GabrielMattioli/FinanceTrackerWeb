@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Clock, History, Tag, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clock, History, Tag, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
@@ -52,6 +52,11 @@ export default function Sidebar({ pendingCount = 0, isOpen = false, onClose }: S
                 <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <Settings size={16} />
                     Configurações
+                </NavLink>
+
+                <NavLink to="/help" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <HelpCircle size={16} />
+                    Ajuda
                 </NavLink>
             </nav>
 
