@@ -180,8 +180,13 @@ export const toggleIgnoreInReports = async (id: any, ignore: boolean) => {
     .update({ ignore_in_reports: ignore })
     .eq('id', id)
     .select()
-    .single();
-  return checkError(error, data);
+    .maybeSingle();
+  
+  if (error) {
+    console.error('toggleIgnoreInReports error:', error);
+    throw error;
+  }
+  return data;
 };
 
 // --- Settings ---

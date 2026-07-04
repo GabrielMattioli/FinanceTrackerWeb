@@ -101,8 +101,9 @@ export default function PendingPage({ onCountChange }: any) {
             await toggleIgnoreInReports(id, !currentStatus);
             toast.success(!currentStatus ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
             await load(false);
-        } catch {
-            toast.error('Erro ao atualizar status.');
+        } catch (err: any) {
+            console.error('handleToggleIgnore error:', err);
+            toast.error(`Erro ao atualizar status: ${err?.message || 'Erro desconhecido'}`);
         }
     };
 

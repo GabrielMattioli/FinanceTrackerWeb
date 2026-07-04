@@ -25,6 +25,7 @@ CREATE TABLE transactions (
   amount numeric NOT NULL,
   category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
   user_id uuid REFERENCES auth.users(id) DEFAULT auth.uid() NOT NULL,
+  ignore_in_reports boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
