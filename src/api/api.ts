@@ -174,6 +174,16 @@ export const bulkDelete = async (transactionIds: any[]) => {
   if (error) throw error;
 };
 
+export const toggleIgnoreInReports = async (id: any, ignore: boolean) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({ ignore_in_reports: ignore })
+    .eq('id', id)
+    .select()
+    .single();
+  return checkError(error, data);
+};
+
 // --- Settings ---
 export const getSettings = async () => {
   const { data, error } = await supabase.from('settings').select('*').maybeSingle();
@@ -340,6 +350,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const dailyMap: Record<number, any> = {};
 
   for (const tx of txs) {
+    if (tx.ignore_in_reports) continue;
+
     if (tx.date < startDate) {
       previousMonthBalance += Number(tx.amount);
     } else {
@@ -417,7 +429,7 @@ export const getYearlySummary = async (year: number) => {
 
     const { data: txs, error } = await supabase
         .from('transactions')
-        .select('date, amount')
+        .select('date, amount, ignore_in_reports')
         .gte('date', startDate)
         .lte('date', endDate);
 
@@ -433,6 +445,8 @@ export const getYearlySummary = async (year: number) => {
     }));
 
     for (const tx of txs) {
+        if (tx.ignore_in_reports) continue;
+        
         const monthIndex = parseInt(tx.date.split('-')[1], 10) - 1;
         const amount = Number(tx.amount);
         
@@ -478,6 +492,7 @@ export default {
   applyCategoryRuleToUncategorized,
   deleteTransaction,
   bulkDelete,
+  toggleIgnoreInReports,
   getSettings,
   updateCurrency,
   importCsv,

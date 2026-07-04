@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, RotateCcw, Trash2, CheckSquare } from 'lucide-react';
-import { getHistory, getCategories, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne } from '../api/api';
+import { Search, RotateCcw, Trash2, CheckSquare, Eye, EyeOff } from 'lucide-react';
+import { getHistory, getCategories, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports } from '../api/api';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { formatAmount, formatDate } from '../utils/formatters';
@@ -86,6 +86,16 @@ export default function HistoryPage() {
             load(page, false);
         } catch {
             toast.error('Erro ao categorizar.');
+        }
+    };
+
+    const handleToggleIgnore = async (id: any, currentStatus: boolean) => {
+        try {
+            await toggleIgnoreInReports(id, !currentStatus);
+            toast.success(!currentStatus ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
+            load(page, false);
+        } catch {
+            toast.error('Erro ao atualizar status.');
         }
     };
 
@@ -228,11 +238,19 @@ export default function HistoryPage() {
                                                 {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
                                             </span>
                                         </td>
-                                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
                                             {formatAmount(tx.amount, baseCurrency)}
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                                                <button
+                                                    className="btn btn-ghost btn-sm"
+                                                    title={tx.ignore_in_reports ? "Incluir nos relatórios" : "Ignorar nos relatórios (Transferência)"}
+                                                    onClick={() => handleToggleIgnore(tx.id, tx.ignore_in_reports)}
+                                                    style={{ padding: '4px 7px' }}
+                                                >
+                                                    {tx.ignore_in_reports ? <Eye size={13} /> : <EyeOff size={13} />}
+                                                </button>
                                                 <button
                                                     className="btn btn-ghost btn-sm"
                                                     title="Mover para Pendentes"
