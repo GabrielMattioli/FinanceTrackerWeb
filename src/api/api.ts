@@ -12,8 +12,7 @@ export const getCategories = async () => {
   if (error) throw error;
   return data.map(c => ({
     ...c,
-    isEssential: c.is_essential || false,
-    expectedAmount: c.expected_amount || null
+    isEssential: c.is_essential || false
   }));
 };
 
@@ -21,8 +20,7 @@ export const createCategory = async (dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
-    is_essential: dto.isEssential,
-    expected_amount: dto.expectedAmount
+    is_essential: dto.isEssential
   };
   const { data, error } = await supabase.from('categories').insert([payload]).select().single();
   return checkError(error, data);
@@ -32,8 +30,7 @@ export const updateCategory = async (id: any, dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
-    is_essential: dto.isEssential,
-    expected_amount: dto.expectedAmount
+    is_essential: dto.isEssential
   };
   const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select().single();
   return checkError(error, data);
@@ -252,11 +249,18 @@ export const importCsv = async (file: File, options: any = {}) => {
   let dateCol = options.dateColumn;
   let descCol = options.descColumn;
   let amountCol = options.amountColumn;
+  let payeeCol = -1;
 
   if (dateCol === undefined || descCol === undefined || amountCol === undefined) {
     // Attempt auto-detect
     dateCol = headers.findIndex(h => /data|date|datum|buchungstag/i.test(h));
-    descCol = headers.findIndex(h => /descrição|description|nome|name|partner|payee|empfänger|empfaenger|verwendungszweck/i.test(h));
+    descCol = headers.findIndex(h => /descrição|description|verwendungszweck/i.test(h));
+    payeeCol = headers.findIndex(h => /nome|name|partner|payee|empfänger|empfaenger|beguenstigter|zahlungspflichtiger/i.test(h));
+    
+    if (descCol === -1 && payeeCol !== -1) {
+      descCol = payeeCol;
+    }
+    
     amountCol = headers.findIndex(h => /^valor$|amount|^betrag$/i.test(h.trim()));
 
     if (dateCol === -1 || descCol === -1 || amountCol === -1) {
@@ -280,7 +284,13 @@ export const importCsv = async (file: File, options: any = {}) => {
   const transactions = [];
   for (const row of dataRows) {
     let dateStr = row[dateCol];
-    let desc = row[descCol] || 'Sem descrição';
+    
+    let descStr = row[descCol] || '';
+    if (payeeCol !== -1 && payeeCol !== descCol && row[payeeCol]) {
+      descStr = descStr ? `${row[payeeCol]} - ${descStr}` : row[payeeCol];
+    }
+    let desc = descStr || 'Sem descrição';
+    
     let amountStr = row[amountCol];
 
     if (!dateStr || !desc || !amountStr) continue;
@@ -394,7 +404,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   const { data: txs, error } = await supabase
     .from('transactions')
-    .select('*, categories(id, name, color)')
+    .select('*, categories(id, name, color, is_essential)')
     .lte('date', endDate);
 
   if (error) throw error;
@@ -406,22 +416,37 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   const categoryMap: Record<string, any> = {};
   const dailyMap: Record<number, any> = {};
+  const essentialCatHistory: Record<string, { total: number, firstDate: string, currentSpent: number, name: string, color: string }> = {};
 
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
 
+    const amount = Number(tx.amount);
+    const isExpense = amount < 0;
+    const expenseAmount = isExpense ? Math.abs(amount) : 0;
+    const isEssential = tx.categories?.is_essential;
+
     if (tx.date < startDate) {
-      previousMonthBalance += Number(tx.amount);
+      previousMonthBalance += amount;
+      
+      if (isExpense && isEssential && tx.categories) {
+        const catId = tx.categories.id;
+        if (!essentialCatHistory[catId]) {
+          essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+        }
+        essentialCatHistory[catId].total += expenseAmount;
+        if (tx.date < essentialCatHistory[catId].firstDate) {
+          essentialCatHistory[catId].firstDate = tx.date;
+        }
+      }
     } else {
-      const amount = Number(tx.amount);
       if (amount >= 0) {
         totalIncome += amount;
       } else {
-        const expense = Math.abs(amount);
-        totalExpense += expense;
+        totalExpense += expenseAmount;
 
         if (!tx.categories) {
-          uncategorizedTotal += expense;
+          uncategorizedTotal += expenseAmount;
         } else {
           const catId = tx.categories.id;
           if (!categoryMap[catId]) {
@@ -431,7 +456,17 @@ export const getDashboardSummary = async (year: number, month: number) => {
               total: 0
             };
           }
-          categoryMap[catId].total += expense;
+          categoryMap[catId].total += expenseAmount;
+
+          if (isEssential) {
+            if (!essentialCatHistory[catId]) {
+              essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+            }
+            essentialCatHistory[catId].currentSpent += expenseAmount;
+            if (tx.date < essentialCatHistory[catId].firstDate) {
+              essentialCatHistory[catId].firstDate = tx.date;
+            }
+          }
         }
 
         // Daily expenses
@@ -439,7 +474,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
         if (!dailyMap[day]) {
           dailyMap[day] = { day, total: 0, transactions: [] };
         }
-        dailyMap[day].total += expense;
+        dailyMap[day].total += expenseAmount;
         dailyMap[day].transactions.push(tx);
       }
     }
@@ -450,16 +485,54 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const categoryBreakdown = Object.values(categoryMap);
   const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
 
-  // Fetch true expected essential outflow from categories
+  // Fetch all essential categories to ensure we include ones with zero transactions
   let expectedEssentialOutflow = 0;
+  const fixedExpenses = [];
+
   try {
-    const { data: essentialCats } = await supabase.from('categories').select('expected_amount').eq('is_essential', true);
+    const { data: essentialCats } = await supabase.from('categories').select('id, name, color').eq('is_essential', true);
     if (essentialCats) {
-      expectedEssentialOutflow = essentialCats.reduce((acc, c) => acc + Number(c.expected_amount || 0), 0);
+      for (const cat of essentialCats) {
+        if (!essentialCatHistory[cat.id]) {
+          essentialCatHistory[cat.id] = { total: 0, firstDate: '', currentSpent: 0, name: cat.name, color: cat.color };
+        }
+      }
     }
   } catch (e) {
-    // Ignore error and leave it 0
+    // Ignore error
   }
+
+  for (const catId in essentialCatHistory) {
+    const data = essentialCatHistory[catId];
+    let monthsPassed = 1;
+
+    if (data.firstDate) {
+      const [fYear, fMonth] = data.firstDate.split('-').map(Number);
+      const totalMonthsDiff = (year - fYear) * 12 + (month - fMonth);
+      if (totalMonthsDiff > 0) {
+        monthsPassed = totalMonthsDiff;
+      }
+    }
+
+    const average = data.total > 0 ? data.total / monthsPassed : 0;
+    const pending = Math.max(0, average - data.currentSpent);
+
+    expectedEssentialOutflow += pending;
+
+    fixedExpenses.push({
+      id: catId,
+      name: data.name,
+      color: data.color,
+      average,
+      currentSpent: data.currentSpent,
+      pending,
+      isPaid: data.currentSpent >= average && average > 0,
+      isFirstMonth: data.total === 0 // meaning no past history
+    });
+  }
+
+  // Sort fixed expenses by highest average first
+  fixedExpenses.sort((a, b) => b.average - a.average);
 
   const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
 
@@ -473,7 +546,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
     expectedEssentialOutflow,
     categoryBreakdown,
     uncategorizedTotal,
-    dailyExpenses
+    dailyExpenses,
+    fixedExpenses
   };
 };
 
