@@ -248,9 +248,9 @@ export const importCsv = async (file: File, options: any = {}) => {
 
   if (dateCol === undefined || descCol === undefined || amountCol === undefined) {
     // Attempt auto-detect
-    dateCol = headers.findIndex(h => /data|date/i.test(h));
-    descCol = headers.findIndex(h => /descrição|description|nome|histórico|history/i.test(h));
-    amountCol = headers.findIndex(h => /valor|amount/i.test(h));
+    dateCol = headers.findIndex(h => /data|date|datum|buchungstag/i.test(h));
+    descCol = headers.findIndex(h => /descrição|description|nome|name|partner|payee|empfänger|verwendungszweck|histórico|history/i.test(h));
+    amountCol = headers.findIndex(h => /valor|amount|betrag/i.test(h));
 
     if (dateCol === -1 || descCol === -1 || amountCol === -1) {
       return {
@@ -328,11 +328,46 @@ export const importCsv = async (file: File, options: any = {}) => {
   }
 
   if (transactions.length > 0) {
-    const { error } = await supabase.from('transactions').insert(transactions);
-    if (error) throw error;
+    let minDate = transactions[0].date;
+    let maxDate = transactions[0].date;
+    for (const tx of transactions) {
+      if (tx.date < minDate) minDate = tx.date;
+      if (tx.date > maxDate) maxDate = tx.date;
+    }
+
+    const { data: existingTxs, error: fetchError } = await supabase
+      .from('transactions')
+      .select('date, description, amount')
+      .gte('date', minDate)
+      .lte('date', maxDate);
+
+    if (fetchError) throw fetchError;
+
+    const dbCounts: Record<string, number> = {};
+    for (const tx of existingTxs || []) {
+      const sig = `${tx.date}|${tx.description}|${Number(tx.amount)}`;
+      dbCounts[sig] = (dbCounts[sig] || 0) + 1;
+    }
+
+    const toInsert = [];
+    for (const tx of transactions) {
+      const sig = `${tx.date}|${tx.description}|${Number(tx.amount)}`;
+      if (dbCounts[sig] && dbCounts[sig] > 0) {
+        dbCounts[sig]--;
+      } else {
+        toInsert.push(tx);
+      }
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from('transactions').insert(toInsert);
+      if (error) throw error;
+    }
+
+    return { imported: toInsert.length, skipped: dataRows.length - toInsert.length, errors: 0 };
   }
 
-  return { imported: transactions.length, skipped: dataRows.length - transactions.length, errors: 0 };
+  return { imported: 0, skipped: dataRows.length, errors: 0 };
 };
 
 export const getDashboardSummary = async (year: number, month: number) => {
