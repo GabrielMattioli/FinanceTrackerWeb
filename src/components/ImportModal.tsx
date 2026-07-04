@@ -102,9 +102,16 @@ export default function ImportModal({ onClose, onSuccess }) {
                         <>
                             <div className="drop-icon"><Upload style={{ width: 36, height: 36 }} /></div>
                             <p>Arraste o CSV aqui ou clique para selecionar</p>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Sparkles size={13} /> Detecta Sparkasse, N26, Nubank automaticamente
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center', textAlign: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+                                    <Sparkles size={13} /> Bancos suportados automaticamente:
+                                </span>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                                    • N26 (Exportação Padrão)<br/>
+                                    • Nubank (Exportação Padrão)<br/>
+                                    • Sparkasse (Excel CSV-CAMT V2 ou V8)
+                                </span>
+                            </div>
                         </>
                     )}
                 </div>

@@ -86,9 +86,9 @@ export const getPending = async (page: number = 0, size: number = 100) => {
     .range(page * size, (page + 1) * size - 1);
 
   if (error) throw error;
-  return { 
-    content: data.map(tx => ({ ...tx, category: tx.categories })), 
-    totalElements: count 
+  return {
+    content: data.map(tx => ({ ...tx, category: tx.categories })),
+    totalElements: count
   };
 };
 
@@ -118,10 +118,10 @@ export const getHistory = async (params: any = {}) => {
 
   const { data, error, count } = await query;
   if (error) throw error;
-  return { 
-    content: data.map(tx => ({ ...tx, category: tx.categories })), 
-    totalElements: count, 
-    totalPages: Math.ceil((count || 0) / size) 
+  return {
+    content: data.map(tx => ({ ...tx, category: tx.categories })),
+    totalElements: count,
+    totalPages: Math.ceil((count || 0) / size)
   };
 };
 
@@ -181,7 +181,7 @@ export const toggleIgnoreInReports = async (id: any, ignore: boolean) => {
     .eq('id', id)
     .select()
     .maybeSingle();
-  
+
   if (error) {
     console.error('toggleIgnoreInReports error:', error);
     throw error;
@@ -201,7 +201,7 @@ export const getSettings = async () => {
   if (!data) {
     return { baseCurrency: 'EUR' };
   }
-  
+
   return {
     ...data,
     baseCurrency: data.base_currency || 'EUR'
@@ -235,11 +235,18 @@ export const updateCurrency = async (baseCurrency: string) => {
 
 export const importCsv = async (file: File, options: any = {}) => {
   const text = await file.text();
-  const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
-  
+  const firstLine = text.split('\n')[0] || '';
+  const delimiter = firstLine.includes(';') ? ';' : ',';
+  const rows = text.split('\n').map(row => row.split(delimiter).map(cell => cell.trim().replace(/^"|"$/g, '')));
+
   if (rows.length === 0) return { imported: 0, skipped: 0, errors: 0 };
-  
+
   const headers = rows[0];
+
+  if (headers.includes('Auftragskonto') && headers.includes('BLZ') && !headers.includes('Glaeubiger ID')) {
+    throw new Error('Formato MT940 legado. Por favor, exporte usando a opção "Excel (CSV-CAMT V2)" ou "V8".');
+  }
+
   const dataRows = rows.slice(1).filter(r => r.some(cell => cell));
 
   let dateCol = options.dateColumn;
@@ -249,8 +256,8 @@ export const importCsv = async (file: File, options: any = {}) => {
   if (dateCol === undefined || descCol === undefined || amountCol === undefined) {
     // Attempt auto-detect
     dateCol = headers.findIndex(h => /data|date|datum|buchungstag/i.test(h));
-    descCol = headers.findIndex(h => /descrição|description|nome|name|partner|payee|empfänger|verwendungszweck|histórico|history/i.test(h));
-    amountCol = headers.findIndex(h => /valor|amount|betrag/i.test(h));
+    descCol = headers.findIndex(h => /descrição|description|nome|name|partner|payee|empfänger|empfaenger|verwendungszweck/i.test(h));
+    amountCol = headers.findIndex(h => /^valor$|amount|^betrag$/i.test(h.trim()));
 
     if (dateCol === -1 || descCol === -1 || amountCol === -1) {
       return {
@@ -273,17 +280,28 @@ export const importCsv = async (file: File, options: any = {}) => {
   const transactions = [];
   for (const row of dataRows) {
     let dateStr = row[dateCol];
-    const desc = row[descCol];
+    let desc = row[descCol] || 'Sem descrição';
     let amountStr = row[amountCol];
 
     if (!dateStr || !desc || !amountStr) continue;
 
-    // Convert DD/MM/YYYY to YYYY-MM-DD if needed
+    // Convert DD/MM/YYYY or DD.MM.YYYY to YYYY-MM-DD if needed
     if (dateStr.includes('/')) {
       const parts = dateStr.split('/');
       if (parts.length === 3) {
         if (parts[2].length === 4) { // DD/MM/YYYY
           dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else if (parts[2].length === 2) { // DD/MM/YY
+          dateStr = `20${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+    } else if (dateStr.includes('.')) {
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        if (parts[2].length === 4) { // DD.MM.YYYY
+          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else if (parts[2].length === 2) { // DD.MM.YY
+          dateStr = `20${parts[2]}-${parts[1]}-${parts[0]}`;
         }
       }
     }
@@ -299,13 +317,13 @@ export const importCsv = async (file: File, options: any = {}) => {
     } else if (amountStr.includes(',')) {
       amountStr = amountStr.replace(',', '.');
     }
-    
+
     const amount = Number(amountStr);
-    
+
     // Quick validate date YYYY-MM-DD
     const dateMatch = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (isNaN(amount) || !dateMatch) continue;
-    
+
     // Format to strict YYYY-MM-DD for PG
     const cleanDate = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
 
@@ -439,7 +457,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
     if (essentialCats) {
       expectedEssentialOutflow = essentialCats.reduce((acc, c) => acc + Number(c.expected_amount || 0), 0);
     }
-  } catch(e) {
+  } catch (e) {
     // Ignore error and leave it 0
   }
 
@@ -479,46 +497,46 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
 
   const { data: txs, error } = await query;
 
-    if (error) throw error;
+  if (error) throw error;
 
-    // Initialize 12 months
-    const months = Array.from({ length: 12 }, (_, i) => ({
-        month: i + 1,
-        hasData: false,
-        totalIncome: 0,
-        totalExpense: 0,
-        netBalance: 0
-    }));
+  // Initialize 12 months
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    hasData: false,
+    totalIncome: 0,
+    totalExpense: 0,
+    netBalance: 0
+  }));
 
-    for (const tx of txs) {
-        if (tx.ignore_in_reports) continue;
-        
-        const monthIndex = parseInt(tx.date.split('-')[1], 10) - 1;
-        const amount = Number(tx.amount);
-        
-        months[monthIndex].hasData = true;
-        
-        if (amount >= 0) {
-            months[monthIndex].totalIncome += amount;
-            months[monthIndex].netBalance += amount;
-        } else {
-            months[monthIndex].totalExpense += Math.abs(amount);
-            months[monthIndex].netBalance += amount;
-        }
+  for (const tx of txs) {
+    if (tx.ignore_in_reports) continue;
+
+    const monthIndex = parseInt(tx.date.split('-')[1], 10) - 1;
+    const amount = Number(tx.amount);
+
+    months[monthIndex].hasData = true;
+
+    if (amount >= 0) {
+      months[monthIndex].totalIncome += amount;
+      months[monthIndex].netBalance += amount;
+    } else {
+      months[monthIndex].totalExpense += Math.abs(amount);
+      months[monthIndex].netBalance += amount;
     }
+  }
 
-    // Current logic expects months to just be a property, but wait, usually it's just an array 
-    // of all 12 months, and if there's no data, it's fine.
-    // However, the fallback in MonthBar also looks for months that are not in the future?
-    // Actually, `hasData` true/false is exactly what the component uses to disable it.
-    // Let's make the current month available even if hasData is false, so user can click the current month.
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    if (year === currentYear) {
-        months[currentMonth - 1].hasData = true; // Always allow clicking current month
-    }
+  // Current logic expects months to just be a property, but wait, usually it's just an array 
+  // of all 12 months, and if there's no data, it's fine.
+  // However, the fallback in MonthBar also looks for months that are not in the future?
+  // Actually, `hasData` true/false is exactly what the component uses to disable it.
+  // Let's make the current month available even if hasData is false, so user can click the current month.
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
+  if (year === currentYear) {
+    months[currentMonth - 1].hasData = true; // Always allow clicking current month
+  }
 
-    return { months };
+  return { months };
 };
 
 export default {
