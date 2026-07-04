@@ -26,7 +26,6 @@ export default function CategoriesPage() {
     const [name, setName] = useState('');
     const [color, setColor] = useState('#6366f1');
     const [isEssential, setIsEssential] = useState(false);
-    const [expectedAmount, setExpectedAmount] = useState('');
     const [saving, setSaving] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const colorRef = useRef(null);
@@ -75,8 +74,7 @@ export default function CategoriesPage() {
             const payload = {
                 name: name.trim(),
                 color,
-                isEssential,
-                expectedAmount: isEssential && expectedAmount ? parseFloat(expectedAmount) : null
+                isEssential
             };
             if (editingCategoryId) {
                 await updateCategory(editingCategoryId, payload);
@@ -88,7 +86,6 @@ export default function CategoriesPage() {
             setName('');
             setColor('#6366f1');
             setIsEssential(false);
-            setExpectedAmount('');
             setEditingCategoryId(null);
             await loadCategories();
         } catch (err) {
@@ -103,7 +100,6 @@ export default function CategoriesPage() {
         setName(c.name);
         setColor(c.color);
         setIsEssential(c.isEssential || false);
-        setExpectedAmount(c.expectedAmount || '');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -112,7 +108,6 @@ export default function CategoriesPage() {
         setName('');
         setColor('#6366f1');
         setIsEssential(false);
-        setExpectedAmount('');
     };
 
     const handleDeleteCategory = async (id, catName) => {
@@ -250,22 +245,8 @@ export default function CategoriesPage() {
                     </div>
                     <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
                         <input type="checkbox" id="isEssential" checked={isEssential} onChange={e => setIsEssential(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                        <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Fixa/Recorrente)</label>
+                        <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Valor previsto será a média automática)</label>
                     </div>
-                    {isEssential && (
-                        <div className="form-group" style={{ marginTop: 10 }}>
-                            <label className="label" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Valor Mensal Esperado ({currencySymbol})</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="Ex: 500.00"
-                                value={expectedAmount}
-                                onChange={e => setExpectedAmount(e.target.value)}
-                                step="0.01"
-                                min="0"
-                            />
-                        </div>
-                    )}
                     <div style={{ marginBottom: 16, marginTop: 16 }}>
                         <label className="label">Preview</label>
                         <span className="category-badge" style={{ background: color + '22', color, border: `1px solid ${color}44`, fontSize: 13 }}>
@@ -337,7 +318,7 @@ export default function CategoriesPage() {
                                         <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--bg-card)', padding: '2px 6px', borderRadius: 4, width: 'fit-content' }}>{c.color}</span>
                                         {c.isEssential && (
                                             <span style={{ fontSize: 11, background: 'var(--accent)', color: 'white', padding: '2px 6px', borderRadius: 4, width: 'fit-content' }}>
-                                                Essencial: {formatCurrencyValue(c.expectedAmount || 0, baseCurrency)}
+                                                Essencial (Auto)
                                             </span>
                                         )}
                                     </div>
