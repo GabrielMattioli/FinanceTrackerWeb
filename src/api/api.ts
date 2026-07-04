@@ -451,41 +451,6 @@ export const getYearlySummary = async (year: number) => {
     return { months };
 };
 
-export const generateTestData = async () => {
-  // 1. Create categories
-  const categoriesToCreate = [
-    { name: 'Alimentação', color: '#ff6b6b' },
-    { name: 'Transporte', color: '#4ecdc4' },
-    { name: 'Lazer', color: '#feca57' },
-    { name: 'Salário', color: '#1dd1a1' }
-  ];
-
-  const createdCategories = [];
-  for (const cat of categoriesToCreate) {
-    const { data } = await supabase.from('categories').insert([cat]).select().single();
-    createdCategories.push(data);
-  }
-
-  const foodCat = createdCategories.find(c => c.name === 'Alimentação').id;
-  const transportCat = createdCategories.find(c => c.name === 'Transporte').id;
-  const salaryCat = createdCategories.find(c => c.name === 'Salário').id;
-
-  // 2. Create some transactions (history & pending)
-  const today = new Date();
-
-  const transactions = [
-    { date: today.toISOString().split('T')[0], description: 'Supermercado', amount: -150.50, category_id: foodCat },
-    { date: today.toISOString().split('T')[0], description: 'Uber', amount: -25.00, category_id: transportCat },
-    { date: today.toISOString().split('T')[0], description: 'Salário Mensal', amount: 3500.00, category_id: salaryCat },
-    { date: today.toISOString().split('T')[0], description: 'Restaurante', amount: -85.00, category_id: null }, // pending
-    { date: today.toISOString().split('T')[0], description: 'Padaria', amount: -12.50, category_id: null } // pending
-  ];
-
-  await supabase.from('transactions').insert(transactions);
-
-  return true;
-};
-
 export default {
   getCategories,
   createCategory,
@@ -507,6 +472,5 @@ export default {
   importCsv,
   getDashboardSummary,
   getLatestDashboardMonth,
-  getYearlySummary,
-  generateTestData
+  getYearlySummary
 };

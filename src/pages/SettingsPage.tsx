@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Database, Info, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSettings, generateTestData } from '../api/api';
+import { getSettings } from '../api/api';
 import { useSettings } from '../context/SettingsContext';
 
 export default function SettingsPage() {
@@ -114,22 +114,6 @@ export default function SettingsPage() {
                 <div className="settings-about">
                     <div className="about-row"><span>Versão</span><span>{version || '1.0.0'}</span></div>
                     <div className="about-row"><span>Banco de dados</span><span>Supabase (PostgreSQL)</span></div>
-                    <div style={{ marginTop: 16 }}>
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={async () => {
-                                try {
-                                    await generateTestData();
-                                    toast.success('Dados de teste gerados com sucesso!');
-                                    setTimeout(() => window.location.reload(), 1000);
-                                } catch (e: any) {
-                                    toast.error('Erro ao gerar dados: ' + e.message);
-                                }
-                            }}
-                        >
-                            Gerar Dados de Teste
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
