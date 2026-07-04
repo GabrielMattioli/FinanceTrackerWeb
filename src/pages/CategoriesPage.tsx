@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit2, X, List, Hash } from 'lucide-react';
 import {
     getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories,
-    getCategoryRules, createCategoryRule, deleteCategoryRule
+    getCategoryRules, createCategoryRule, deleteCategoryRule, applyCategoryRuleToUncategorized
 } from '../api/api';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
@@ -72,8 +72,8 @@ export default function CategoriesPage() {
         if (!name.trim()) return;
         setSaving(true);
         try {
-            const payload = { 
-                name: name.trim(), 
+            const payload = {
+                name: name.trim(),
                 color,
                 isEssential,
                 expectedAmount: isEssential && expectedAmount ? parseFloat(expectedAmount) : null
@@ -129,7 +129,7 @@ export default function CategoriesPage() {
     };
 
     const handleToggleSelect = (id) => {
-        setSelectedCategoryIds(prev => 
+        setSelectedCategoryIds(prev =>
             prev.includes(id) ? prev.filter(catId => catId !== id) : [...prev, id]
         );
     };
@@ -154,11 +154,21 @@ export default function CategoriesPage() {
         if (!ruleKeyword.trim() || !ruleCategoryId) return;
         setSavingRule(true);
         try {
+            const keyword = ruleKeyword.trim();
             await createCategoryRule({
-                keyword: ruleKeyword.trim(),
+                keyword: keyword,
                 categoryId: ruleCategoryId
             });
-            toast.success('Regra criada com sucesso!');
+
+            const updatedData = await applyCategoryRuleToUncategorized(keyword, ruleCategoryId);
+            const updatedCount = updatedData ? updatedData.length : 0;
+
+            if (updatedCount > 0) {
+                toast.success(`Regra criada! ${updatedCount} transações pendentes foram categorizadas.`);
+            } else {
+                toast.success('Regra criada com sucesso!');
+            }
+
             setRuleKeyword('');
             setRuleCategoryId('');
             await loadRules();
@@ -313,9 +323,9 @@ export default function CategoriesPage() {
                                     e.currentTarget.style.boxShadow = 'none';
                                 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <input 
-                                        type="checkbox" 
-                                        style={{ cursor: 'pointer', width: 16, height: 16 }} 
+                                    <input
+                                        type="checkbox"
+                                        style={{ cursor: 'pointer', width: 16, height: 16 }}
                                         checked={selectedCategoryIds.includes(c.id)}
                                         onChange={() => handleToggleSelect(c.id)}
                                     />

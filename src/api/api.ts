@@ -154,6 +154,16 @@ export const bulkCategorize = async (transactionIds: any[], categoryId: any) => 
   return checkError(error, data);
 };
 
+export const applyCategoryRuleToUncategorized = async (keyword: string, categoryId: any) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({ category_id: categoryId })
+    .is('category_id', null)
+    .ilike('description', `%${keyword}%`)
+    .select();
+  return checkError(error, data);
+};
+
 export const deleteTransaction = async (id: any) => {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
@@ -465,6 +475,7 @@ export default {
   categorizeOne,
   uncategorizeOne,
   bulkCategorize,
+  applyCategoryRuleToUncategorized,
   deleteTransaction,
   bulkDelete,
   getSettings,
