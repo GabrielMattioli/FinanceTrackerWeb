@@ -137,7 +137,7 @@ export default function HistoryPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={setMonth} allowAllMonths={true} />
+                <MonthBar year={year} month={month} onMonthChange={setMonth} allowAllMonths={true} categorizedOnly={true} />
             </div>
 
             <div className="filter-bar">

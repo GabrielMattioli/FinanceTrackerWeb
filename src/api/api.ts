@@ -428,15 +428,21 @@ export const getLatestDashboardMonth = async () => {
   return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
 };
 
-export const getYearlySummary = async (year: number) => {
-    const startDate = `${year}-01-01`;
-    const endDate = `${year}-12-31`;
+export const getYearlySummary = async (year: number, categorizedOnly: boolean = false) => {
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
 
-    const { data: txs, error } = await supabase
-        .from('transactions')
-        .select('date, amount, ignore_in_reports')
-        .gte('date', startDate)
-        .lte('date', endDate);
+  let query = supabase
+    .from('transactions')
+    .select('date, amount, ignore_in_reports')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (categorizedOnly) {
+    query = query.not('category_id', 'is', null);
+  }
+
+  const { data: txs, error } = await query;
 
     if (error) throw error;
 

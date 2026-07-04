@@ -31,9 +31,10 @@ interface MonthBarProps {
     month?: number | string | null;
     onMonthChange: (month: number | string) => void;
     allowAllMonths?: boolean;
+    categorizedOnly?: boolean;
 }
 
-export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = false }: MonthBarProps) {
+export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = false, categorizedOnly = false }: MonthBarProps) {
     const [yearlyData, setYearlyData] = useState<any[]>([]);
     const now = new Date();
     const currentRealMonth = now.getMonth() + 1;
@@ -41,7 +42,7 @@ export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = f
 
     useEffect(() => {
         let isMounted = true;
-        getYearlySummary(year)
+        getYearlySummary(year, categorizedOnly)
             .then(res => {
                 if (isMounted) setYearlyData(res.months || []);
             })
