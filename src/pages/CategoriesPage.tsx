@@ -26,6 +26,7 @@ export default function CategoriesPage() {
     const [name, setName] = useState('');
     const [color, setColor] = useState('#6366f1');
     const [isEssential, setIsEssential] = useState(false);
+    const [isSavings, setIsSavings] = useState(false);
     const [saving, setSaving] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const colorRef = useRef(null);
@@ -74,7 +75,8 @@ export default function CategoriesPage() {
             const payload = {
                 name: name.trim(),
                 color,
-                isEssential
+                isEssential,
+                isSavings
             };
             if (editingCategoryId) {
                 await updateCategory(editingCategoryId, payload);
@@ -86,6 +88,7 @@ export default function CategoriesPage() {
             setName('');
             setColor('#6366f1');
             setIsEssential(false);
+            setIsSavings(false);
             setEditingCategoryId(null);
             await loadCategories();
         } catch (err) {
@@ -100,6 +103,7 @@ export default function CategoriesPage() {
         setName(c.name);
         setColor(c.color);
         setIsEssential(c.isEssential || false);
+        setIsSavings(c.isSavings || false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -108,6 +112,7 @@ export default function CategoriesPage() {
         setName('');
         setColor('#6366f1');
         setIsEssential(false);
+        setIsSavings(false);
     };
 
     const handleDeleteCategory = async (id, catName) => {
@@ -243,9 +248,15 @@ export default function CategoriesPage() {
                             <input ref={colorRef} type="color" value={color} onChange={e => setColor(e.target.value)} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
                         </div>
                     </div>
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-                        <input type="checkbox" id="isEssential" checked={isEssential} onChange={e => setIsEssential(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                        <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Valor previsto será a média automática)</label>
+                    <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input type="checkbox" id="isEssential" checked={isEssential} onChange={e => setIsEssential(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                            <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Valor previsto será a média automática)</label>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input type="checkbox" id="isSavings" checked={isSavings} onChange={e => setIsSavings(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                            <label htmlFor="isSavings" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>É Economia/Investimento?</label>
+                        </div>
                     </div>
                     <div style={{ marginBottom: 16, marginTop: 16 }}>
                         <label className="label">Preview</label>
@@ -317,8 +328,13 @@ export default function CategoriesPage() {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--bg-card)', padding: '2px 6px', borderRadius: 4, width: 'fit-content' }}>{c.color}</span>
                                         {c.isEssential && (
-                                            <span style={{ fontSize: 11, background: 'var(--accent)', color: 'white', padding: '2px 6px', borderRadius: 4, width: 'fit-content' }}>
-                                                Essencial (Auto)
+                                            <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(59,130,246,0.2)' }}>
+                                                Essencial
+                                            </span>
+                                        )}
+                                        {c.isSavings && (
+                                            <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(16,185,129,0.2)' }}>
+                                                Economia
                                             </span>
                                         )}
                                     </div>

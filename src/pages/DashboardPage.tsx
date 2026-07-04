@@ -20,7 +20,7 @@ const MONTHS = [
 const SEM_CATEGORIA_COLOR = '#6b7280';
 
 function StatCard({ label, value, type, baseCurrency, note = null }) {
-    const icon = type === 'income' ? '↑' : type === 'expense' ? '↓' : type === 'accumulated' ? '∑' : '≈';
+    const icon = type === 'income' ? '↑' : type === 'expense' ? '↓' : type === 'accumulated' ? '∑' : type === 'saved' ? '★' : '≈';
     return (
         <div className={`stat-card ${type}`}>
             <div className="stat-icon">{icon}</div>
@@ -205,6 +205,7 @@ export default function DashboardPage() {
                         <div className="stat-grid">
                             <StatCard label="Total de Entradas" value={data?.totalIncome} type="income" baseCurrency={baseCurrency} />
                             <StatCard label="Total de Saídas" value={data?.totalExpense} type="expense" baseCurrency={baseCurrency} />
+                            <StatCard label="Total Poupado" value={data?.totalSaved} type="saved" baseCurrency={baseCurrency} />
                             <StatCard
                                 label="Saldo Líquido"
                                 value={data?.netBalance}

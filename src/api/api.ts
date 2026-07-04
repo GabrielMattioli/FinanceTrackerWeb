@@ -12,7 +12,8 @@ export const getCategories = async () => {
   if (error) throw error;
   return data.map(c => ({
     ...c,
-    isEssential: c.is_essential || false
+    isEssential: c.is_essential || false,
+    isSavings: c.is_savings || false
   }));
 };
 
@@ -20,7 +21,8 @@ export const createCategory = async (dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
-    is_essential: dto.isEssential
+    is_essential: dto.isEssential,
+    is_savings: dto.isSavings
   };
   const { data, error } = await supabase.from('categories').insert([payload]).select().single();
   return checkError(error, data);
@@ -30,7 +32,8 @@ export const updateCategory = async (id: any, dto: any) => {
   const payload = {
     name: dto.name,
     color: dto.color,
-    is_essential: dto.isEssential
+    is_essential: dto.isEssential,
+    is_savings: dto.isSavings
   };
   const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select().single();
   return checkError(error, data);
@@ -404,7 +407,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   const { data: txs, error } = await supabase
     .from('transactions')
-    .select('*, categories(id, name, color, is_essential)')
+    .select('*, categories(id, name, color, is_essential, is_savings)')
     .lte('date', endDate);
 
   if (error) throw error;
@@ -412,6 +415,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
   let previousMonthBalance = 0;
   let totalIncome = 0;
   let totalExpense = 0;
+  let totalSaved = 0;
   let uncategorizedTotal = 0;
 
   const categoryMap: Record<string, any> = {};
@@ -443,44 +447,48 @@ export const getDashboardSummary = async (year: number, month: number) => {
       if (amount >= 0) {
         totalIncome += amount;
       } else {
-        totalExpense += expenseAmount;
-
-        if (!tx.categories) {
-          uncategorizedTotal += expenseAmount;
+        if (tx.categories?.is_savings) {
+          totalSaved += expenseAmount;
         } else {
-          const catId = tx.categories.id;
-          if (!categoryMap[catId]) {
-            categoryMap[catId] = {
-              name: tx.categories.name,
-              color: tx.categories.color,
-              total: 0
-            };
-          }
-          categoryMap[catId].total += expenseAmount;
+          totalExpense += expenseAmount;
 
-          if (isEssential) {
-            if (!essentialCatHistory[catId]) {
-              essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+          if (!tx.categories) {
+            uncategorizedTotal += expenseAmount;
+          } else {
+            const catId = tx.categories.id;
+            if (!categoryMap[catId]) {
+              categoryMap[catId] = {
+                name: tx.categories.name,
+                color: tx.categories.color,
+                total: 0
+              };
             }
-            essentialCatHistory[catId].currentSpent += expenseAmount;
-            if (tx.date < essentialCatHistory[catId].firstDate) {
-              essentialCatHistory[catId].firstDate = tx.date;
+            categoryMap[catId].total += expenseAmount;
+
+            if (isEssential) {
+              if (!essentialCatHistory[catId]) {
+                essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+              }
+              essentialCatHistory[catId].currentSpent += expenseAmount;
+              if (tx.date < essentialCatHistory[catId].firstDate) {
+                essentialCatHistory[catId].firstDate = tx.date;
+              }
             }
           }
-        }
 
-        // Daily expenses
-        const day = parseInt(tx.date.split('-')[2], 10);
-        if (!dailyMap[day]) {
-          dailyMap[day] = { day, total: 0, transactions: [] };
+          // Daily expenses
+          const day = parseInt(tx.date.split('-')[2], 10);
+          if (!dailyMap[day]) {
+            dailyMap[day] = { day, total: 0, transactions: [] };
+          }
+          dailyMap[day].total += expenseAmount;
+          dailyMap[day].transactions.push(tx);
         }
-        dailyMap[day].total += expenseAmount;
-        dailyMap[day].transactions.push(tx);
       }
     }
   }
 
-  const netBalance = totalIncome - totalExpense;
+  const netBalance = totalIncome - totalExpense - totalSaved;
   const accumulatedBalance = previousMonthBalance + netBalance;
   const categoryBreakdown = Object.values(categoryMap);
   const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
@@ -539,6 +547,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
   return {
     totalIncome,
     totalExpense,
+    totalSaved,
     netBalance,
     accumulatedBalance,
     previousMonthBalance,
@@ -561,7 +570,7 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
 
   let query = supabase
     .from('transactions')
-    .select('date, amount, ignore_in_reports')
+    .select('date, amount, ignore_in_reports, categories(is_savings)')
     .gte('date', startDate)
     .lte('date', endDate);
 
@@ -594,7 +603,9 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
       months[monthIndex].totalIncome += amount;
       months[monthIndex].netBalance += amount;
     } else {
-      months[monthIndex].totalExpense += Math.abs(amount);
+      if (!(tx.categories as any)?.is_savings) {
+        months[monthIndex].totalExpense += Math.abs(amount);
+      }
       months[monthIndex].netBalance += amount;
     }
   }
