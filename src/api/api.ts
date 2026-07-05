@@ -445,7 +445,39 @@ export const getDashboardSummary = async (year: number, month: number) => {
       }
     } else {
       if (amount >= 0) {
-        totalIncome += amount;
+        if (!tx.categories) {
+          totalIncome += amount;
+        } else if (tx.categories.is_savings) {
+          totalSaved -= amount;
+        } else {
+          totalExpense -= amount;
+          const catId = tx.categories.id;
+          if (!categoryMap[catId]) {
+            categoryMap[catId] = {
+              name: tx.categories.name,
+              color: tx.categories.color,
+              total: 0
+            };
+          }
+          categoryMap[catId].total -= amount;
+
+          if (isEssential) {
+            if (!essentialCatHistory[catId]) {
+              essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+            }
+            essentialCatHistory[catId].currentSpent -= amount;
+            if (tx.date < essentialCatHistory[catId].firstDate) {
+              essentialCatHistory[catId].firstDate = tx.date;
+            }
+          }
+          
+          const day = parseInt(tx.date.split('-')[2], 10);
+          if (!dailyMap[day]) {
+            dailyMap[day] = { day, total: 0, transactions: [] };
+          }
+          dailyMap[day].total -= amount;
+          dailyMap[day].transactions.push(tx);
+        }
       } else {
         if (tx.categories?.is_savings) {
           totalSaved += expenseAmount;
@@ -600,7 +632,11 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
     months[monthIndex].hasData = true;
 
     if (amount >= 0) {
-      months[monthIndex].totalIncome += amount;
+      if (!tx.categories) {
+        months[monthIndex].totalIncome += amount;
+      } else if (!(tx.categories as any).is_savings) {
+        months[monthIndex].totalExpense -= amount;
+      }
       months[monthIndex].netBalance += amount;
     } else {
       if (!(tx.categories as any)?.is_savings) {
