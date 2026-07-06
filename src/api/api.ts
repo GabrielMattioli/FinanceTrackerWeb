@@ -420,7 +420,12 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   const categoryMap: Record<string, any> = {};
   const dailyMap: Record<number, any> = {};
-  const essentialCatHistory: Record<string, { total: number, firstDate: string, currentSpent: number, name: string, color: string }> = {};
+  const essentialCatHistory: Record<string, { lastMonthTotal: number, currentSpent: number, name: string, color: string }> = {};
+
+  const lastMonthYear = month === 1 ? year - 1 : year;
+  const lastMonthMonth = month === 1 ? 12 : month - 1;
+  const lastMonthStartDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-01`;
+  const lastMonthEndDate = new Date(lastMonthYear, lastMonthMonth, 0).toISOString().split('T')[0];
 
   const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
 
@@ -438,11 +443,10 @@ export const getDashboardSummary = async (year: number, month: number) => {
       if (isEssential && tx.categories) {
         const catId = tx.categories.id;
         if (!essentialCatHistory[catId]) {
-          essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+          essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
         }
-        essentialCatHistory[catId].total -= amount;
-        if (tx.date < essentialCatHistory[catId].firstDate || !essentialCatHistory[catId].firstDate) {
-          essentialCatHistory[catId].firstDate = tx.date;
+        if (tx.date >= lastMonthStartDate && tx.date <= lastMonthEndDate) {
+          essentialCatHistory[catId].lastMonthTotal -= amount;
         }
       }
     } else {
@@ -459,12 +463,9 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
         if (isEssential) {
           if (!essentialCatHistory[catId]) {
-            essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+            essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
           }
           essentialCatHistory[catId].currentSpent -= amount;
-          if (tx.date < essentialCatHistory[catId].firstDate || !essentialCatHistory[catId].firstDate) {
-            essentialCatHistory[catId].firstDate = tx.date;
-          }
         }
       }
 
@@ -520,7 +521,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
     if (essentialCats) {
       for (const cat of essentialCats) {
         if (!essentialCatHistory[cat.id]) {
-          essentialCatHistory[cat.id] = { total: 0, firstDate: '', currentSpent: 0, name: cat.name, color: cat.color };
+          essentialCatHistory[cat.id] = { lastMonthTotal: 0, currentSpent: 0, name: cat.name, color: cat.color };
         }
       }
     }
@@ -530,18 +531,9 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   for (const catId in essentialCatHistory) {
     const data = essentialCatHistory[catId];
-    let monthsPassed = 1;
-
-    if (data.firstDate) {
-      const [fYear, fMonth] = data.firstDate.split('-').map(Number);
-      const totalMonthsDiff = (year - fYear) * 12 + (month - fMonth);
-      if (totalMonthsDiff > 0) {
-        monthsPassed = totalMonthsDiff;
-      }
-    }
-
-    const average = data.total > 0 ? data.total / monthsPassed : 0;
-    const pending = Math.max(0, average - data.currentSpent);
+    
+    const lastMonthAmount = data.lastMonthTotal;
+    const pending = Math.max(0, lastMonthAmount - data.currentSpent);
 
     expectedEssentialOutflow += pending;
 
@@ -549,16 +541,16 @@ export const getDashboardSummary = async (year: number, month: number) => {
       id: catId,
       name: data.name,
       color: data.color,
-      average,
+      lastMonthAmount,
       currentSpent: data.currentSpent,
       pending,
-      isPaid: data.currentSpent >= average && average > 0,
-      isFirstMonth: data.total === 0 // meaning no past history
+      isPaid: data.currentSpent >= lastMonthAmount && lastMonthAmount > 0,
+      isFirstMonth: data.lastMonthTotal === 0
     });
   }
 
-  // Sort fixed expenses by highest average first
-  fixedExpenses.sort((a, b) => b.average - a.average);
+  // Sort fixed expenses by highest lastMonthAmount first
+  fixedExpenses.sort((a, b) => b.lastMonthAmount - a.lastMonthAmount);
 
   const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
 

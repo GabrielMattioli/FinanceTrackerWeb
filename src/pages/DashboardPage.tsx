@@ -336,14 +336,14 @@ export default function DashboardPage() {
                             return (
                                 <div className="card" style={{ marginBottom: 24 }}>
                                     <div className="card-header" style={{ marginBottom: 20 }}>
-                                        <h3 className="card-title">Despesas Fixas (Média Automática)</h3>
-                                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Status de pagamento baseado no histórico</span>
+                                        <h3 className="card-title">Despesas Fixas (Mês Passado)</h3>
+                                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Status de pagamento baseado no mês passado</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                                        {fixedExpenses.map(expense => {
-                                            const pct = expense.average > 0 ? Math.min(100, (expense.currentSpent / expense.average) * 100) : (expense.currentSpent > 0 ? 100 : 0);
-                                            const isOverspent = expense.currentSpent > expense.average && expense.average > 0;
-                                            
+                                        {fixedExpenses.map((expense: any) => {
+                                            const pct = expense.lastMonthAmount > 0 ? Math.min(100, (expense.currentSpent / expense.lastMonthAmount) * 100) : (expense.currentSpent > 0 ? 100 : 0);
+                                            const isOverspent = expense.currentSpent > expense.lastMonthAmount && expense.lastMonthAmount > 0;
+
                                             return (
                                                 <div key={expense.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                                                         <div style={{ fontSize: 13, fontWeight: 600 }}>
                                                             {expense.isPaid ? (
                                                                 <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                                    <ShieldCheck size={16} /> Pago {isOverspent ? `(+${formatCurrencyValue(expense.currentSpent - expense.average, baseCurrency)})` : ''}
+                                                                    <ShieldCheck size={16} /> Pago {isOverspent ? `(+${formatCurrencyValue(expense.currentSpent - expense.lastMonthAmount, baseCurrency)})` : ''}
                                                                 </span>
                                                             ) : (
                                                                 <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -365,12 +365,12 @@ export default function DashboardPage() {
                                                     </div>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
                                                         <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
-                                                        <span>Média Histórica: {formatCurrencyValue(expense.average, baseCurrency)} {expense.isFirstMonth ? '(Novo)' : ''}</span>
+                                                        <span>Mês Passado: {formatCurrencyValue(expense.lastMonthAmount, baseCurrency)} {expense.isFirstMonth ? '(Sem Dados)' : ''}</span>
                                                     </div>
                                                     <div style={{ height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-                                                        <div style={{ 
-                                                            height: '100%', 
-                                                            background: expense.isPaid ? '#10b981' : expense.color, 
+                                                        <div style={{
+                                                            height: '100%',
+                                                            background: expense.isPaid ? '#10b981' : expense.color,
                                                             width: `${pct}%`,
                                                             transition: 'width 0.5s ease-out',
                                                             borderRadius: 4
