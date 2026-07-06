@@ -1,104 +1,133 @@
-import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, EyeOff } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, EyeOff, PieChart, Filter, CheckCircle, AlertTriangle, FileText, ArrowRightLeft, CreditCard, PlusCircle, PenTool, Trash2 } from 'lucide-react';
 
 export default function HelpPage() {
     return (
         <div className="settings-page" style={{ paddingBottom: '40px' }}>
             <div className="settings-card card">
                 <div className="card-header" style={{ marginBottom: 20 }}>
-                    <BookOpen size={20} />
-                    <span>Guia de Uso do Sistema</span>
+                    <BookOpen size={24} style={{ color: 'var(--primary-color)' }} />
+                    <span style={{ fontSize: 20, fontWeight: 600 }}>Central de Ajuda</span>
                 </div>
-                
-                <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-                    Abaixo você encontra uma explicação detalhada de cada uma das funcionalidades disponíveis no sistema.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', marginBottom: '32px', borderLeft: '4px solid var(--primary-color)' }}>
+                    <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 15, lineHeight: 1.6 }}>
+                        Bem-vindo ao guia completo do Finance Tracker. Aqui você encontra não apenas o passo a passo de como usar cada tela, mas também <strong>melhores práticas</strong> e <strong>dicas</strong> de como manter suas finanças sempre organizadas e seus gráficos precisos.
+                    </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
                     {/* Dashboard */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <LayoutDashboard size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Dashboard</h4>
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <LayoutDashboard size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Dashboard e Gráficos</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            É a visão geral das suas finanças. Aqui você acompanha seus saldos totais, receitas e despesas. 
-                            Gráficos interativos mostram para onde seu dinheiro está indo, dividindo os gastos por categorias e permitindo 
-                            uma análise rápida da sua saúde financeira.
-                        </p>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>O Dashboard é a central de controle. Ele resume todas as suas movimentações confirmadas do mês.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                                <li><strong>Cartões de Resumo:</strong> Exibem de forma rápida o total de Receitas, Despesas e o Saldo final do mês.</li>
+                                <li><strong>Gráfico de Categoria <PieChart size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Ótimo para identificar para onde a maior parte do seu dinheiro está indo.</li>
+                                <li><strong>Gráfico de Evolução:</strong> Permite visualizar as entradas e saídas ao longo do tempo (dias ou meses), ajudando a identificar padrões de comportamento financeiro.</li>
+                                <li><strong>Filtros Rápido <Filter size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> No topo da tela, você pode facilmente trocar de mês para comparar seus resultados atuais com os anteriores.</li>
+                            </ul>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: 'rgba(255, 171, 0, 0.1)', padding: '12px', borderRadius: '6px' }}>
+                                <AlertTriangle size={16} color="#FFAB00" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}><strong>Atenção:</strong> Transações pendentes aparecem como "sem categoria" nos gráficos. Certifique-se de processar a aba "Pendentes" para que seus gráficos fiquem precisos.</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Importação */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <Upload size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Importar Transações</h4>
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <Upload size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Importar Transações (Arquivos CSV)</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            Através do botão "Importar" no topo da tela, você pode adicionar várias transações de uma só vez usando um arquivo de planilha (CSV) ou 
-                            extrato bancário. As transações importadas não vão direto para o seu saldo; elas ficam na aba "Pendentes" 
-                            para que você possa revisá-las.
-                        </p>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>A funcionalidade de importação é a maneira de importar as transações do seu banco para o sistema.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <li><strong>Como usar:</strong> Clique no botão "Importar", selecione o arquivo gerado pelo seu banco e aguarde.</li>
+                                <li><strong>Formatos suportados:</strong> O sistema suporta <strong>APENAS</strong> arquivos no formato CSV.</li>
+                                <li><strong>O que acontece:</strong> O sistema lê o arquivo e cria registros em massa que vão diretamente para a aba "Pendentes". Seu saldo não é afetado neste momento.</li>
+                            </ul>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: 'rgba(255, 171, 0, 0.1)', padding: '12px', borderRadius: '6px' }}>
+                                <AlertTriangle size={16} color="#FFAB00" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}><strong>Dica:</strong> Se voce criar categorias automáticas na aba "Categorias" antes de importar os dados, o sistema irá categorizar as transações importadas com base nas regras criadas.</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Pendentes */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <Clock size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Transações Pendentes</h4>
+                    {/* Pendentes e Conciliação */}
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <Clock size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Processando Transações Pendentes</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            Esta tela exibe todas as transações que foram importadas mas ainda não foram confirmadas. 
-                            O objetivo aqui é que você atribua a categoria correta para cada gasto ou ganho. 
-                            Somente após você "confirmar" uma transação pendente, ela passará a contar no seu saldo e nos gráficos do Dashboard.
-                        </p>
-                    </div>
-
-                    {/* Ignorar Transações */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <EyeOff size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Ignorar Transações</h4>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>A aba Pendentes é a sua "caixa de entrada" financeira. É aqui que você classifica suas importações.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                                <li><strong>Escolhendo Categorias:</strong> O passo mais importante. Atribua a categoria correta para garantir a qualidade dos gráficos.</li>
+                                <li><strong>Confirmar <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', color: 'var(--success-color)' }} />:</strong> Após conferir valor e descrição, e definir a categoria, clique em "Confirmar" ou no botão de ✓. A transação agora é oficial e vai para o Histórico.</li>
+                            </ul>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            Ao revisar suas transações pendentes, você pode encontrar transferências internas, pagamentos de fatura de cartão ou itens que não devem afetar seus gráficos. Nesses casos, basta usar a opção de "Ignorar". A transação será descartada com segurança, sem contabilizar como despesa ou receita no seu Dashboard.
-                        </p>
                     </div>
 
                     {/* Histórico */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <History size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Histórico</h4>
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <History size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Gerenciando o Histórico</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            O Histórico é o registro definitivo de todas as suas movimentações financeiras já processadas. 
-                            Você pode visualizar os detalhes de qualquer mês, e se cometer algum erro, pode editar o valor, a data ou a 
-                            categoria de qualquer transação salva. Você também pode excluir registros por aqui.
-                        </p>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>O Histórico contém os dados definitivos. Diferente das "Pendentes", tudo aqui ja esta categorizado.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <li><strong>Edição e Exclusão:</strong> Cometeu um erro? Não tem problema. Encontre a transação no Histórico e você poderá alterar a categoria, ou até mesmo excluí-la <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
+                                <li><strong>Navegação:</strong> Use a barra de busca e os filtros para encontrar transações específicas.</li>
+                            </ul>
+                        </div>
                     </div>
 
                     {/* Categorias */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <Tag size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Categorias</h4>
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <Tag size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Organização de Categorias</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            Aqui você personaliza como organiza seu dinheiro. É possível criar novas categorias para suas despesas e receitas, 
-                            escolhendo cores específicas para facilitar a identificação visual em todo o aplicativo.
-                        </p>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>Um bom controle financeiro depende de uma boa categorização. Aqui você gerencia isso.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <li><strong>Criando e Editando <PenTool size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Crie novas categorias definindo um nome, uma cor, e o Tipo (se é uma categoria para despesas essenciais, economias ou investimentos).</li>
+                                <li><strong>Evite Excesso:</strong> Cuidado para não criar categorias muito específicas. Prefira grupos como "Delivery", "Mercado", "Lazer", "Transporte", etc.</li>
+                            </ul>
+                        </div>
                     </div>
 
                     {/* Configurações */}
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <Settings size={18} style={{ color: 'var(--text-primary)' }} />
-                            <h4 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Configurações</h4>
+                    <div className="help-section">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
+                                <Settings size={20} style={{ color: 'var(--primary-color)' }} />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Configurações do Sistema</h4>
                         </div>
-                        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            Permite ajustar preferências gerais do sistema, como alterar a sua Moeda Base (ex: Real, Dólar, Euro). 
-                            Ao alterar a moeda, todo o aplicativo será atualizado para exibir o símbolo monetário escolhido.
-                        </p>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
+                            <p style={{ marginBottom: '12px' }}>Personalize a sua experiência de uso no site.</p>
+                            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <li><strong>Moeda Base:</strong> Ajuste o símbolo monetário (R$, $, €, etc) que acompanha todos os valores do sistema. Ao alterar aqui, todas as telas passam a exibir o novo símbolo instantaneamente.</li>
+                                <li><strong>Tema / Aparência:</strong> Alterne entre os modos claro e escuro no topo da página para melhor visualização.</li>
+                            </ul>
+                        </div>
                     </div>
 
                 </div>
