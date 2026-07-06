@@ -101,7 +101,8 @@ export const getHistory = async (params: any = {}) => {
 
   if (params.month && params.year) {
     const startDate = `${params.year}-${String(params.month).padStart(2, '0')}-01`;
-    const endDate = new Date(params.year, params.month, 0).toISOString().split('T')[0];
+    const daysInMonth = new Date(params.year, params.month, 0).getDate();
+    const endDate = `${params.year}-${String(params.month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
     query = query.gte('date', startDate).lte('date', endDate);
   } else if (params.year) {
     const startDate = `${params.year}-01-01`;
@@ -403,7 +404,8 @@ export const importCsv = async (file: File, options: any = {}) => {
 
 export const getDashboardSummary = async (year: number, month: number) => {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
   const { data: txs, error } = await supabase
     .from('transactions')
@@ -425,7 +427,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const lastMonthYear = month === 1 ? year - 1 : year;
   const lastMonthMonth = month === 1 ? 12 : month - 1;
   const lastMonthStartDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-01`;
-  const lastMonthEndDate = new Date(lastMonthYear, lastMonthMonth, 0).toISOString().split('T')[0];
+  const daysInLastMonth = new Date(lastMonthYear, lastMonthMonth, 0).getDate();
+  const lastMonthEndDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-${String(daysInLastMonth).padStart(2, '0')}`;
 
   const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
 
