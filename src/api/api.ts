@@ -422,6 +422,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const dailyMap: Record<number, any> = {};
   const essentialCatHistory: Record<string, { total: number, firstDate: string, currentSpent: number, name: string, color: string }> = {};
 
+  const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
+
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
 
@@ -433,96 +435,80 @@ export const getDashboardSummary = async (year: number, month: number) => {
     if (tx.date < startDate) {
       previousMonthBalance += amount;
       
-      if (isExpense && isEssential && tx.categories) {
+      if (isEssential && tx.categories) {
         const catId = tx.categories.id;
         if (!essentialCatHistory[catId]) {
           essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
         }
-        essentialCatHistory[catId].total += expenseAmount;
-        if (tx.date < essentialCatHistory[catId].firstDate) {
+        essentialCatHistory[catId].total -= amount;
+        if (tx.date < essentialCatHistory[catId].firstDate || !essentialCatHistory[catId].firstDate) {
           essentialCatHistory[catId].firstDate = tx.date;
         }
       }
     } else {
+      if (tx.categories && !tx.categories.is_savings) {
+        const catId = tx.categories.id;
+        if (!categoryMap[catId]) {
+          categoryMap[catId] = {
+            name: tx.categories.name,
+            color: tx.categories.color,
+            total: 0
+          };
+        }
+        categoryMap[catId].total -= amount;
+
+        if (isEssential) {
+          if (!essentialCatHistory[catId]) {
+            essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+          }
+          essentialCatHistory[catId].currentSpent -= amount;
+          if (tx.date < essentialCatHistory[catId].firstDate || !essentialCatHistory[catId].firstDate) {
+            essentialCatHistory[catId].firstDate = tx.date;
+          }
+        }
+      }
+
       if (amount >= 0) {
-        if (!tx.categories) {
-          totalIncome += amount;
-        } else if (tx.categories.is_savings) {
+        if (tx.categories?.is_savings) {
           totalSaved -= amount;
+        } else if (!tx.categories || tx.categories.id === mainIncomeId) {
+          totalIncome += amount;
         } else {
           totalExpense -= amount;
-          const catId = tx.categories.id;
-          if (!categoryMap[catId]) {
-            categoryMap[catId] = {
-              name: tx.categories.name,
-              color: tx.categories.color,
-              total: 0
-            };
-          }
-          categoryMap[catId].total -= amount;
-
-          if (isEssential) {
-            if (!essentialCatHistory[catId]) {
-              essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
-            }
-            essentialCatHistory[catId].currentSpent -= amount;
-            if (tx.date < essentialCatHistory[catId].firstDate) {
-              essentialCatHistory[catId].firstDate = tx.date;
-            }
-          }
-          
-          const day = parseInt(tx.date.split('-')[2], 10);
-          if (!dailyMap[day]) {
-            dailyMap[day] = { day, total: 0, transactions: [] };
-          }
-          dailyMap[day].total -= amount;
-          dailyMap[day].transactions.push(tx);
         }
       } else {
         if (tx.categories?.is_savings) {
           totalSaved += expenseAmount;
         } else {
           totalExpense += expenseAmount;
-
           if (!tx.categories) {
             uncategorizedTotal += expenseAmount;
-          } else {
-            const catId = tx.categories.id;
-            if (!categoryMap[catId]) {
-              categoryMap[catId] = {
-                name: tx.categories.name,
-                color: tx.categories.color,
-                total: 0
-              };
-            }
-            categoryMap[catId].total += expenseAmount;
-
-            if (isEssential) {
-              if (!essentialCatHistory[catId]) {
-                essentialCatHistory[catId] = { total: 0, firstDate: tx.date, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
-              }
-              essentialCatHistory[catId].currentSpent += expenseAmount;
-              if (tx.date < essentialCatHistory[catId].firstDate) {
-                essentialCatHistory[catId].firstDate = tx.date;
-              }
-            }
           }
-
-          // Daily expenses
-          const day = parseInt(tx.date.split('-')[2], 10);
-          if (!dailyMap[day]) {
-            dailyMap[day] = { day, total: 0, transactions: [] };
-          }
-          dailyMap[day].total += expenseAmount;
-          dailyMap[day].transactions.push(tx);
         }
+      }
+
+      // Daily expenses
+      if (amount < 0 && !(tx.categories?.is_savings)) {
+        const day = parseInt(tx.date.split('-')[2], 10);
+        if (!dailyMap[day]) {
+          dailyMap[day] = { day, total: 0, transactions: [] };
+        }
+        dailyMap[day].total += expenseAmount;
+        dailyMap[day].transactions.push(tx);
+      } else if (amount >= 0 && tx.categories && !tx.categories.is_savings) {
+        const day = parseInt(tx.date.split('-')[2], 10);
+        if (!dailyMap[day]) {
+          dailyMap[day] = { day, total: 0, transactions: [] };
+        }
+        dailyMap[day].total -= amount;
+        dailyMap[day].transactions.push(tx);
       }
     }
   }
 
   const netBalance = totalIncome - totalExpense - totalSaved;
   const accumulatedBalance = previousMonthBalance + netBalance;
-  const categoryBreakdown = Object.values(categoryMap);
+  const categoryBreakdown = Object.values(categoryMap).filter((c: any) => c.total > 0);
   const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
 
   // Fetch all essential categories to ensure we include ones with zero transactions
@@ -617,11 +603,13 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
   // Initialize 12 months
   const months = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
-    hasData: false,
     totalIncome: 0,
     totalExpense: 0,
-    netBalance: 0
+    netBalance: 0,
+    hasData: false
   }));
+
+  const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
 
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
@@ -632,10 +620,12 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
     months[monthIndex].hasData = true;
 
     if (amount >= 0) {
-      if (!tx.categories) {
-        months[monthIndex].totalIncome += amount;
-      } else if (!(tx.categories as any).is_savings) {
-        months[monthIndex].totalExpense -= amount;
+      if (!(tx.categories as any)?.is_savings) {
+        if (!tx.categories || (tx.categories as any).id === mainIncomeId) {
+          months[monthIndex].totalIncome += amount;
+        } else {
+          months[monthIndex].totalExpense -= amount;
+        }
       }
       months[monthIndex].netBalance += amount;
     } else {
@@ -658,6 +648,18 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
   }
 
   return { months };
+};
+
+export const getMainIncomeCategoryId = () => {
+  return localStorage.getItem('mainIncomeCategoryId');
+};
+
+export const setMainIncomeCategoryId = (id: string | null) => {
+  if (id) {
+    localStorage.setItem('mainIncomeCategoryId', id);
+  } else {
+    localStorage.removeItem('mainIncomeCategoryId');
+  }
 };
 
 export default {
@@ -683,5 +685,7 @@ export default {
   importCsv,
   getDashboardSummary,
   getLatestDashboardMonth,
-  getYearlySummary
+  getYearlySummary,
+  getMainIncomeCategoryId,
+  setMainIncomeCategoryId
 };

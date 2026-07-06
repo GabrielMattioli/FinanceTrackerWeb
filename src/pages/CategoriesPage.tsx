@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit2, X, List, Hash } from 'lucide-react';
 import {
     getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories,
-    getCategoryRules, createCategoryRule, deleteCategoryRule, applyCategoryRuleToUncategorized
+    getCategoryRules, createCategoryRule, deleteCategoryRule, applyCategoryRuleToUncategorized,
+    getMainIncomeCategoryId, setMainIncomeCategoryId
 } from '../api/api';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
@@ -27,6 +28,7 @@ export default function CategoriesPage() {
     const [color, setColor] = useState('#6366f1');
     const [isEssential, setIsEssential] = useState(false);
     const [isSavings, setIsSavings] = useState(false);
+    const [isMainIncome, setIsMainIncome] = useState(false);
     const [saving, setSaving] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const colorRef = useRef(null);
@@ -80,15 +82,24 @@ export default function CategoriesPage() {
             };
             if (editingCategoryId) {
                 await updateCategory(editingCategoryId, payload);
+                if (isMainIncome) {
+                    setMainIncomeCategoryId(editingCategoryId);
+                } else if (getMainIncomeCategoryId() === editingCategoryId) {
+                    setMainIncomeCategoryId(null);
+                }
                 toast.success('Categoria atualizada!');
             } else {
-                await createCategory(payload);
+                const newCat = await createCategory(payload);
+                if (isMainIncome) {
+                    setMainIncomeCategoryId(newCat.id);
+                }
                 toast.success('Categoria criada!');
             }
             setName('');
             setColor('#6366f1');
             setIsEssential(false);
             setIsSavings(false);
+            setIsMainIncome(false);
             setEditingCategoryId(null);
             await loadCategories();
         } catch (err) {
@@ -104,6 +115,7 @@ export default function CategoriesPage() {
         setColor(c.color);
         setIsEssential(c.isEssential || false);
         setIsSavings(c.isSavings || false);
+        setIsMainIncome(getMainIncomeCategoryId() === c.id);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -113,12 +125,16 @@ export default function CategoriesPage() {
         setColor('#6366f1');
         setIsEssential(false);
         setIsSavings(false);
+        setIsMainIncome(false);
     };
 
     const handleDeleteCategory = async (id, catName) => {
         if (!window.confirm(`Excluir a categoria "${catName}"? Transações vinculadas voltarão para Pendentes.`)) return;
         try {
             await deleteCategory(id);
+            if (getMainIncomeCategoryId() === id) {
+                setMainIncomeCategoryId(null);
+            }
             toast.success(`Categoria "${catName}" excluída.`);
             setSelectedCategoryIds(prev => prev.filter(selectedId => selectedId !== id));
             await loadCategories();
@@ -139,6 +155,9 @@ export default function CategoriesPage() {
         if (!window.confirm(`Excluir as ${selectedCategoryIds.length} categorias selecionadas? Transações vinculadas voltarão para Pendentes.`)) return;
         try {
             await bulkDeleteCategories(selectedCategoryIds);
+            if (selectedCategoryIds.includes(getMainIncomeCategoryId())) {
+                setMainIncomeCategoryId(null);
+            }
             toast.success(`${selectedCategoryIds.length} categorias excluídas.`);
             setSelectedCategoryIds([]);
             await loadCategories();
@@ -248,7 +267,7 @@ export default function CategoriesPage() {
                             <input ref={colorRef} type="color" value={color} onChange={e => setColor(e.target.value)} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <input type="checkbox" id="isEssential" checked={isEssential} onChange={e => setIsEssential(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
                             <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Valor previsto será a média automática)</label>
@@ -256,6 +275,10 @@ export default function CategoriesPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <input type="checkbox" id="isSavings" checked={isSavings} onChange={e => setIsSavings(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
                             <label htmlFor="isSavings" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>É Economia/Investimento?</label>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input type="checkbox" id="isMainIncome" checked={isMainIncome} onChange={e => setIsMainIncome(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                            <label htmlFor="isMainIncome" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>É Entrada Principal? (Soma apenas nas receitas)</label>
                         </div>
                     </div>
                     <div style={{ marginBottom: 16, marginTop: 16 }}>
@@ -335,6 +358,11 @@ export default function CategoriesPage() {
                                         {c.isSavings && (
                                             <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(16,185,129,0.2)' }}>
                                                 Economia
+                                            </span>
+                                        )}
+                                        {getMainIncomeCategoryId() === c.id && (
+                                            <span style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(234,179,8,0.2)' }}>
+                                                Entrada Principal
                                             </span>
                                         )}
                                     </div>
