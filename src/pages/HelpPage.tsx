@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, EyeOff, PieChart, Filter, CheckCircle, AlertTriangle, FileText, ArrowRightLeft, CreditCard, PlusCircle, PenTool, Trash2 } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, PieChart, Filter, CheckCircle, AlertTriangle, PenTool, Trash2 } from 'lucide-react';
 
 export default function HelpPage() {
     return (
