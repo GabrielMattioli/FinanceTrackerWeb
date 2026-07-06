@@ -31,7 +31,8 @@ export default function HelpPage() {
                                 <li><strong>Cartões de Resumo:</strong> Exibem de forma rápida o total de Receitas, Despesas e o Saldo final do mês.</li>
                                 <li><strong>Gráfico de Categoria <PieChart size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Ótimo para identificar para onde a maior parte do seu dinheiro está indo.</li>
                                 <li><strong>Gráfico de Evolução:</strong> Permite visualizar as entradas e saídas ao longo do tempo (dias ou meses), ajudando a identificar padrões de comportamento financeiro.</li>
-                                <li><strong>Filtros Rápido <Filter size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> No topo da tela, você pode facilmente trocar de mês para comparar seus resultados atuais com os anteriores.</li>
+                                <li><strong>Saúde Financeira:</strong> Avalia automaticamente como está o seu mês projetando entradas futuras e subtraindo suas contas fixas. A barra colorida exibe o seu nível de comprometimento com cores diferentes, indo do Verde (Excelente) ao Vermelho (Crítico).</li>
+                                <li><strong>Filtros Rápidos <Filter size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> No topo da tela, você pode facilmente trocar de mês e ano para comparar seus resultados atuais com os anteriores.</li>
                             </ul>
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: 'rgba(255, 171, 0, 0.1)', padding: '12px', borderRadius: '6px' }}>
                                 <AlertTriangle size={16} color="#FFAB00" style={{ flexShrink: 0, marginTop: '2px' }} />
