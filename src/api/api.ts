@@ -423,6 +423,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const categoryMap: Record<string, any> = {};
   const dailyMap: Record<number, any> = {};
   const essentialCatHistory: Record<string, { lastMonthTotal: number, currentSpent: number, name: string, color: string }> = {};
+  const historicalIncomeMap: Record<string, number> = {};
 
   const lastMonthYear = month === 1 ? year - 1 : year;
   const lastMonthMonth = month === 1 ? 12 : month - 1;
@@ -443,6 +444,11 @@ export const getDashboardSummary = async (year: number, month: number) => {
     if (tx.date < startDate) {
       previousMonthBalance += amount;
       
+      if (amount >= 0 && (!tx.categories?.is_savings && (!tx.categories || tx.categories.id === mainIncomeId))) {
+        const monthKey = tx.date.substring(0, 7); // e.g. "YYYY-MM"
+        historicalIncomeMap[monthKey] = (historicalIncomeMap[monthKey] || 0) + amount;
+      }
+
       if (isEssential && tx.categories) {
         const catId = tx.categories.id;
         if (!essentialCatHistory[catId]) {
@@ -555,7 +561,14 @@ export const getDashboardSummary = async (year: number, month: number) => {
   // Sort fixed expenses by highest lastMonthAmount first
   fixedExpenses.sort((a, b) => b.lastMonthAmount - a.lastMonthAmount);
 
-  const safeMoneyMargin = accumulatedBalance - expectedEssentialOutflow;
+  const pastIncomes = Object.values(historicalIncomeMap).filter(v => v > 0);
+  const minHistoricalIncome = pastIncomes.length > 0 ? Math.min(...pastIncomes) : 0;
+
+  const expectedMonthlyIncomeStr = localStorage.getItem('expectedMonthlyIncome');
+  const baseExpectedIncome = expectedMonthlyIncomeStr ? Number(expectedMonthlyIncomeStr) : minHistoricalIncome;
+  const pendingIncome = Math.max(0, baseExpectedIncome - totalIncome);
+  const expectedTotalIncome = totalIncome + pendingIncome;
+  const safeMoneyMargin = accumulatedBalance + pendingIncome - expectedEssentialOutflow;
 
   return {
     totalIncome,
@@ -566,6 +579,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
     previousMonthBalance,
     safeMoneyMargin,
     expectedEssentialOutflow,
+    expectedTotalIncome,
+    pendingIncome,
     categoryBreakdown,
     uncategorizedTotal,
     dailyExpenses,

@@ -11,8 +11,10 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const { baseCurrency, updateBaseCurrency } = useSettings();
     const [updatingCurrency, setUpdatingCurrency] = useState(false);
+    const [expectedIncome, setExpectedIncome] = useState('');
 
     useEffect(() => {
+        setExpectedIncome(localStorage.getItem('expectedMonthlyIncome') || '');
         getSettings()
             .then(data => {
                 // setDbDir(data.dbDir || '');
@@ -49,9 +51,9 @@ export default function SettingsPage() {
                 <div className="form-group" style={{ marginTop: 16 }}>
                     <label>Moeda Base</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <select 
-                            className="form-control" 
-                            value={baseCurrency} 
+                        <select
+                            className="form-control"
+                            value={baseCurrency}
                             onChange={handleCurrencyChange}
                             disabled={updatingCurrency}
                             style={{ maxWidth: 250 }}
@@ -64,6 +66,27 @@ export default function SettingsPage() {
                     </div>
                     <p className="form-hint">
                         A moeda base será exibida em todo o aplicativo (dashboard, transações, etc).
+                    </p>
+                </div>
+
+                <div className="form-group" style={{ marginTop: 24 }}>
+                    <label>Receita Principal Esperada</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <input
+                            type="number"
+                            step="0.01"
+                            className="form-control"
+                            value={expectedIncome}
+                            onChange={(e) => {
+                                setExpectedIncome(e.target.value);
+                                localStorage.setItem('expectedMonthlyIncome', e.target.value);
+                            }}
+                            placeholder="Ex: 3500,00"
+                            style={{ maxWidth: 250 }}
+                        />
+                    </div>
+                    <p className="form-hint">
+                        Valor fixo usado para projetar a "Saúde Financeira". Deixe em branco para o app estimar automaticamente com base no mês passado.
                     </p>
                 </div>
             </div>

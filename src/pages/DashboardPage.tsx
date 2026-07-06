@@ -191,102 +191,109 @@ export default function DashboardPage() {
                         {/* Safety Margin Visual Bar - Redesigned for "Financial Health" */}
                         {(() => {
                             const accBal = Number(data?.accumulatedBalance ?? data?.netBalance ?? 0);
+                            const pendingIncome = Number(data?.pendingIncome || 0);
+                            const effectiveBal = accBal + pendingIncome;
                             const safe = Number(data?.safeMoneyMargin || 0);
                             const expectedTotal = Number(data?.expectedEssentialOutflow || 0);
-                            const reserved = Math.max(0, accBal - safe);
-                            const netBal = accBal; // alias so the rest of the block is unchanged
+                            const reserved = Math.max(0, effectiveBal - safe);
 
-                            const safePctCalc = netBal > 0 ? (safe / netBal) * 100 : 0;
-                            const isNegative = safe <= 0;
-                            const isTight = safe > 0 && safePctCalc < 20; // Less than 20% safe
+                            const safePctCalc = effectiveBal > 0 ? (safe / effectiveBal) * 100 : 0;
+                            
+                            let statusColor = '#10b981';
+                            let statusMsg = '';
+                            let StatusIcon = ShieldCheck;
+                            
+                            if (safe <= 0) {
+                                statusColor = '#f43f5e'; // Red (Crítico)
+                                statusMsg = "Crítico: Saldo livre esgotado! Foque apenas no essencial.";
+                                StatusIcon = AlertCircle;
+                            } else if (safePctCalc < 15) {
+                                statusColor = '#f97316'; // Orange (Aperto)
+                                statusMsg = "Aperto: Quase todo o seu saldo projetado está comprometido.";
+                                StatusIcon = AlertCircle;
+                            } else if (safePctCalc < 30) {
+                                statusColor = '#f59e0b'; // Yellow (Atenção)
+                                statusMsg = "Atenção: Sua folga é pequena. Cuidado com gastos não planejados.";
+                                StatusIcon = Info;
+                            } else if (safePctCalc < 50) {
+                                statusColor = '#10b981'; // Green (Saudável)
+                                statusMsg = "Saudável: Você tem uma boa margem para lazer e imprevistos.";
+                                StatusIcon = ShieldCheck;
+                            } else {
+                                statusColor = '#3b82f6'; // Blue (Excelente)
+                                statusMsg = "Excelente: Grande parte da sua renda está livre! Ótimo momento para investir.";
+                                StatusIcon = ShieldCheck;
+                            }
 
-                            const statusClass = isNegative ? 'danger' : (isTight ? 'tight' : 'safe');
-                            const StatusIcon = isNegative ? AlertCircle : (isTight ? Info : ShieldCheck);
+                            const statusClass = safe <= 0 ? 'danger' : (safePctCalc < 30 ? 'tight' : 'safe');
 
                             // Percentage calculation for the bar visual
                             let safePct = 0;
                             let reservedPct = 0;
-                            if (netBal > 0) {
-                                reservedPct = Math.min(100, (reserved / netBal) * 100);
+                            if (effectiveBal > 0) {
+                                reservedPct = Math.min(100, (reserved / effectiveBal) * 100);
                                 safePct = Math.max(0, 100 - reservedPct);
                             } else {
                                 reservedPct = 100;
                             }
 
-                            let statusMsg = "Tudo certo! Sua margem está saudável. Que tal poupar ou investir o excedente?";
-                            if (isNegative) statusMsg = "Alerta: Saldo livre esgotado! Foque apenas em despesas essenciais.";
-                            else if (isTight) statusMsg = "Atenção: Sua margem de segurança está baixa. Cuidado com gastos extras!";
-
                             return (
                                 <div className={`card safety-card ${statusClass}`} style={{ marginBottom: 24, padding: '24px' }}>
-                                    <div className="safety-status-label" style={{
-                                        color: isNegative ? '#f43f5e' : (isTight ? '#f59e0b' : 'var(--text-primary)')
-                                    }}>
-                                        <StatusIcon size={18} className={isNegative ? 'danger-icon' : ''} />
+                                    <div className="safety-status-label" style={{ color: statusColor }}>
+                                        <StatusIcon size={18} className={safe <= 0 ? 'danger-icon' : ''} />
                                         <span>Saúde Financeira: Margem de Segurança</span>
                                     </div>
 
-                                    <div className="safety-stats-row">
-                                        <div className="safety-stat">
-                                            <div className="label">Margem Livre</div>
-                                            <div className="value" style={{ color: isNegative ? '#f43f5e' : 'var(--accent)' }}>
-                                                {formatCurrencyValue(safe, baseCurrency)}
-                                            </div>
+                                    <div style={{ marginTop: 16, marginBottom: 24, textAlign: 'center' }}>
+                                        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Livre para Gastar</div>
+                                        <div style={{ fontSize: 42, fontWeight: 700, color: statusColor, letterSpacing: '-1px' }}>
+                                            {formatCurrencyValue(safe, baseCurrency)}
                                         </div>
 
-                                        <div className="safety-divider" />
-
-                                        <div className="safety-stat">
-                                            <div className="label">Reservado (Fixos)</div>
-                                            <div className="value" style={{ color: 'var(--text-secondary)' }}>
-                                                {formatCurrencyValue(reserved, baseCurrency)}
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+                                            <div style={{ background: 'var(--bg-secondary)', padding: '6px 12px', borderRadius: 20, fontSize: 12, color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}>
+                                                Total Projetado: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrencyValue(effectiveBal, baseCurrency)}</strong>
                                             </div>
-                                        </div>
-
-                                        <div className="safety-divider" />
-
-                                        <div className="safety-stat">
-                                            <div className="label">Saldo Líquido Total</div>
-                                            <div className="value" style={{ color: 'var(--text-primary)' }}>
-                                                {formatCurrencyValue(netBal, baseCurrency)}
+                                            <div style={{ background: 'var(--bg-secondary)', padding: '6px 12px', borderRadius: 20, fontSize: 12, color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}>
+                                                Contas Fixas: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrencyValue(expectedTotal, baseCurrency)}</strong>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="safety-bar-container">
-                                        {netBal > 0 ? (
+                                    <div style={{ height: 12, borderRadius: 6, overflow: 'hidden', display: 'flex', background: 'var(--bg-input, var(--bg-secondary))', marginBottom: 12 }}>
+                                        {effectiveBal > 0 ? (
                                             <>
-                                                <div className="safety-segment safe" style={{ width: `${safePct}%` }} title={`Margem Livre: ${formatCurrencyValue(safe, baseCurrency)}`} />
-                                                <div className="safety-segment reserved" style={{ width: `${reservedPct}%` }} title={`Reservado (Fixos): ${formatCurrencyValue(reserved, baseCurrency)}`} />
+                                                <div style={{ width: `${reservedPct}%`, backgroundColor: statusColor, backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)', transition: 'width 0.5s ease-in-out' }} title={`Comprometido: ${reservedPct.toFixed(0)}%`} />
+                                                <div style={{ width: `${safePct}%`, background: 'var(--text-muted)', opacity: 0.3 }} title={`Folga: ${safePct.toFixed(0)}%`} />
                                             </>
                                         ) : (
-                                            <div className="safety-segment danger" style={{ width: '100%' }} title="Sem saldo positivo" />
+                                            <div style={{ width: '100%', backgroundColor: '#f43f5e', backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)' }} title="Sem folga" />
                                         )}
                                     </div>
 
-                                    <div className="safety-legend" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                                        <div style={{ display: 'flex', gap: 20 }}>
-                                            <div className="legend-item">
-                                                <div className="legend-dot" style={{ background: 'var(--accent)' }} />
-                                                <span>Margem Livre: {safePct.toFixed(0)}%</span>
-                                            </div>
-                                            <div className="legend-item">
-                                                <div className="legend-dot" style={{ background: 'var(--text-muted)' }} />
-                                                <span>Reservado (Fixos): {reservedPct.toFixed(0)}%</span>
-                                            </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor }} />
+                                            <span>Comprometido ({reservedPct.toFixed(0)}%)</span>
                                         </div>
-                                        {isNegative && safe < 0 && (
-                                            <div className="legend-item" style={{ color: '#f43f5e' }}>
-                                                <TrendingDown size={14} />
-                                                <span>Excedido em {formatCurrencyValue(Math.abs(safe), baseCurrency)}</span>
-                                            </div>
-                                        )}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)' }} />
+                                            <span>Folga ({safePct.toFixed(0)}%)</span>
+                                        </div>
                                     </div>
+
+                                    {safe <= 0 && (
+                                        <div style={{ textAlign: 'center', color: '#f43f5e', fontSize: 13, marginTop: 12, fontWeight: 500 }}>
+                                            <TrendingDown size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: 4 }} />
+                                            Excedido em {formatCurrencyValue(Math.abs(safe), baseCurrency)}
+                                        </div>
+                                    )}
 
                                     <div className="safety-tip">
                                         <Target size={16} />
                                         <span>
-                                            <strong>Dica:</strong> {statusMsg} (Despesas Fixas Pendentes: <strong>{formatCurrencyValue(expectedTotal, baseCurrency)}</strong>)
+                                            <strong>Dica:</strong> {statusMsg} (Despesas Fixas Pendentes: <strong>{formatCurrencyValue(expectedTotal, baseCurrency)}</strong>
+                                            {pendingIncome > 0 && <>, Receita Pendente Esperada: <strong>{formatCurrencyValue(pendingIncome, baseCurrency)}</strong></>})
                                         </span>
                                     </div>
                                 </div>
