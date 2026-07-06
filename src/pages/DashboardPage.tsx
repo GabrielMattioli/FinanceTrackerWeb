@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
-    LineChart, Line, Tooltip, ResponsiveContainer, LabelList,
+    LineChart, Line, PieChart, Pie, Tooltip, ResponsiveContainer, LabelList,
     ReferenceArea
 } from 'recharts';
 import { ShieldCheck, AlertCircle, Info, TrendingDown, Target } from 'lucide-react';
@@ -31,25 +31,18 @@ function StatCard({ label, value, type, baseCurrency, note = null }) {
     );
 }
 
-const LineTooltip = ({ active = false, payload = null, label = '', baseCurrency }) => {
+const DonutTooltip = ({ active = false, payload = null, baseCurrency, totalIncome = 0 }) => {
     if (active && payload && payload.length) {
-        const transactions = payload[0]?.payload?.transactions || [];
+        const { name, value, color } = payload[0].payload;
+        const pct = totalIncome > 0 ? ((value / totalIncome) * 100).toFixed(1) : 0;
         return (
             <div className="custom-tooltip" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', maxWidth: 260 }}>
-                <div className="ct-label" style={{ marginBottom: 4 }}>Dia {label}</div>
-                <div className="ct-value" style={{ marginBottom: transactions.length ? 8 : 0 }}>
-                    {formatCurrencyValue(payload[0].value, baseCurrency)}
+                <div className="ct-label" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
+                    {name}
                 </div>
-                {transactions.length > 0 && (
-                    <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {transactions.map((tx, i) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 11, color: 'var(--text-secondary)' }}>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>{tx.description || '—'}</span>
-                                <span style={{ whiteSpace: 'nowrap', color: 'var(--text-primary)', fontWeight: 500 }}>{formatCurrencyValue(tx.amount, baseCurrency)}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <div className="ct-value">{formatCurrencyValue(value, baseCurrency)}</div>
+                {totalIncome > 0 && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{pct}% da Entrada</div>}
             </div>
         );
     }
@@ -147,37 +140,9 @@ export default function DashboardPage() {
     const totalExpense = Number(data?.totalExpense || 0);
     const hasBarData = barData.length > 0;
 
-    // ── Line chart data ────────────────────────────────────────────────────────
-    const lineData = (data?.dailyExpenses || []).map(d => ({
-        day: d.day,
-        total: Number(d.total),
-        transactions: d.transactions || [],
-    }));
-    const hasLineData = lineData.length > 0;
-
-    // Determine weekend day numbers for the selected month/year so we can highlight them
-    const weekendDays = (() => {
-        if (!hasLineData) return [];
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const pairs = [];
-        let i = 1;
-        while (i <= daysInMonth) {
-            const dow = new Date(year, month - 1, i).getDay(); // 0=Sun, 6=Sat
-            if (dow === 6) { // Saturday — weekend starts here
-                const sat = i;
-                const sun = i + 1 <= daysInMonth ? i + 1 : i;
-                pairs.push({ x1: sat - 0.5, x2: sun + 0.5 });
-                i += 2;
-            } else if (dow === 0) { // Sunday only (month starts on Sunday)
-                pairs.push({ x1: i - 0.5, x2: i + 0.5 });
-                i++;
-            } else {
-                i++;
-            }
-        }
-        return pairs;
-    })();
-
+    // ── Pie chart data ─────────────────────────────────────────────────────────
+    const totalIncomeForPie = Number(data?.totalIncome || 0);
+    const pieData = [...barData];
     // Dynamic height for bar chart — 44px per item, min 200
     const barChartHeight = Math.max(200, barData.length * 44 + 20);
 
@@ -387,68 +352,65 @@ export default function DashboardPage() {
                         {/* Charts */}
                         <div className="charts-grid">
 
-                            {/* ── Line Chart — Daily Expense Evolution ── */}
+                            {/* ── Pie Chart — Consumption from Income ── */}
                             <div className="card">
                                 <div className="card-header" style={{ marginBottom: 28 }}>
-                                    <h3 className="card-title">Evolução Diária de Gastos</h3>
+                                    <h3 className="card-title">Consumo da Entrada Principal</h3>
                                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                                         {MONTHS[month]} {year}
                                     </span>
                                 </div>
-                                {!hasLineData ? (
+                                {pieData.length === 0 ? (
                                     <div className="table-empty" style={{ padding: '40px 0' }}>
-                                        <div className="empty-icon">📈</div>
+                                        <div className="empty-icon">🥧</div>
                                         <p>Sem dados para este período</p>
-                                        <span>Importe transações para ver a evolução diária</span>
+                                        <span>Importe transações para ver o consumo</span>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height={280}>
-                                        <LineChart data={lineData} margin={{ left: 10, right: 30, top: 8, bottom: 15 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-
-                                            {/* Weekend highlight bands */}
-                                            {weekendDays.map((wd, i) => (
-                                                <ReferenceArea
-                                                    key={i}
-                                                    x1={wd.x1}
-                                                    x2={wd.x2}
-                                                    fill="var(--weekend-band-fill, rgba(99,102,241,0.06))"
-                                                    strokeOpacity={0}
-                                                />
-                                            ))}
-
-                                            <XAxis
-                                                dataKey="day"
-                                                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tickFormatter={v => `${v}`}
-                                                label={{ value: 'Dia', position: 'insideBottomRight', offset: -10, fill: 'var(--text-muted)', fontSize: 11 }}
-                                            />
-                                            <YAxis
-                                                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tickFormatter={v => {
-                                                    const sym = ({ 'EUR': '€', 'BRL': 'R$', 'USD': '$' })[baseCurrency] || '€';
-                                                    if (v === 0) return `${sym}0`;
-                                                    if (v >= 1000) return `${sym}${(v / 1000).toFixed(1).replace('.0', '')}k`;
-                                                    return `${sym}${v}`;
-                                                }}
-                                                width={52}
-                                            />
-                                            <Tooltip content={<LineTooltip baseCurrency={baseCurrency} />} cursor={{ stroke: 'var(--border-color)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-
-                                            <Line
-                                                type="monotone"
-                                                dataKey="total"
-                                                stroke="var(--accent)"
-                                                strokeWidth={2.5}
-                                                dot={{ r: 3, fill: 'var(--accent)', strokeWidth: 0 }}
-                                                activeDot={{ r: 5, fill: 'var(--accent-hover)', strokeWidth: 0 }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
+                                    <>
+                                        <div style={{ position: 'relative', width: '100%', height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {/* Center Text Overlay */}
+                                            <div style={{ position: 'absolute', pointerEvents: 'none', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Entrada Principal</div>
+                                                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                    {formatCurrencyValue(totalIncomeForPie, baseCurrency)}
+                                                </div>
+                                            </div>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={pieData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={75}
+                                                        outerRadius={100}
+                                                        paddingAngle={0}
+                                                        cornerRadius={8}
+                                                        dataKey="value"
+                                                        stroke="var(--bg-card)"
+                                                        strokeWidth={4}
+                                                    >
+                                                        {pieData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip content={<DonutTooltip baseCurrency={baseCurrency} totalIncome={totalIncomeForPie} />} cursor={false} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        {/* Custom Legend Below Chart */}
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', justifyContent: 'center', marginTop: 12, padding: '0 8px' }}>
+                                            {pieData.map((entry, idx) => {
+                                                const pct = totalIncomeForPie > 0 ? ((entry.value / totalIncomeForPie) * 100).toFixed(1) : '0.0';
+                                                return (
+                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
+                                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: entry.color, flexShrink: 0 }} />
+                                                        <span style={{ whiteSpace: 'nowrap' }}>{entry.name} <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>({pct}%)</span></span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                             </div>
 
