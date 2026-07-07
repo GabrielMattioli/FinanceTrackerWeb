@@ -1686,12 +1686,14 @@ input[type="color"] {
   }
 
   .responsive-table tr {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     margin-bottom: 16px;
-    padding: 12px;
+    padding: 0 12px 12px 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
 
@@ -1703,6 +1705,35 @@ input[type="color"] {
     padding: 12px 4px;
     font-size: 14px;
     text-align: right;
+    width: 100%;
+  }
+
+  /* Description acts as card title */
+  .responsive-table td[data-label="Descrição"] {
+    order: -1;
+    justify-content: flex-start;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 16px 36px 12px 4px;
+    border-bottom: 1px dashed var(--border-light);
+    white-space: normal !important;
+    max-width: none !important;
+    text-align: left;
+  }
+
+  .responsive-table td[data-label="Descrição"]::before {
+    display: none;
+  }
+
+  /* Checkbox top right */
+  .responsive-table td[data-label=""] {
+    position: absolute;
+    top: 16px;
+    right: 12px;
+    width: auto;
+    border: none;
+    padding: 0;
   }
 
   .responsive-table td:last-child {
