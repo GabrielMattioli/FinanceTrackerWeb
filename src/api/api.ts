@@ -71,6 +71,15 @@ export const createCategoryRule = async (dto: any) => {
   return checkError(error, data);
 };
 
+export const updateCategoryRule = async (id: any, dto: any) => {
+  const payload = {
+    keyword: dto.keyword,
+    category_id: dto.categoryId
+  };
+  const { data, error } = await supabase.from('category_rules').update(payload).eq('id', id).select().single();
+  return checkError(error, data);
+};
+
 export const deleteCategoryRule = async (id: any) => {
   const { error } = await supabase.from('category_rules').delete().eq('id', id);
   if (error) throw error;

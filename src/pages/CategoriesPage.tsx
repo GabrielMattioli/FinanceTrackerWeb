@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit2, X, List, Hash } from 'lucide-react';
 import {
     getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories,
-    getCategoryRules, createCategoryRule, deleteCategoryRule, applyCategoryRuleToUncategorized,
+    getCategoryRules, createCategoryRule, deleteCategoryRule, updateCategoryRule, applyCategoryRuleToUncategorized,
     getMainIncomeCategoryId, setMainIncomeCategoryId
 } from '../api/api';
 import toast from 'react-hot-toast';
@@ -40,6 +40,9 @@ export default function CategoriesPage() {
     const [ruleKeyword, setRuleKeyword] = useState('');
     const [ruleCategoryId, setRuleCategoryId] = useState('');
     const [savingRule, setSavingRule] = useState(false);
+    const [editingRuleId, setEditingRuleId] = useState(null);
+    const [editRuleKeyword, setEditRuleKeyword] = useState('');
+    const [editRuleCategoryId, setEditRuleCategoryId] = useState('');
 
     const loadCategories = async () => {
         setLoadingCategories(true);
@@ -193,6 +196,37 @@ export default function CategoriesPage() {
             await loadRules();
         } catch (err) {
             toast.error(err?.message || 'Erro ao salvar regra.');
+        } finally {
+            setSavingRule(false);
+        }
+    };
+
+    const handleEditRule = (rule) => {
+        setEditingRuleId(rule.id);
+        setEditRuleKeyword(rule.keyword);
+        setEditRuleCategoryId(rule.category_id);
+    };
+
+    const handleCancelEditRule = () => {
+        setEditingRuleId(null);
+        setEditRuleKeyword('');
+        setEditRuleCategoryId('');
+    };
+
+    const handleUpdateRule = async (id) => {
+        if (!editRuleKeyword.trim() || !editRuleCategoryId) return;
+        setSavingRule(true);
+        try {
+            const keyword = editRuleKeyword.trim();
+            await updateCategoryRule(id, {
+                keyword: keyword,
+                categoryId: editRuleCategoryId
+            });
+            toast.success('Regra atualizada com sucesso!');
+            handleCancelEditRule();
+            await loadRules();
+        } catch (err) {
+            toast.error(err?.message || 'Erro ao atualizar regra.');
         } finally {
             setSavingRule(false);
         }
@@ -503,26 +537,67 @@ export default function CategoriesPage() {
                     <div>
                         {rules.map(r => (
                             <div key={r.id} className="category-item" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 10, alignItems: 'center' }}>
-                                <div>
-                                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Contém: </span>
-                                    <strong>"{r.keyword}"</strong>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>→</span>
-                                    <span className="category-badge" style={{ background: r.category.color + '22', color: r.category.color, border: `1px solid ${r.category.color}44`, fontSize: 12 }}>
-                                        <span className="category-dot" style={{ background: r.category.color }} />
-                                        {r.category.name}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                    <button
-                                        className="btn btn-danger btn-sm"
-                                        onClick={() => handleDeleteRule(r.id, r.keyword)}
-                                        title="Excluir Regra"
-                                    >
-                                        <Trash2 size={13} />
-                                    </button>
-                                </div>
+                                {editingRuleId === r.id ? (
+                                    <>
+                                        <input
+                                            className="input"
+                                            value={editRuleKeyword}
+                                            onChange={e => setEditRuleKeyword(e.target.value)}
+                                            style={{ padding: '6px 10px', fontSize: 13 }}
+                                            maxLength={100}
+                                        />
+                                        <select
+                                            className="input"
+                                            value={editRuleCategoryId}
+                                            onChange={e => setEditRuleCategoryId(e.target.value)}
+                                            style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', padding: '6px 10px', fontSize: 13 }}
+                                        >
+                                            <option value="" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}>-- Selecione --</option>
+                                            {categories.map(c => (
+                                                <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            <button className="btn btn-primary btn-sm" onClick={() => handleUpdateRule(r.id)} disabled={savingRule}>
+                                                Salvar
+                                            </button>
+                                            <button className="btn btn-sm" onClick={handleCancelEditRule} style={{ background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Contém: </span>
+                                            <strong>"{r.keyword}"</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>→</span>
+                                            <span className="category-badge" style={{ background: r.category.color + '22', color: r.category.color, border: `1px solid ${r.category.color}44`, fontSize: 12 }}>
+                                                <span className="category-dot" style={{ background: r.category.color }} />
+                                                {r.category.name}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            <button
+                                                className="btn btn-sm"
+                                                onClick={() => handleEditRule(r)}
+                                                title="Editar Regra"
+                                                style={{ background: 'transparent', color: 'var(--text-main)' }}
+                                            >
+                                                <Edit2 size={13} />
+                                            </button>
+                                            <button
+                                                className="btn btn-danger btn-sm"
+                                                onClick={() => handleDeleteRule(r.id, r.keyword)}
+                                                title="Excluir Regra"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ))}
                     </div>
