@@ -1665,6 +1665,12 @@ input[type="color"] {
     padding: 16px;
   }
 
+  .card:has(.responsive-table) {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
   .responsive-table {
     display: block;
     width: 100%;
