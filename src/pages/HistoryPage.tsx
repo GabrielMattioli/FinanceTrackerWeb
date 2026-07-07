@@ -200,7 +200,6 @@ export default function HistoryPage() {
                                     <th>Data</th>
                                     <th>Descrição</th>
                                     <th>Categoria</th>
-                                    <th>Tipo</th>
                                     <th style={{ textAlign: 'right' }}>Valor</th>
                                     <th style={{ width: 80 }}></th>
                                 </tr>
@@ -234,11 +233,6 @@ export default function HistoryPage() {
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
                                             </select>
-                                        </td>
-                                        <td data-label="Tipo">
-                                            <span className={`badge badge-${tx.amount >= 0 ? 'income' : 'expense'}`}>
-                                                {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
-                                            </span>
                                         </td>
                                         <td data-label="Valor" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
                                             {formatAmount(tx.amount, baseCurrency)}

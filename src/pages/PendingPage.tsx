@@ -191,7 +191,6 @@ export default function PendingPage({ onCountChange }: any) {
                                     </th>
                                     <th>Data</th>
                                     <th>Descrição</th>
-                                    <th>Tipo</th>
                                     <th style={{ textAlign: 'right' }}>Valor</th>
                                     <th style={{ width: 200 }}>Categorizar</th>
                                 </tr>
@@ -212,11 +211,6 @@ export default function PendingPage({ onCountChange }: any) {
                                         </td>
                                         <td data-label="Descrição" style={{ maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {tx.description}
-                                        </td>
-                                        <td data-label="Tipo">
-                                            <span className={`badge badge-${tx.amount >= 0 ? 'income' : 'expense'}`}>
-                                                {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
-                                            </span>
                                         </td>
                                         <td data-label="Valor" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
                                             {formatAmount(tx.amount, baseCurrency)}
