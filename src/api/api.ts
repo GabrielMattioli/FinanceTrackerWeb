@@ -258,7 +258,7 @@ export const importCsv = async (file: File, options: any = {}) => {
   if (dateCol === undefined || descCol === undefined || amountCol === undefined) {
     // Attempt auto-detect
     dateCol = headers.findIndex(h => /data|date|datum|buchungstag/i.test(h));
-    descCol = headers.findIndex(h => /descrição|description|verwendungszweck/i.test(h));
+    descCol = headers.findIndex(h => /descrição|description|verwendungszweck|payment reference/i.test(h));
     payeeCol = headers.findIndex(h => /nome|name|partner|payee|empfänger|empfaenger|beguenstigter|zahlungspflichtiger/i.test(h));
     
     if (descCol === -1 && payeeCol !== -1) {
@@ -291,7 +291,16 @@ export const importCsv = async (file: File, options: any = {}) => {
     
     let descStr = row[descCol] || '';
     if (payeeCol !== -1 && payeeCol !== descCol && row[payeeCol]) {
-      descStr = descStr ? `${row[payeeCol]} - ${descStr}` : row[payeeCol];
+      const payeeVal = row[payeeCol].trim();
+      const descVal = descStr.trim();
+      
+      if (!descVal) {
+        descStr = payeeVal;
+      } else if (payeeVal.toLowerCase() === descVal.toLowerCase()) {
+        descStr = payeeVal;
+      } else {
+        descStr = `${payeeVal} - ${descVal}`;
+      }
     }
     let desc = descStr || 'Sem descrição';
     
