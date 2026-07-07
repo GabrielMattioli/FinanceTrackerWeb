@@ -712,6 +712,13 @@ tbody tr.selected {
   background: transparent;
   padding: 0;
   gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.month-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .month-tab {
@@ -1752,5 +1759,10 @@ input[type="color"] {
 
   .responsive-table td .custom-checkbox {
     margin: 0;
+  }
+
+  .month-tab {
+    flex: 0 0 auto;
+    min-width: 64px;
   }
 }
