@@ -121,6 +121,7 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: any
                                         dataKey="value"
                                         stroke="var(--bg-card)"
                                         strokeWidth={4}
+                                        isAnimationActive={false}
                                     >
                                         {pieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -180,7 +181,7 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: any
                             />
                             <Tooltip content={<BarTooltip baseCurrency={baseCurrency} />} cursor={{ fill: 'var(--bg-hover)' }} />
 
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14}>
+                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14} isAnimationActive={false}>
                                 {barData.map((entry, i) => (
                                     <Cell key={i} fill={entry.color} />
                                 ))}
