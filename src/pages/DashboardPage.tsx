@@ -66,7 +66,7 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={setMonth} allowAllMonths={false} />
+                <MonthBar year={year} month={month} onMonthChange={(m) => setMonth(Number(m))} allowAllMonths={false} />
             </div>
 
             <div className={`dashboard-slide-wrapper ${slideClass}`}>
