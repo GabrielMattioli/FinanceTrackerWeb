@@ -238,7 +238,28 @@ export const importCsv = async (file: File, options: any = {}) => {
   const text = await file.text();
   const firstLine = text.split('\n')[0] || '';
   const delimiter = firstLine.includes(';') ? ';' : ',';
-  const rows = text.split('\n').map(row => row.split(delimiter).map(cell => cell.trim().replace(/^"|"$/g, '')));
+  
+  const parseRow = (row: string) => {
+    const cells = [];
+    let currentCell = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+        currentCell += char;
+      } else if (char === delimiter && !inQuotes) {
+        cells.push(currentCell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+        currentCell = '';
+      } else {
+        currentCell += char;
+      }
+    }
+    cells.push(currentCell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+    return cells;
+  };
+
+  const rows = text.split('\n').map(parseRow);
 
   if (rows.length === 0) return { imported: 0, skipped: 0, errors: 0 };
 
