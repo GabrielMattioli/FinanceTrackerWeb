@@ -5,8 +5,12 @@ import { getCategories, createCategory, deleteCategory, updateCategory, bulkDele
 import toast from 'react-hot-toast';
 
 const DEFAULT_COLORS = [
-    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b',
-    '#10b981', '#14b8a6', '#3b82f6', '#06b6d4', '#84cc16',
+    '#ef4444', '#f43f5e', '#ec4899', // Reds & Pinks
+    '#f97316', '#f59e0b', '#eab308', // Oranges & Yellows
+    '#84cc16', '#22c55e', '#10b981', '#14b8a6', // Greens
+    '#06b6d4', '#0ea5e9', '#3b82f6', // Blues
+    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // Purples & Indigos
+    '#64748b', '#52525b', '#78716c', // Grays
 ];
 
 export default function CategoryManager() {
@@ -241,13 +245,7 @@ export default function CategoryManager() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ marginBottom: 16, marginTop: 16 }}>
-                        <label className="label">Preview</label>
-                        <span className="category-badge" style={{ background: color + '22', color, border: `1px solid ${color}44`, fontSize: 13 }}>
-                            <span className="category-dot" style={{ background: color }} />
-                            {name || 'Nome da categoria'}
-                        </span>
-                    </div>
+
                     <button className="btn btn-primary" type="submit" disabled={!name.trim() || saving} style={{ width: '100%' }}>
                         {saving ? <span className="spinner" /> : (editingCategoryId ? <Edit2 size={15} /> : <Plus size={15} />)}
                         {editingCategoryId ? 'Salvar Alterações' : 'Criar Categoria'}
