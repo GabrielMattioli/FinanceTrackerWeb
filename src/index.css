@@ -737,6 +737,7 @@ tbody tr.selected {
   position: relative;
   margin-bottom: -2px;
   text-transform: capitalize;
+  touch-action: manipulation;
 }
 
 .month-tab:hover:not(:disabled) {
