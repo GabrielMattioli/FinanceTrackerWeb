@@ -28,6 +28,10 @@ export default function FixedExpensesCard({ data, baseCurrency }: any) {
                                         <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
                                             <ShieldCheck size={16} /> Pago {isOverspent ? `(+${formatCurrencyValue(expense.currentSpent - expense.lastMonthAmount, baseCurrency)})` : ''}
                                         </span>
+                                    ) : expense.lastMonthAmount === 0 ? (
+                                        <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            Sem histórico
+                                        </span>
                                     ) : (
                                         <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
                                             <AlertCircle size={16} /> Pendente: {formatCurrencyValue(expense.pending, baseCurrency)}
