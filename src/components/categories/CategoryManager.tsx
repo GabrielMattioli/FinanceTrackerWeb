@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories } from '../../api/categories';
-import { getMainIncomeCategoryId, setMainIncomeCategoryId } from '../../api/settings';
+
 import toast from 'react-hot-toast';
 
 const DEFAULT_COLORS = [
@@ -46,21 +46,14 @@ export default function CategoryManager() {
                 name: name.trim(),
                 color,
                 isEssential,
-                isSavings
+                isSavings,
+                isMainIncome
             };
             if (editingCategoryId) {
                 await updateCategory(editingCategoryId, payload);
-                if (isMainIncome) {
-                    setMainIncomeCategoryId(editingCategoryId);
-                } else if (getMainIncomeCategoryId() === editingCategoryId) {
-                    setMainIncomeCategoryId(null);
-                }
                 toast.success('Categoria atualizada!');
             } else {
-                const newCat = await createCategory(payload);
-                if (isMainIncome) {
-                    setMainIncomeCategoryId(newCat.id);
-                }
+                await createCategory(payload);
                 toast.success('Categoria criada!');
             }
             setName('');
@@ -83,7 +76,7 @@ export default function CategoryManager() {
         setColor(c.color);
         setIsEssential(c.isEssential || false);
         setIsSavings(c.isSavings || false);
-        setIsMainIncome(getMainIncomeCategoryId() === c.id);
+        setIsMainIncome(c.isMainIncome || false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -100,9 +93,6 @@ export default function CategoryManager() {
         if (!window.confirm(`Excluir a categoria "${catName}"? Transações vinculadas voltarão para Pendentes.`)) return;
         try {
             await deleteCategory(id);
-            if (getMainIncomeCategoryId() === id) {
-                setMainIncomeCategoryId(null);
-            }
             toast.success(`Categoria "${catName}" excluída.`);
             setSelectedCategoryIds(prev => prev.filter(selectedId => selectedId !== id));
             await loadCategories();
@@ -122,9 +112,6 @@ export default function CategoryManager() {
         if (!window.confirm(`Excluir as ${selectedCategoryIds.length} categorias selecionadas? Transações vinculadas voltarão para Pendentes.`)) return;
         try {
             await bulkDeleteCategories(selectedCategoryIds);
-            if (selectedCategoryIds.includes(getMainIncomeCategoryId())) {
-                setMainIncomeCategoryId(null);
-            }
             toast.success(`${selectedCategoryIds.length} categorias excluídas.`);
             setSelectedCategoryIds([]);
             await loadCategories();
@@ -333,7 +320,7 @@ export default function CategoryManager() {
                                                 Economia
                                             </span>
                                         )}
-                                        {getMainIncomeCategoryId() === c.id && (
+                                        {c.isMainIncome && (
                                             <span style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(234,179,8,0.2)' }}>
                                                 Entrada Principal
                                             </span>

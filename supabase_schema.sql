@@ -6,6 +6,7 @@ CREATE TABLE categories (
   color text,
   is_essential boolean DEFAULT false,
   is_savings boolean DEFAULT false,
+  is_main_income boolean DEFAULT false,
   expected_amount numeric,
   user_id uuid REFERENCES auth.users(id) DEFAULT auth.uid() NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL

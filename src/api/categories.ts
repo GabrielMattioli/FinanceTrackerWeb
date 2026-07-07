@@ -7,7 +7,8 @@ export const getCategories = async () => {
   return data.map(c => ({
     ...c,
     isEssential: c.is_essential || false,
-    isSavings: c.is_savings || false
+    isSavings: c.is_savings || false,
+    isMainIncome: c.is_main_income || false
   }));
 };
 
@@ -16,7 +17,8 @@ export const createCategory = async (dto: any) => {
     name: dto.name,
     color: dto.color,
     is_essential: dto.isEssential,
-    is_savings: dto.isSavings
+    is_savings: dto.isSavings,
+    is_main_income: dto.isMainIncome
   };
   const { data, error } = await supabase.from('categories').insert([payload]).select().single();
   return checkError(error, data);
@@ -27,7 +29,8 @@ export const updateCategory = async (id: any, dto: any) => {
     name: dto.name,
     color: dto.color,
     is_essential: dto.isEssential,
-    is_savings: dto.isSavings
+    is_savings: dto.isSavings,
+    is_main_income: dto.isMainIncome
   };
   const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select().single();
   return checkError(error, data);

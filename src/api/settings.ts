@@ -242,14 +242,4 @@ export const importCsv = async (file: File, options: any = {}) => {
   return { imported: 0, skipped: dataRows.length, errors: 0 };
 };
 
-export const getMainIncomeCategoryId = () => {
-  return localStorage.getItem('mainIncomeCategoryId');
-};
 
-export const setMainIncomeCategoryId = (id: string | null) => {
-  if (id) {
-    localStorage.setItem('mainIncomeCategoryId', id);
-  } else {
-    localStorage.removeItem('mainIncomeCategoryId');
-  }
-};

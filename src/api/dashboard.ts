@@ -7,7 +7,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
 
   const { data: txs, error } = await supabase
     .from('transactions')
-    .select('*, categories(id, name, color, is_essential, is_savings)')
+    .select('*, categories(id, name, color, is_essential, is_savings, is_main_income)')
     .lte('date', endDate);
 
   if (error) throw error;
@@ -29,7 +29,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
   const daysInLastMonth = new Date(lastMonthYear, lastMonthMonth, 0).getDate();
   const lastMonthEndDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-${String(daysInLastMonth).padStart(2, '0')}`;
 
-  const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
+
 
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
@@ -42,7 +42,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
     if (tx.date < startDate) {
       previousMonthBalance += amount;
       
-      if (amount >= 0 && (!tx.categories?.is_savings && (!tx.categories || tx.categories.id === mainIncomeId))) {
+      if (amount >= 0 && (!tx.categories?.is_savings && (!tx.categories || tx.categories.is_main_income))) {
         const monthKey = tx.date.substring(0, 7); // e.g. "YYYY-MM"
         historicalIncomeMap[monthKey] = (historicalIncomeMap[monthKey] || 0) + amount;
       }
@@ -79,7 +79,7 @@ export const getDashboardSummary = async (year: number, month: number) => {
       if (amount >= 0) {
         if (tx.categories?.is_savings) {
           totalSaved -= amount;
-        } else if (!tx.categories || tx.categories.id === mainIncomeId) {
+        } else if (!tx.categories || tx.categories.is_main_income) {
           totalIncome += amount;
         } else {
           totalExpense -= amount;
@@ -196,7 +196,7 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
 
   let query = supabase
     .from('transactions')
-    .select('date, amount, ignore_in_reports, categories(is_savings)')
+    .select('date, amount, ignore_in_reports, categories(is_savings, is_main_income)')
     .gte('date', startDate)
     .lte('date', endDate);
 
@@ -217,7 +217,7 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
     hasData: false
   }));
 
-  const mainIncomeId = localStorage.getItem('mainIncomeCategoryId');
+
 
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
@@ -229,7 +229,7 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
 
     if (amount >= 0) {
       if (!(tx.categories as any)?.is_savings) {
-        if (!tx.categories || (tx.categories as any).id === mainIncomeId) {
+        if (!tx.categories || (tx.categories as any).is_main_income) {
           months[monthIndex].totalIncome += amount;
         } else {
           months[monthIndex].totalExpense -= amount;
