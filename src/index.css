@@ -1664,4 +1664,56 @@ input[type="color"] {
   .page-content {
     padding: 16px;
   }
+
+  .responsive-table {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 16px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    padding: 12px 4px;
+    font-size: 14px;
+    text-align: right;
+  }
+
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: left;
+    margin-right: 16px;
+  }
+
+  .responsive-table td .custom-checkbox {
+    margin: 0;
+  }
 }

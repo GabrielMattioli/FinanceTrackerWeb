@@ -186,7 +186,7 @@ export default function HistoryPage() {
                             <p>Nenhuma transação neste período.</p>
                         </div>
                     ) : (
-                        <table>
+                        <table className="responsive-table">
                             <thead>
                                 <tr>
                                     <th style={{ width: 44 }}>
@@ -208,7 +208,7 @@ export default function HistoryPage() {
                             <tbody>
                                 {filtered.map(tx => (
                                     <tr key={tx.id} className={selected.has(tx.id) ? 'selected' : ''}>
-                                        <td>
+                                        <td data-label="">
                                             <input
                                                 type="checkbox"
                                                 className="custom-checkbox"
@@ -216,13 +216,13 @@ export default function HistoryPage() {
                                                 onChange={() => toggleSelect(tx.id)}
                                             />
                                         </td>
-                                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                        <td data-label="Data" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                                             {formatDate(tx.date)}
                                         </td>
-                                        <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        <td data-label="Descrição" style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {tx.description}
                                         </td>
-                                        <td>
+                                        <td data-label="Categoria">
                                             <select
                                                 className="select"
                                                 style={{ fontSize: 12, padding: '5px 8px', maxWidth: 140 }}
@@ -235,15 +235,15 @@ export default function HistoryPage() {
                                                 ))}
                                             </select>
                                         </td>
-                                        <td>
+                                        <td data-label="Tipo">
                                             <span className={`badge badge-${tx.amount >= 0 ? 'income' : 'expense'}`}>
                                                 {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
                                             </span>
                                         </td>
-                                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
+                                        <td data-label="Valor" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
                                             {formatAmount(tx.amount, baseCurrency)}
                                         </td>
-                                        <td>
+                                        <td data-label="Ações">
                                             <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                                                 <button
                                                     className="btn btn-ghost btn-sm"

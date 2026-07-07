@@ -178,7 +178,7 @@ export default function PendingPage({ onCountChange }: any) {
                             <span>Importe um extrato CSV para começar.</span>
                         </div>
                     ) : (
-                        <table>
+                        <table className="responsive-table">
                             <thead>
                                 <tr>
                                     <th style={{ width: 44 }}>
@@ -199,7 +199,7 @@ export default function PendingPage({ onCountChange }: any) {
                             <tbody>
                                 {filtered.map(tx => (
                                     <tr key={tx.id} className={selected.has(tx.id) ? 'selected' : ''}>
-                                        <td>
+                                        <td data-label="">
                                             <input
                                                 type="checkbox"
                                                 className="custom-checkbox"
@@ -207,21 +207,21 @@ export default function PendingPage({ onCountChange }: any) {
                                                 onChange={() => toggleSelect(tx.id)}
                                             />
                                         </td>
-                                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                        <td data-label="Data" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                                             {formatDate(tx.date)}
                                         </td>
-                                        <td style={{ maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        <td data-label="Descrição" style={{ maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {tx.description}
                                         </td>
-                                        <td>
+                                        <td data-label="Tipo">
                                             <span className={`badge badge-${tx.amount >= 0 ? 'income' : 'expense'}`}>
                                                 {tx.amount >= 0 ? '↑ Entrada' : '↓ Saída'}
                                             </span>
                                         </td>
-                                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
+                                        <td data-label="Valor" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', textDecoration: tx.ignore_in_reports ? 'line-through' : 'none', opacity: tx.ignore_in_reports ? 0.6 : 1 }}>
                                             {formatAmount(tx.amount, baseCurrency)}
                                         </td>
-                                        <td>
+                                        <td data-label="Ações">
                                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                                 <select
                                                     className="select"
