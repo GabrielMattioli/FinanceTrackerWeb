@@ -267,18 +267,71 @@ export default function CategoriesPage() {
                             <input ref={colorRef} type="color" value={color} onChange={e => setColor(e.target.value)} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input type="checkbox" id="isEssential" checked={isEssential} onChange={e => setIsEssential(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                            <label htmlFor="isEssential" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>Despesa Essencial (Valor previsto será a média automática)</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px', marginTop: '16px' }}>
+                        {/* Despesa Essencial */}
+                        <div
+                            onClick={() => setIsEssential(!isEssential)}
+                            style={{
+                                border: `2px solid ${isEssential ? 'var(--accent)' : 'var(--border-color)'}`,
+                                background: isEssential ? 'var(--accent-light)' : 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px'
+                            }}
+                        >
+                            <input type="checkbox" checked={isEssential} readOnly style={{ width: 18, height: 18, accentColor: 'var(--accent)', marginTop: 2, cursor: 'pointer' }} />
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Despesa Essencial</h4>
+                                <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Despesas fixas que sao cobradas todos os meses (ex: aluguel, internet, academia).</p>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input type="checkbox" id="isSavings" checked={isSavings} onChange={e => setIsSavings(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                            <label htmlFor="isSavings" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>É Economia/Investimento?</label>
+
+                        {/* Economia / Investimento */}
+                        <div
+                            onClick={() => setIsSavings(!isSavings)}
+                            style={{
+                                border: `2px solid ${isSavings ? '#10b981' : 'var(--border-color)'}`,
+                                background: isSavings ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px'
+                            }}
+                        >
+                            <input type="checkbox" checked={isSavings} readOnly style={{ width: 18, height: 18, accentColor: '#10b981', marginTop: 2, cursor: 'pointer' }} />
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Economia ou Investimento</h4>
+                                <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Identifica valores poupados ou investidos, separando-os de despesas comuns.</p>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input type="checkbox" id="isMainIncome" checked={isMainIncome} onChange={e => setIsMainIncome(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
-                            <label htmlFor="isMainIncome" style={{ cursor: 'pointer', margin: 0, fontSize: 14 }}>É Entrada Principal? (Soma apenas nas receitas)</label>
+
+                        {/* Entrada Principal */}
+                        <div
+                            onClick={() => setIsMainIncome(!isMainIncome)}
+                            style={{
+                                border: `2px solid ${isMainIncome ? '#eab308' : 'var(--border-color)'}`,
+                                background: isMainIncome ? 'rgba(234, 179, 8, 0.1)' : 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px'
+                            }}
+                        >
+                            <input type="checkbox" checked={isMainIncome} readOnly style={{ width: 18, height: 18, accentColor: '#eab308', marginTop: 2, cursor: 'pointer' }} />
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Entrada Principal</h4>
+                                <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Considerada a fonte principal de receita (ex: salário) nos cálculos de saldo.</p>
+                            </div>
                         </div>
                     </div>
                     <div style={{ marginBottom: 16, marginTop: 16 }}>
