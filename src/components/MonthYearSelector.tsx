@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getYearlySummary } from '../api/api';
+import { getYearlySummary } from '../api/dashboard';
 
 const ABBR_MONTHS = [
     'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',

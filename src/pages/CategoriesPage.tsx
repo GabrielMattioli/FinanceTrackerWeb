@@ -1,11 +1,9 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit2, X, List, Hash } from 'lucide-react';
-import {
-    getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories,
-    getCategoryRules, createCategoryRule, deleteCategoryRule, updateCategoryRule, applyCategoryRuleToUncategorized,
-    getMainIncomeCategoryId, setMainIncomeCategoryId
-} from '../api/api';
+import { getCategories, createCategory, deleteCategory, updateCategory, bulkDeleteCategories, getCategoryRules, createCategoryRule, deleteCategoryRule, updateCategoryRule } from '../api/categories';
+import { applyCategoryRuleToUncategorized } from '../api/transactions';
+import { getMainIncomeCategoryId, setMainIncomeCategoryId } from '../api/settings';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
 import { formatCurrencyValue } from '../utils/formatters';

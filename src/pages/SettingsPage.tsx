@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Database, Info, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSettings } from '../api/api';
+import { getSettings } from '../api/settings';
 import { useSettings } from '../context/SettingsContext';
 
 export default function SettingsPage() {

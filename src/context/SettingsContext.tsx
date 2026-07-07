@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { getSettings, updateCurrency as apiUpdateCurrency } from '../api/api';
+import { getSettings, updateCurrency as apiUpdateCurrency } from '../api/settings';
 
 interface SettingsContextType {
     baseCurrency: string;

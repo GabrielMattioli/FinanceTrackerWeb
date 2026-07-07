@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, RotateCcw, Trash2, CheckSquare, Eye, EyeOff } from 'lucide-react';
-import { getHistory, getCategories, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports } from '../api/api';
+import { getHistory, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports } from '../api/transactions';
+import { getCategories } from '../api/categories';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { formatAmount, formatDate } from '../utils/formatters';

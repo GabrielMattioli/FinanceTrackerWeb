@@ -6,7 +6,7 @@ import {
     ReferenceArea
 } from 'recharts';
 import { ShieldCheck, AlertCircle, Info, TrendingDown, Target } from 'lucide-react';
-import { getDashboardSummary, getLatestDashboardMonth } from '../api/api';
+import { getDashboardSummary, getLatestDashboardMonth } from '../api/dashboard';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { useSettings } from '../context/SettingsContext';

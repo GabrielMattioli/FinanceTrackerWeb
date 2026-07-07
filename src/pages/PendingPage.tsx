@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo } from 'react';
 import { Search, CheckSquare, Tag, Trash2, Eye, EyeOff } from 'lucide-react';
-import { getPending, getCategories, bulkCategorize, categorizeOne, deleteTransaction, bulkDelete, toggleIgnoreInReports } from '../api/api';
+import { getPending, bulkCategorize, categorizeOne, deleteTransaction, bulkDelete, toggleIgnoreInReports } from '../api/transactions';
+import { getCategories } from '../api/categories';
 import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';

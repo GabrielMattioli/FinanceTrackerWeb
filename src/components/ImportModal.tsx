@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useRef } from 'react';
 import { X, Upload, FileText, Sparkles } from 'lucide-react';
-import { importCsv } from '../api/api';
+import { importCsv } from '../api/settings';
 import toast from 'react-hot-toast';
 
 export default function ImportModal({ onClose, onSuccess }) {
