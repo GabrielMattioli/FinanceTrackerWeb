@@ -70,16 +70,16 @@ export default function DashboardPage() {
             </div>
 
             <div className={`dashboard-slide-wrapper ${slideClass}`}>
-                {!data && loading ? (
+                {loading ? (
                     <div className="loading-page"><span className="spinner" /> Carregando...</div>
-                ) : data ? (
-                    <div style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', pointerEvents: loading ? 'none' : 'auto' }}>
+                ) : (
+                    <>
                         <StatGrid data={data} baseCurrency={baseCurrency} />
                         <SafetyMarginCard data={data} baseCurrency={baseCurrency} />
                         <FixedExpensesCard data={data} baseCurrency={baseCurrency} />
                         <DashboardCharts data={data} baseCurrency={baseCurrency} year={year} month={month} />
-                    </div>
-                ) : null}
+                    </>
+                )}
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState, useEffect, startTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { getYearlySummary } from '../api/dashboard';
 
 const ABBR_MONTHS = [
@@ -15,11 +15,11 @@ interface YearSelectorProps {
 export function YearSelector({ year, onYearChange }: YearSelectorProps) {
     return (
         <div className="year-selector">
-            <button className="btn-icon" onClick={() => startTransition(() => onYearChange(year - 1))}>
+            <button className="btn-icon" onClick={() => onYearChange(year - 1)}>
                 <ChevronLeft size={16} />
             </button>
             <span className="current-year">{year}</span>
-            <button className="btn-icon" onClick={() => startTransition(() => onYearChange(year + 1))}>
+            <button className="btn-icon" onClick={() => onYearChange(year + 1)}>
                 <ChevronRight size={16} />
             </button>
         </div>
@@ -60,7 +60,7 @@ export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = f
             {allowAllMonths && (
                 <button
                     className={`month-tab ${month === '' || month === null ? 'active' : ''}`}
-                    onClick={() => startTransition(() => onMonthChange(''))}
+                    onClick={() => onMonthChange('')}
                 >
                     Todos
                 </button>
@@ -83,7 +83,7 @@ export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = f
                         key={m.month}
                         className={tabClass}
                         disabled={!m.hasData}
-                        onClick={() => startTransition(() => onMonthChange(m.month))}
+                        onClick={() => onMonthChange(m.month)}
                         style={{ position: 'relative' }}
                     >
                         {ABBR_MONTHS[m.month - 1]}
