@@ -1766,7 +1766,13 @@ input[type="color"] {
     flex: 0 0 auto;
     min-width: 64px;
   }
+}
 
+.mobile-select-all {
+  display: none;
+}
+
+@media (max-width: 768px) {
   .mobile-select-all {
     display: flex;
     align-items: center;
@@ -1780,7 +1786,4 @@ input[type="color"] {
     cursor: pointer;
     user-select: none;
   }
-}
-.mobile-select-all {
-  display: none;
 }
