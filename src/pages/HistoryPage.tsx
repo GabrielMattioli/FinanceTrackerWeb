@@ -186,7 +186,18 @@ export default function HistoryPage() {
                             <p>Nenhuma transação neste período.</p>
                         </div>
                     ) : (
-                        <table className="responsive-table">
+                        <>
+                            <div className="mobile-select-all">
+                                <input
+                                    type="checkbox"
+                                    className="custom-checkbox"
+                                    checked={allSelected}
+                                    onChange={() => toggleAll()}
+                                    id="mobile-select-all-history"
+                                />
+                                <label htmlFor="mobile-select-all-history">Selecionar todas</label>
+                            </div>
+                            <table className="responsive-table">
                             <thead>
                                 <tr>
                                     <th style={{ width: 44 }}>
@@ -269,6 +280,7 @@ export default function HistoryPage() {
                                 ))}
                             </tbody>
                         </table>
+                        </>
                     )}
                 </div>
             </div>

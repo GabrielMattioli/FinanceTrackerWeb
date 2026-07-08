@@ -178,7 +178,18 @@ export default function PendingPage({ onCountChange }: any) {
                             <span>Importe um extrato CSV para começar.</span>
                         </div>
                     ) : (
-                        <table className="responsive-table">
+                        <>
+                            <div className="mobile-select-all">
+                                <input
+                                    type="checkbox"
+                                    className="custom-checkbox"
+                                    checked={allSelected}
+                                    onChange={() => toggleAll()}
+                                    id="mobile-select-all"
+                                />
+                                <label htmlFor="mobile-select-all">Selecionar todas</label>
+                            </div>
+                            <table className="responsive-table">
                             <thead>
                                 <tr>
                                     <th style={{ width: 44 }}>
@@ -250,6 +261,7 @@ export default function PendingPage({ onCountChange }: any) {
                                 ))}
                             </tbody>
                         </table>
+                        </>
                     )}
                 </div>
             </div>

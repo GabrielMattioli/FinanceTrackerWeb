@@ -1766,4 +1766,21 @@ input[type="color"] {
     flex: 0 0 auto;
     min-width: 64px;
   }
+
+  .mobile-select-all {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px 12px 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .mobile-select-all label {
+    cursor: pointer;
+    user-select: none;
+  }
+}
+.mobile-select-all {
+  display: none;
 }
