@@ -14,14 +14,14 @@ export default function Sidebar({ pendingCount = 0, isOpen = false, onClose }: S
     return (
         <>
             {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
-            <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+            <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
                 <div className="sidebar-logo">
                 <div className="logo-icon">💰</div>
                 <h1>FinanceTracker</h1>
                 <p>Controle Financeiro Pessoal</p>
             </div>
 
-            <nav className="sidebar-nav" style={{ flex: 1 }} onClick={onClose}>
+            <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }} onClick={onClose}>
                 <span className="sidebar-section-label">Visão Geral</span>
 
                 <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

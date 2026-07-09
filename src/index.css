@@ -131,7 +131,7 @@ body {
   left: 0;
   top: 0;
   width: var(--sidebar-width);
-  height: 100vh;
+  height: 100dvh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   display: flex;
@@ -1797,5 +1797,20 @@ input[type="color"] {
   .mobile-select-all label {
     cursor: pointer;
     user-select: none;
+  }
+
+  .bulk-bar {
+    flex-wrap: wrap;
+    border-radius: 12px;
+    padding: 12px;
+    gap: 8px;
+    width: 100%;
+  }
+  .bulk-bar .select {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .bulk-bar .btn {
+    flex: 1;
   }
 }
