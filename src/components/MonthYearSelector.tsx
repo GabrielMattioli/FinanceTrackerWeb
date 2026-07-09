@@ -32,9 +32,10 @@ interface MonthBarProps {
     onMonthChange: (month: number | string) => void;
     allowAllMonths?: boolean;
     categorizedOnly?: boolean;
+    updateTrigger?: any;
 }
 
-export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = false, categorizedOnly = false }: MonthBarProps) {
+export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = false, categorizedOnly = false, updateTrigger }: MonthBarProps) {
     const [yearlyData, setYearlyData] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const activeTabRef = useRef<HTMLButtonElement>(null);
@@ -65,7 +66,7 @@ export function MonthBar({ year, month = null, onMonthChange, allowAllMonths = f
         return () => {
             isMounted = false;
         };
-    }, [year]);
+    }, [year, categorizedOnly, updateTrigger]);
 
     return (
         <div className="month-bar" ref={containerRef}>
