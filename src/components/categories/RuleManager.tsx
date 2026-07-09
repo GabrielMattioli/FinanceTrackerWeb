@@ -53,7 +53,13 @@ export default function RuleManager() {
                     keyword: trimmedKeyword,
                     categoryId: categoryId
                 });
-                toast.success('Regra atualizada com sucesso!');
+                const updatedData = await applyCategoryRuleToUncategorized(trimmedKeyword, categoryId);
+                const updatedCount = updatedData ? updatedData.length : 0;
+                if (updatedCount > 0) {
+                    toast.success(`Regra atualizada! ${updatedCount} transações pendentes foram categorizadas.`);
+                } else {
+                    toast.success('Regra atualizada com sucesso!');
+                }
             } else {
                 await createCategoryRule({
                     keyword: trimmedKeyword,
@@ -67,7 +73,7 @@ export default function RuleManager() {
                     toast.success('Regra criada com sucesso!');
                 }
             }
-            
+
             handleCancelEditRule();
             await loadRules();
         } catch (err: any) {
