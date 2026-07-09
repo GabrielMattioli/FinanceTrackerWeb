@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import { SettingsProvider } from './context/SettingsContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppContent from './components/AppContent';
 
@@ -12,7 +13,8 @@ import './index.css';
 export default function App() {
   return (
     <AuthProvider>
-      <SettingsProvider>
+      <ThemeProvider>
+        <SettingsProvider>
         <BrowserRouter>
           <Toaster
             position="bottom-right"
@@ -40,7 +42,8 @@ export default function App() {
             />
           </Routes>
         </BrowserRouter>
-      </SettingsProvider>
+        </SettingsProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Wallet } from 'lucide-react';
+import { Wallet, Sun, Moon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTheme } from '../context/ThemeContext';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
@@ -50,8 +52,14 @@ export const Login = () => {
       justifyContent: 'center',
       minHeight: '100vh',
       backgroundColor: 'var(--bg-primary)',
-      color: 'var(--text-primary)'
+      color: 'var(--text-primary)',
+      position: 'relative'
     }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
+        <button className="btn btn-ghost" onClick={toggleTheme} aria-label="Toggle Theme" style={{ padding: '8px' }}>
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </div>
       <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '40px 30px' }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>

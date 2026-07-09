@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { getPending } from '../api/transactions';
+import { useTheme } from '../context/ThemeContext';
 
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -28,7 +29,7 @@ export default function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const { theme, toggleTheme } = useTheme();
 
   const refreshPendingCount = useCallback(async () => {
     try {
@@ -42,15 +43,6 @@ export default function AppContent() {
   useEffect(() => {
     refreshPendingCount();
   }, [refreshPendingCount]);
-
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
 
   const title = PAGE_TITLES[location.pathname] || 'FinanceTracker';
 
