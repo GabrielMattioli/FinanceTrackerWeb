@@ -108,6 +108,24 @@ export default function RuleManager() {
         }
     };
 
+    const rulesByCategory = rules.reduce((acc, rule) => {
+        const categoryId = rule.category_id || (rule.category && rule.category.id);
+        if (!acc[categoryId]) {
+            acc[categoryId] = {
+                category: rule.category,
+                rules: []
+            };
+        }
+        acc[categoryId].rules.push(rule);
+        return acc;
+    }, {} as Record<string, { category: any, rules: any[] }>);
+
+    const groupedRules = Object.values(rulesByCategory).sort((a, b) => {
+        if (!a.category) return 1;
+        if (!b.category) return -1;
+        return a.category.name.localeCompare(b.category.name);
+    });
+
     return (
         <div className="settings-layout">
             <div className="card">
@@ -126,57 +144,79 @@ export default function RuleManager() {
                         <span>Crie regras para categorizar transações automaticamente.</span>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gap: '12px', padding: '16px' }}>
-                        {rules.map(r => (
-                            <div key={r.id} style={{
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', padding: '16px' }}>
+                        {groupedRules.map(group => (
+                            <div key={group.category?.id || 'unknown'} style={{
                                 background: 'var(--bg-main)',
                                 border: '1px solid var(--border-color)',
                                 borderRadius: '12px',
                                 padding: '16px',
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '12px',
-                                transition: 'transform 0.2s, box-shadow 0.2s'
-                            }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.transform = 'none';
-                                    e.currentTarget.style.boxShadow = 'none';
+                                flexDirection: 'column'
+                            }}>
+                                <h4 style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-primary)', fontSize: '15px'
                                 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Contém: </span>
-                                        <strong style={{ fontSize: 15, color: 'var(--text-primary)' }}>"{r.keyword}"</strong>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>→</span>
-                                        <span className="category-badge" style={{ background: r.category.color + '22', color: r.category.color, border: `1px solid ${r.category.color}44`, fontSize: 12 }}>
-                                            <span className="category-dot" style={{ background: r.category.color }} />
-                                            {r.category.name}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                    <button
-                                        className="btn btn-ghost btn-sm"
-                                        onClick={() => handleEditRule(r)}
-                                        title="Editar Regra"
-                                        style={{ padding: '8px' }}
-                                    >
-                                        <Edit2 size={14} />
-                                    </button>
-                                    <button
-                                        className="btn btn-ghost btn-sm"
-                                        onClick={() => handleDeleteRule(r.id, r.keyword)}
-                                        title="Excluir Regra"
-                                        style={{ padding: '8px', color: 'var(--danger)' }}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    {group.category ? (
+                                        <>
+                                            <span className="category-dot" style={{ background: group.category.color }} />
+                                            {group.category.name}
+                                        </>
+                                    ) : 'Sem Categoria'}
+                                </h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {group.rules.map(r => (
+                                        <div key={r.id} style={{
+                                            background: 'var(--bg-card)',
+                                            border: `1px solid ${group.category ? group.category.color + '33' : 'var(--border-color)'}`,
+                                            borderRadius: '20px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            overflow: 'hidden',
+                                            transition: 'border-color 0.2s',
+                                        }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = group.category ? group.category.color + '88' : 'var(--text-muted)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = group.category ? group.category.color + '33' : 'var(--border-color)'; }}
+                                        >
+                                            <div 
+                                                style={{ 
+                                                    padding: '6px 12px', 
+                                                    fontSize: '13px', 
+                                                    color: 'var(--text-main)', 
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
+                                                }}
+                                                onClick={() => handleEditRule(r)}
+                                                title="Clique para editar"
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.02)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                            >
+                                                <span>{r.keyword}</span>
+                                            </div>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteRule(r.id, r.keyword); }}
+                                                title="Excluir Regra"
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    borderLeft: `1px solid ${group.category ? group.category.color + '22' : 'var(--border-color)'}`,
+                                                    padding: '6px 10px',
+                                                    cursor: 'pointer',
+                                                    color: 'var(--text-muted)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))}

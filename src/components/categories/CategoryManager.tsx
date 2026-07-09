@@ -127,6 +127,13 @@ export default function CategoryManager() {
         }
     };
 
+    const groupedCategories = [
+        { id: 'income', name: 'Entradas Principais', icon: '💰', items: categories.filter(c => c.isMainIncome) },
+        { id: 'essential', name: 'Despesas Essenciais', icon: '🏠', items: categories.filter(c => c.isEssential && !c.isMainIncome) },
+        { id: 'savings', name: 'Economias & Investimentos', icon: '📈', items: categories.filter(c => c.isSavings && !c.isEssential && !c.isMainIncome) },
+        { id: 'others', name: 'Outras Categorias', icon: '🏷️', items: categories.filter(c => !c.isMainIncome && !c.isEssential && !c.isSavings) },
+    ].filter(g => g.items.length > 0);
+
     return (
         <div className="settings-layout">
             <div className="card">
@@ -155,74 +162,85 @@ export default function CategoryManager() {
                         <span>Clique em "Nova" para adicionar uma categoria.</span>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', padding: '16px' }}>
-                        {categories.map(c => (
-                            <div key={c.id} style={{
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', padding: '16px' }}>
+                        {groupedCategories.map(group => (
+                            <div key={group.id} style={{
                                 background: 'var(--bg-main)',
                                 border: '1px solid var(--border-color)',
                                 borderRadius: '12px',
                                 padding: '16px',
                                 display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                cursor: 'default'
-                            }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.transform = 'none';
-                                    e.currentTarget.style.boxShadow = 'none';
+                                flexDirection: 'column'
+                            }}>
+                                <h4 style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-primary)', fontSize: '15px'
                                 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <input
-                                        type="checkbox"
-                                        style={{ cursor: 'pointer', width: 16, height: 16 }}
-                                        checked={selectedCategoryIds.includes(c.id)}
-                                        onChange={() => handleToggleSelect(c.id)}
-                                    />
-                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: c.color }} />
-                                    <span style={{ fontWeight: 600, fontSize: '15px', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--bg-card)', padding: '2px 6px', borderRadius: 4, width: 'fit-content' }}>{c.color}</span>
-                                        {c.isEssential && (
-                                            <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(59,130,246,0.2)' }}>
-                                                Essencial
-                                            </span>
-                                        )}
-                                        {c.isSavings && (
-                                            <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(16,185,129,0.2)' }}>
-                                                Economia
-                                            </span>
-                                        )}
-                                        {c.isMainIncome && (
-                                            <span style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, border: '1px solid rgba(234,179,8,0.2)' }}>
-                                                Entrada Principal
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 6 }}>
-                                        <button
-                                            className="btn btn-ghost btn-sm"
-                                            onClick={() => handleEditCategory(c)}
-                                            style={{ padding: '6px' }}
-                                            title="Editar Categoria"
+                                    <span style={{ fontSize: '16px' }}>{group.icon}</span>
+                                    {group.name}
+                                </h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {group.items.map(c => (
+                                        <div key={c.id} style={{
+                                            background: 'var(--bg-card)',
+                                            border: `1px solid ${selectedCategoryIds.includes(c.id) ? c.color : c.color + '40'}`,
+                                            borderRadius: '20px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            overflow: 'hidden',
+                                            transition: 'all 0.2s',
+                                            boxShadow: selectedCategoryIds.includes(c.id) ? `0 0 0 1px ${c.color}` : 'none'
+                                        }}
+                                            onMouseEnter={e => { if (!selectedCategoryIds.includes(c.id)) e.currentTarget.style.borderColor = c.color + '88'; }}
+                                            onMouseLeave={e => { if (!selectedCategoryIds.includes(c.id)) e.currentTarget.style.borderColor = c.color + '40'; }}
                                         >
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button
-                                            className="btn btn-ghost btn-sm"
-                                            onClick={() => handleDeleteCategory(c.id, c.name)}
-                                            style={{ padding: '6px', color: 'var(--danger)' }}
-                                            title="Excluir Categoria"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                            <div style={{ padding: '0 0 0 10px', display: 'flex', alignItems: 'center' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedCategoryIds.includes(c.id)} 
+                                                    onChange={() => handleToggleSelect(c.id)}
+                                                    style={{ cursor: 'pointer', margin: 0, width: 14, height: 14, accentColor: c.color }}
+                                                />
+                                            </div>
+                                            <div 
+                                                style={{ 
+                                                    padding: '6px 10px 6px 8px', 
+                                                    fontSize: '13px', 
+                                                    color: 'var(--text-main)', 
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
+                                                }}
+                                                onClick={() => handleEditCategory(c)}
+                                                title="Clique para editar"
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.02)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                            >
+                                                <span className="category-dot" style={{ background: c.color, width: 8, height: 8, minWidth: 8 }} />
+                                                <span>{c.name}</span>
+                                            </div>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteCategory(c.id, c.name); }}
+                                                title="Excluir Categoria"
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    borderLeft: `1px solid ${c.color + '22'}`,
+                                                    padding: '6px 10px',
+                                                    cursor: 'pointer',
+                                                    color: 'var(--text-muted)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))}
