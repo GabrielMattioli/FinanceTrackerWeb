@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import { Plus, Edit2, X } from 'lucide-react';
 import { getCategoryRules, createCategoryRule, deleteCategoryRule, updateCategoryRule, getCategories } from '../../api/categories';
 import { applyCategoryRuleToUncategorized } from '../../api/transactions';
 import toast from 'react-hot-toast';
@@ -120,7 +120,7 @@ export default function RuleManager() {
         return acc;
     }, {} as Record<string, { category: any, rules: any[] }>);
 
-    const groupedRules = Object.values(rulesByCategory).sort((a, b) => {
+    const groupedRules = (Object.values(rulesByCategory) as { category: any, rules: any[] }[]).sort((a, b) => {
         if (!a.category) return 1;
         if (!b.category) return -1;
         return a.category.name.localeCompare(b.category.name);
@@ -165,7 +165,7 @@ export default function RuleManager() {
                                     ) : 'Sem Categoria'}
                                 </h4>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                    {group.rules.map(r => (
+                                    {group.rules.map((r: any) => (
                                         <div key={r.id} style={{
                                             background: 'var(--bg-card)',
                                             border: `1px solid ${group.category ? group.category.color + '33' : 'var(--border-color)'}`,
