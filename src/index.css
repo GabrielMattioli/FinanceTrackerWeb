@@ -1196,24 +1196,36 @@ tbody tr.selected {
 .bulk-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  background: var(--accent-light);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 10px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  animation: slideDown 0.2s ease;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50px;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  
+  /* Mantém a barra fixa no topo ao rolar a página */
+  position: sticky;
+  top: 16px;
+  z-index: 100;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+
+  animation: slideDownFade 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-@keyframes slideDown {
+@keyframes slideDownFade {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-20px) scale(0.95);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
