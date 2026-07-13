@@ -74,7 +74,7 @@ export default function DashboardPage() {
                     <div className="loading-page"><span className="spinner" /> Carregando...</div>
                 ) : (
                     <>
-                        <StatGrid data={data} baseCurrency={baseCurrency} />
+                        <StatGrid data={data} baseCurrency={baseCurrency} year={year} month={month} />
                         <SafetyMarginCard data={data} baseCurrency={baseCurrency} />
                         <FixedExpensesCard data={data} baseCurrency={baseCurrency} />
                         <DashboardCharts data={data} baseCurrency={baseCurrency} year={year} month={month} />

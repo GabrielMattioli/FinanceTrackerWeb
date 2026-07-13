@@ -12,18 +12,27 @@ function StatCard({ label, value, type, baseCurrency, note = null }: any) {
     );
 }
 
-export default function StatGrid({ data, baseCurrency }: any) {
+export default function StatGrid({ data, baseCurrency, year, month }: any) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    // Show Net Balance only for past months
+    const isPastMonth = year < currentYear || (year === currentYear && month < currentMonth);
+
     return (
         <div className="stat-grid">
             <StatCard label="Total de Entradas" value={data?.totalIncome} type="income" baseCurrency={baseCurrency} />
             <StatCard label="Total de Saídas" value={data?.totalExpense} type="expense" baseCurrency={baseCurrency} />
             <StatCard label="Total Poupado" value={data?.totalSaved} type="saved" baseCurrency={baseCurrency} />
-            <StatCard
-                label="Saldo Líquido"
-                value={data?.netBalance}
-                type="net"
-                baseCurrency={baseCurrency}
-            />
+            {isPastMonth && (
+                <StatCard
+                    label="Saldo Líquido"
+                    value={data?.netBalance}
+                    type="net"
+                    baseCurrency={baseCurrency}
+                />
+            )}
         </div>
     );
 }
