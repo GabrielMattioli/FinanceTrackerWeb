@@ -24,15 +24,6 @@ export default function StatGrid({ data, baseCurrency }: any) {
                 type="net"
                 baseCurrency={baseCurrency}
             />
-            <StatCard
-                label="Saldo Acumulado"
-                value={data?.accumulatedBalance}
-                type="accumulated"
-                baseCurrency={baseCurrency}
-                note={Number(data?.previousMonthBalance || 0) !== 0
-                    ? `Inclui ${formatCurrencyValue(data.previousMonthBalance, baseCurrency)} de meses anteriores`
-                    : null}
-            />
         </div>
     );
 }
