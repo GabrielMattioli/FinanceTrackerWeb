@@ -5,9 +5,11 @@ function StatCard({ label, value, type, baseCurrency, note = null }: any) {
     return (
         <div className={`stat-card ${type}`}>
             <div className="stat-icon">{icon}</div>
-            <div className="stat-label">{label}</div>
-            <div className="stat-value">{formatCurrencyValue(value, baseCurrency)}</div>
-            {note && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{note}</div>}
+            <div className="stat-info">
+                <div className="stat-label">{label}</div>
+                <div className="stat-value">{formatCurrencyValue(value, baseCurrency)}</div>
+                {note && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{note}</div>}
+            </div>
         </div>
     );
 }
