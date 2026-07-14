@@ -76,7 +76,7 @@ export default function DashboardPage() {
                     <>
                         <StatGrid data={data} baseCurrency={baseCurrency} year={year} month={month} />
                         <SafetyMarginCard data={data} baseCurrency={baseCurrency} />
-                        <FixedExpensesCard data={data} baseCurrency={baseCurrency} />
+                        <FixedExpensesCard data={data} baseCurrency={baseCurrency} year={year} month={month} onRefresh={() => load(year, month)} />
                         <DashboardCharts data={data} baseCurrency={baseCurrency} year={year} month={month} />
                     </>
                 )}

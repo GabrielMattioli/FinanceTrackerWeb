@@ -60,3 +60,18 @@ CREATE POLICY "Users can manage their own transactions" ON transactions
 CREATE POLICY "Users can manage their own settings" ON settings
   FOR ALL USING (auth.uid() = user_id);
 
+CREATE TABLE category_monthly_state (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  category_id uuid REFERENCES categories(id) ON DELETE CASCADE,
+  month text NOT NULL, -- formato 'YYYY-MM'
+  is_paid boolean DEFAULT false,
+  user_id uuid REFERENCES auth.users(id) DEFAULT auth.uid() NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(category_id, month, user_id)
+);
+
+ALTER TABLE category_monthly_state ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own monthly state" ON category_monthly_state
+  FOR ALL USING (auth.uid() = user_id);
+

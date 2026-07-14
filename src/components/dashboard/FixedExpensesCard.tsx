@@ -1,7 +1,25 @@
-import { ShieldCheck, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { ShieldCheck, AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 import { formatCurrencyValue } from '../../utils/formatters';
+import { toggleCategoryPaidState } from '../../api/dashboard';
+import toast from 'react-hot-toast';
 
-export default function FixedExpensesCard({ data, baseCurrency }: any) {
+export default function FixedExpensesCard({ data, baseCurrency, year, month, onRefresh }: any) {
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    const handleToggle = async (expense: any) => {
+        try {
+            setLoadingId(expense.id);
+            await toggleCategoryPaidState(expense.id, year, month, !expense.isManuallyPaid);
+            toast.success(expense.isManuallyPaid ? 'Marcado como pendente' : 'Marcado como pago');
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            toast.error('Erro ao atualizar status');
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
     const fixedExpenses = data?.fixedExpenses || [];
     if (fixedExpenses.length === 0) return null;
 
@@ -23,20 +41,34 @@ export default function FixedExpensesCard({ data, baseCurrency }: any) {
                                     <div style={{ width: 14, height: 14, borderRadius: '50%', background: expense.color }} />
                                     <span style={{ fontWeight: 600, fontSize: 15 }}>{expense.name}</span>
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 600 }}>
-                                    {expense.isPaid ? (
-                                        <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            <ShieldCheck size={16} /> Pago {isOverspent ? `(+${formatCurrencyValue(expense.currentSpent - expense.lastMonthAmount, baseCurrency)})` : ''}
-                                        </span>
-                                    ) : expense.lastMonthAmount === 0 ? (
-                                        <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            Sem histórico
-                                        </span>
-                                    ) : (
-                                        <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                            <AlertCircle size={16} /> Pendente: {formatCurrencyValue(expense.pending, baseCurrency)}
-                                        </span>
-                                    )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                                        {expense.isPaid ? (
+                                            <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <ShieldCheck size={16} /> Pago {isOverspent ? `(+${formatCurrencyValue(expense.currentSpent - expense.lastMonthAmount, baseCurrency)})` : ''}
+                                            </span>
+                                        ) : expense.lastMonthAmount === 0 ? (
+                                            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                Sem histórico
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <AlertCircle size={16} /> Pendente: {formatCurrencyValue(expense.pending, baseCurrency)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button 
+                                        onClick={() => handleToggle(expense)}
+                                        disabled={loadingId === expense.id}
+                                        style={{ 
+                                            background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0,
+                                            color: expense.isManuallyPaid ? '#10b981' : 'var(--text-muted)',
+                                            opacity: loadingId === expense.id ? 0.5 : 1
+                                        }}
+                                        title={expense.isManuallyPaid ? "Desmarcar pagamento manual" : "Marcar como pago"}
+                                    >
+                                        {expense.isManuallyPaid ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                                    </button>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>

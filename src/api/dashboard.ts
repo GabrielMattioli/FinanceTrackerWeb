@@ -122,15 +122,25 @@ export const getDashboardSummary = async (year: number, month: number) => {
   // Fetch all essential categories to ensure we include ones with zero transactions
   let expectedEssentialOutflow = 0;
   const fixedExpenses = [];
+  const manuallyPaidCategoryIds = new Set<string>();
 
   try {
-    const { data: essentialCats } = await supabase.from('categories').select('id, name, color').eq('is_essential', true);
-    if (essentialCats) {
-      for (const cat of essentialCats) {
+    const currentMonthStr = `${year}-${String(month).padStart(2, '0')}`;
+    const [catsRes, paidRes] = await Promise.all([
+      supabase.from('categories').select('id, name, color').eq('is_essential', true),
+      supabase.from('category_monthly_state').select('category_id').eq('month', currentMonthStr).eq('is_paid', true)
+    ]);
+
+    if (catsRes.data) {
+      for (const cat of catsRes.data) {
         if (!essentialCatHistory[cat.id]) {
           essentialCatHistory[cat.id] = { lastMonthTotal: 0, currentSpent: 0, name: cat.name, color: cat.color };
         }
       }
+    }
+    
+    if (paidRes.data) {
+      paidRes.data.forEach((p: any) => manuallyPaidCategoryIds.add(p.category_id));
     }
   } catch (e) {
     // Ignore error
@@ -140,7 +150,14 @@ export const getDashboardSummary = async (year: number, month: number) => {
     const data = essentialCatHistory[catId];
     
     const lastMonthAmount = data.lastMonthTotal;
-    const pending = Math.max(0, lastMonthAmount - data.currentSpent);
+    let pending = Math.max(0, lastMonthAmount - data.currentSpent);
+    let isPaid = data.currentSpent >= lastMonthAmount && lastMonthAmount > 0;
+    const isManuallyPaid = manuallyPaidCategoryIds.has(catId);
+
+    if (isManuallyPaid) {
+      pending = 0;
+      isPaid = true;
+    }
 
     expectedEssentialOutflow += pending;
 
@@ -151,7 +168,8 @@ export const getDashboardSummary = async (year: number, month: number) => {
       lastMonthAmount,
       currentSpent: data.currentSpent,
       pending,
-      isPaid: data.currentSpent >= lastMonthAmount && lastMonthAmount > 0,
+      isPaid,
+      isManuallyPaid,
       isFirstMonth: data.lastMonthTotal === 0
     });
   }
@@ -251,4 +269,35 @@ export const getYearlySummary = async (year: number, categorizedOnly: boolean = 
   }
 
   return { months };
+};
+
+export const toggleCategoryPaidState = async (categoryId: string, year: number, month: number, isPaid: boolean) => {
+  const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+  
+  const { data: existing } = await supabase
+    .from('category_monthly_state')
+    .select('id')
+    .eq('category_id', categoryId)
+    .eq('month', monthStr)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from('category_monthly_state')
+      .update({ is_paid: isPaid })
+      .eq('id', existing.id);
+    if (error) throw error;
+  } else {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("Usuário não autenticado");
+    const { error } = await supabase
+      .from('category_monthly_state')
+      .insert({
+        category_id: categoryId,
+        month: monthStr,
+        is_paid: isPaid,
+        user_id: userData.user.id
+      });
+    if (error) throw error;
+  }
 };
