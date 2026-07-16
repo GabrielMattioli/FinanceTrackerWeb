@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, PieChart, Filter, CheckCircle, AlertTriangle, PenTool, Trash2 } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Clock, History, Tag, Settings, Upload, PieChart, Filter, CheckCircle, AlertTriangle, PenTool, Trash2, EyeOff, RotateCcw, Hash } from 'lucide-react';
 
 export default function HelpPage() {
     return (
@@ -74,8 +74,9 @@ export default function HelpPage() {
                         <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
                             <p style={{ marginBottom: '12px' }}>A aba Pendentes é a sua "caixa de entrada" financeira. É aqui que você classifica suas importações.</p>
                             <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-                                <li><strong>Escolhendo Categorias:</strong> O passo mais importante. Atribua a categoria correta para garantir a qualidade dos gráficos.</li>
-                                <li><strong>Confirmar <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', color: 'var(--success-color)' }} />:</strong> Após conferir valor e descrição, e definir a categoria, clique em "Confirmar" ou no botão de ✓. A transação agora é oficial e vai para o Histórico.</li>
+                                <li><strong>Categorização Rápida:</strong> Escolha uma categoria no menu suspenso. A transação será automaticamente confirmada e movida para o Histórico.</li>
+                                <li><strong>Ações em Lote:</strong> Você pode selecionar múltiplas transações usando as caixas de seleção na esquerda para categorizá-las ou excluí-las de uma só vez usando a barra que aparecerá no topo.</li>
+                                <li><strong>Ignorar em Relatórios <EyeOff size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Útil para transferências entre contas da mesma titularidade ou pagamentos de cartão de crédito. Isso risca a transação e a esconde dos gráficos de despesas e receitas.</li>
                             </ul>
                         </div>
                     </div>
@@ -91,8 +92,10 @@ export default function HelpPage() {
                         <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
                             <p style={{ marginBottom: '12px' }}>O Histórico contém os dados definitivos. Diferente das "Pendentes", tudo aqui ja esta categorizado.</p>
                             <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <li><strong>Edição e Exclusão:</strong> Cometeu um erro? Não tem problema. Encontre a transação no Histórico e você poderá alterar a categoria, ou até mesmo excluí-la <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />.</li>
-                                <li><strong>Navegação:</strong> Use a barra de busca e os filtros para encontrar transações específicas.</li>
+                                <li><strong>Edição e Exclusão:</strong> Cometeu um erro? Não tem problema. Encontre a transação no Histórico e você poderá alterar a categoria, ou excluí-la <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />. Você também pode excluir múltiplas transações usando as caixas de seleção.</li>
+                                <li><strong>Mover para Pendentes <RotateCcw size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Caso queira descategorizar uma transação e retorná-la para a aba Pendentes.</li>
+                                <li><strong>Ignorar em Relatórios <EyeOff size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Permite excluir a transação dos gráficos e cálculos de saúde financeira, ideal para transferências.</li>
+                                <li><strong>Navegação:</strong> Use a barra de busca e os filtros (mês, ano, categoria) para encontrar transações específicas.</li>
                             </ul>
                         </div>
                     </div>
@@ -106,9 +109,10 @@ export default function HelpPage() {
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Organização de Categorias</h4>
                         </div>
                         <div style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, paddingLeft: '42px' }}>
-                            <p style={{ marginBottom: '12px' }}>Um bom controle financeiro depende de uma boa categorização. Aqui você gerencia isso.</p>
+                            <p style={{ marginBottom: '12px' }}>Um bom controle financeiro depende de uma boa categorização. Aqui você gerencia isso e cria automações.</p>
                             <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <li><strong>Criando e Editando <PenTool size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Crie novas categorias definindo um nome, uma cor, e o Tipo (se é uma categoria para despesas essenciais, economias ou investimentos).</li>
+                                <li><strong>Categorização Automática (Regras) <Hash size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />:</strong> Na aba de automação, você pode criar regras para que futuras transações sejam categorizadas automaticamente com base em palavras-chave na descrição (ex: "UBER" &rarr; Transporte).</li>
                                 <li><strong>Evite Excesso:</strong> Cuidado para não criar categorias muito específicas. Prefira grupos como "Delivery", "Mercado", "Lazer", "Transporte", etc.</li>
                             </ul>
                         </div>
