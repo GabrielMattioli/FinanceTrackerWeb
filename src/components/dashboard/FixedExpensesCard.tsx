@@ -43,6 +43,9 @@ export default function FixedExpensesCard({ data, baseCurrency, year, month, onR
                                     <div style={{ width: 14, height: 14, borderRadius: '50%', background: expense.color }} />
                                     <span style={{ fontWeight: 600, fontSize: 15 }}>{expense.name}</span>
                                 </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
+                                <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                     <div style={{ fontSize: 13, fontWeight: 600 }}>
                                         {expense.isPaid ? (
@@ -59,22 +62,19 @@ export default function FixedExpensesCard({ data, baseCurrency, year, month, onR
                                             </span>
                                         )}
                                     </div>
+                                    <button 
+                                        onClick={() => handleToggle(expense)}
+                                        disabled={loadingId === expense.id}
+                                        style={{ 
+                                            background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0,
+                                            color: expense.isManuallyPaid ? '#10b981' : 'var(--text-muted)',
+                                            opacity: loadingId === expense.id ? 0.5 : 1
+                                        }}
+                                        title={expense.isManuallyPaid ? "Desmarcar pagamento manual" : "Marcar como pago"}
+                                    >
+                                        {expense.isManuallyPaid ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                    </button>
                                 </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
-                                <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
-                                <button 
-                                    onClick={() => handleToggle(expense)}
-                                    disabled={loadingId === expense.id}
-                                    style={{ 
-                                        background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0,
-                                        color: expense.isManuallyPaid ? '#10b981' : 'var(--text-muted)',
-                                        opacity: loadingId === expense.id ? 0.5 : 1
-                                    }}
-                                    title={expense.isManuallyPaid ? "Desmarcar pagamento manual" : "Marcar como pago"}
-                                >
-                                    {expense.isManuallyPaid ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                                </button>
                             </div>
                             <div style={{ height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
                                 <div style={{
