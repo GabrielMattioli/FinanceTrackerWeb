@@ -1,6 +1,7 @@
 import { supabase } from '../supabaseClient';
+import type { DashboardData } from '../types/dashboard';
 
-export const getDashboardSummary = async (year: number, month: number) => {
+export const getDashboardSummary = async (year: number, month: number): Promise<DashboardData> => {
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
   const daysInMonth = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;

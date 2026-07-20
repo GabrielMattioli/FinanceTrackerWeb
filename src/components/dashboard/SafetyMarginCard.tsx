@@ -1,7 +1,8 @@
 import { ShieldCheck, AlertCircle, Info, TrendingDown, Target } from 'lucide-react';
 import { formatCurrencyValue } from '../../utils/formatters';
+import type { DashboardData } from '../../types/dashboard';
 
-export default function SafetyMarginCard({ data, baseCurrency }: any) {
+export default function SafetyMarginCard({ data, baseCurrency }: { data: DashboardData | null; baseCurrency: string }) {
     const accBal = Number(data?.accumulatedBalance ?? data?.netBalance ?? 0);
     const pendingIncome = Number(data?.pendingIncome || 0);
     const effectiveBal = accBal + pendingIncome;

@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrencyValue } from '../../utils/formatters';
+import type { DashboardData } from '../../types/dashboard';
 
 interface TrendInfo {
     pct: number;
@@ -65,7 +66,7 @@ function StatCard({ label, value, type, baseCurrency, trend = null, note = null 
     );
 }
 
-export default function StatGrid({ data, baseCurrency, year, month }: any) {
+export default function StatGrid({ data, baseCurrency, year, month }: { data: DashboardData | null; baseCurrency: string; year: number; month: number }) {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -80,13 +81,13 @@ export default function StatGrid({ data, baseCurrency, year, month }: any) {
 
     return (
         <div className="stat-grid">
-            <StatCard label="Total de Entradas" value={data?.totalIncome} type="income" baseCurrency={baseCurrency} trend={incomeTrend} />
-            <StatCard label="Total de Saídas" value={data?.totalExpense} type="expense" baseCurrency={baseCurrency} trend={expenseTrend} />
-            <StatCard label="Total Poupado" value={data?.totalSaved} type="saved" baseCurrency={baseCurrency} trend={savedTrend} />
+            <StatCard label="Total de Entradas" value={data?.totalIncome ?? 0} type="income" baseCurrency={baseCurrency} trend={incomeTrend} />
+            <StatCard label="Total de Saídas" value={data?.totalExpense ?? 0} type="expense" baseCurrency={baseCurrency} trend={expenseTrend} />
+            <StatCard label="Total Poupado" value={data?.totalSaved ?? 0} type="saved" baseCurrency={baseCurrency} trend={savedTrend} />
             {isPastMonth && (
                 <StatCard
                     label="Saldo Líquido"
-                    value={data?.netBalance}
+                    value={data?.netBalance ?? 0}
                     type="net"
                     baseCurrency={baseCurrency}
                 />

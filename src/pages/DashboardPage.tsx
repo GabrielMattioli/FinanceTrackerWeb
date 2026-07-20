@@ -3,6 +3,7 @@ import { getDashboardSummary, getLatestDashboardMonth } from '../api/dashboard';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { useSettings } from '../context/SettingsContext';
+import type { DashboardData } from '../types/dashboard';
 
 // Components
 import StatGrid from '../components/dashboard/StatGrid';
@@ -16,7 +17,7 @@ export default function DashboardPage() {
     const now = new Date();
     const [year, setYear] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth() + 1);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [slideClass, setSlideClass] = useState('');
     const [initialised, setInitialised] = useState(false);

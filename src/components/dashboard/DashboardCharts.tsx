@@ -4,6 +4,7 @@ import {
     LineChart, Line, Legend
 } from 'recharts';
 import { formatCurrencyValue } from '../../utils/formatters';
+import type { DashboardData, CategoryBreakdownItem } from '../../types/dashboard';
 
 const SEM_CATEGORIA_COLOR = '#6b7280';
 const MONTHS = [
@@ -75,9 +76,9 @@ function LineTooltip({ active = false, payload = null, label, baseCurrency }: an
     return null;
 }
 
-export default function DashboardCharts({ data, baseCurrency, year, month }: any) {
+export default function DashboardCharts({ data, baseCurrency, year, month }: { data: DashboardData | null; baseCurrency: string; year: number; month: number }) {
     // Bar chart data
-    const categorizedItems = (data?.categoryBreakdown || []).map((c: any) => ({
+    const categorizedItems = (data?.categoryBreakdown || []).map((c: CategoryBreakdownItem) => ({
         name: c.name,
         value: Number(c.total),
         color: c.color,

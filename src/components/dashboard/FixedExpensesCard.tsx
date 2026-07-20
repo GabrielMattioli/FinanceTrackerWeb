@@ -3,11 +3,13 @@ import { ShieldCheck, AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 import { formatCurrencyValue } from '../../utils/formatters';
 import { toggleCategoryPaidState } from '../../api/dashboard';
 import toast from 'react-hot-toast';
+import type { DashboardData, FixedExpense } from '../../types/dashboard';
 
-export default function FixedExpensesCard({ data, baseCurrency, year, month, onRefresh }: any) {
+
+export default function FixedExpensesCard({ data, baseCurrency, year, month, onRefresh }: { data: DashboardData | null; baseCurrency: string; year: number; month: number; onRefresh?: () => void }) {
     const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    const handleToggle = async (expense: any) => {
+    const handleToggle = async (expense: FixedExpense) => {
         try {
             setLoadingId(expense.id);
             await toggleCategoryPaidState(expense.id, year, month, !expense.isManuallyPaid);
