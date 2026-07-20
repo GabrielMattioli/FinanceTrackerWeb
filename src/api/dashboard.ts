@@ -18,6 +18,11 @@ export const getDashboardSummary = async (year: number, month: number) => {
   let totalSaved = 0;
   let uncategorizedTotal = 0;
 
+  // Previous month totals for trend comparison
+  let prevMonthIncome = 0;
+  let prevMonthExpense = 0;
+  let prevMonthSaved = 0;
+
   const categoryMap: Record<string, any> = {};
   const dailyMap: Record<number, any> = {};
   const essentialCatHistory: Record<string, { lastMonthTotal: number, currentSpent: number, name: string, color: string }> = {};
@@ -47,12 +52,32 @@ export const getDashboardSummary = async (year: number, month: number) => {
         historicalIncomeMap[monthKey] = (historicalIncomeMap[monthKey] || 0) + amount;
       }
 
+      // Track previous month totals for trend indicators
+      const isLastMonth = tx.date >= lastMonthStartDate && tx.date <= lastMonthEndDate;
+      if (isLastMonth) {
+        if (amount >= 0) {
+          if (tx.categories?.is_savings) {
+            prevMonthSaved -= amount;
+          } else if (!tx.categories || tx.categories.is_main_income) {
+            prevMonthIncome += amount;
+          } else {
+            prevMonthExpense -= amount;
+          }
+        } else {
+          if (tx.categories?.is_savings) {
+            prevMonthSaved += expenseAmount;
+          } else {
+            prevMonthExpense += expenseAmount;
+          }
+        }
+      }
+
       if (isEssential && tx.categories) {
         const catId = tx.categories.id;
         if (!essentialCatHistory[catId]) {
           essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
         }
-        if (tx.date >= lastMonthStartDate && tx.date <= lastMonthEndDate) {
+        if (isLastMonth) {
           essentialCatHistory[catId].lastMonthTotal -= amount;
         }
       }
@@ -200,7 +225,10 @@ export const getDashboardSummary = async (year: number, month: number) => {
     categoryBreakdown,
     uncategorizedTotal,
     dailyExpenses,
-    fixedExpenses
+    fixedExpenses,
+    prevMonthIncome,
+    prevMonthExpense,
+    prevMonthSaved
   };
 };
 
