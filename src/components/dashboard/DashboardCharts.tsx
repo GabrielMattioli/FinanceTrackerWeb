@@ -1,6 +1,7 @@
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
-    PieChart, Pie, Tooltip, ResponsiveContainer, LabelList
+    PieChart, Pie, Tooltip, ResponsiveContainer, LabelList,
+    LineChart, Line, Legend
 } from 'recharts';
 import { formatCurrencyValue } from '../../utils/formatters';
 
@@ -56,6 +57,24 @@ function BarValueLabel({ x = 0, y = 0, width = 0, height = 0, value = 0, pct, ba
     );
 }
 
+function LineTooltip({ active = false, payload = null, label, baseCurrency }: any) {
+    if (active && payload && payload.length) {
+        return (
+            <div className="custom-tooltip" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px' }}>
+                <div className="ct-label" style={{ marginBottom: 6 }}>Dia {label}</div>
+                {payload.map((entry: any) => (
+                    <div key={entry.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, marginBottom: 2 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: entry.color }} />
+                        <span style={{ color: 'var(--text-secondary)' }}>{entry.name}:</span>
+                        <strong>{formatCurrencyValue(entry.value, baseCurrency)}</strong>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+}
+
 export default function DashboardCharts({ data, baseCurrency, year, month }: any) {
     // Bar chart data
     const categorizedItems = (data?.categoryBreakdown || []).map((c: any) => ({
@@ -82,8 +101,95 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: any
     // Dynamic height for bar chart — 44px per item, min 200
     const barChartHeight = Math.max(200, barData.length * 44 + 20);
 
+    // Burn-down chart data — cumulative daily expenses vs ideal pace
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyExpenses: { day: number; total: number }[] = data?.dailyExpenses || [];
+    const prevMonthExpense = Number(data?.prevMonthExpense || 0);
+    const idealTotal = prevMonthExpense > 0 ? prevMonthExpense : totalExpense;
+
+    const burnDownData: { day: number; real: number; ideal: number }[] = [];
+    let cumulative = 0;
+    const dailyMap = new Map(dailyExpenses.map(d => [d.day, d.total]));
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        cumulative += dailyMap.get(d) || 0;
+        const idealValue = idealTotal > 0 ? (idealTotal / daysInMonth) * d : 0;
+
+        // For the current month, only include days up to today
+        const now = new Date();
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+        if (isCurrentMonth && d > now.getDate()) {
+            burnDownData.push({ day: d, real: undefined as any, ideal: Math.round(idealValue * 100) / 100 });
+        } else {
+            burnDownData.push({ day: d, real: Math.round(cumulative * 100) / 100, ideal: Math.round(idealValue * 100) / 100 });
+        }
+    }
+
+    const hasBurnDownData = dailyExpenses.length > 0;
+
     return (
         <div className="charts-grid">
+            {/* Burn-down Chart — Cumulative Daily Spending */}
+            <div className="card" style={{ gridColumn: '1 / -1' }}>
+                <div className="card-header" style={{ marginBottom: 28 }}>
+                    <h3 className="card-title">Ritmo de Gastos</h3>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        Acumulado diário vs ritmo ideal — {MONTHS[month]} {year}
+                    </span>
+                </div>
+                {!hasBurnDownData ? (
+                    <div className="table-empty" style={{ padding: '40px 0' }}>
+                        <div className="empty-icon">📈</div>
+                        <p>Sem dados de gastos diários</p>
+                        <span>Importe transações para ver o ritmo</span>
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={burnDownData} margin={{ left: 10, right: 20, top: 10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                            <XAxis
+                                dataKey="day"
+                                tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                                axisLine={{ stroke: 'var(--border-color)' }}
+                                tickLine={false}
+                                interval={2}
+                            />
+                            <YAxis
+                                tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={(v: number) => formatCurrencyValue(v, baseCurrency)}
+                                width={90}
+                            />
+                            <Tooltip content={<LineTooltip baseCurrency={baseCurrency} />} />
+                            <Legend
+                                verticalAlign="top"
+                                height={36}
+                                formatter={(value: string) => <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{value}</span>}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="ideal"
+                                name="Ritmo Ideal"
+                                stroke="var(--text-muted)"
+                                strokeDasharray="6 4"
+                                strokeWidth={2}
+                                dot={false}
+                                connectNulls
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="real"
+                                name="Gasto Real"
+                                stroke="#f43f5e"
+                                strokeWidth={2.5}
+                                dot={false}
+                                connectNulls
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                )}
+            </div>
             {/* Pie Chart — Consumption from Income */}
             <div className="card">
                 <div className="card-header" style={{ marginBottom: 28 }}>
