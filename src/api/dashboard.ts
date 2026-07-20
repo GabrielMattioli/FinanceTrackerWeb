@@ -237,7 +237,32 @@ export const getLatestDashboardMonth = async () => {
   return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
 };
 
-export const getYearlySummary = async (year: number, categorizedOnly: boolean = false) => {
+// In-memory cache to deduplicate concurrent calls from MonthBar + parent
+const yearlySummaryCache = new Map<string, { promise: Promise<{ months: any[] }>; timestamp: number }>();
+const YEARLY_CACHE_TTL_MS = 30_000;
+
+export const getYearlySummary = (year: number, categorizedOnly: boolean = false) => {
+  const cacheKey = `${year}-${categorizedOnly}`;
+  const cached = yearlySummaryCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < YEARLY_CACHE_TTL_MS) {
+    return cached.promise;
+  }
+
+  const promise = fetchYearlySummary(year, categorizedOnly);
+  yearlySummaryCache.set(cacheKey, { promise, timestamp: Date.now() });
+
+  // Clean up on failure so retries work
+  promise.catch(() => yearlySummaryCache.delete(cacheKey));
+
+  return promise;
+};
+
+export const invalidateYearlySummaryCache = () => {
+  yearlySummaryCache.clear();
+};
+
+const fetchYearlySummary = async (year: number, categorizedOnly: boolean = false) => {
   const startDate = `${year}-01-01`;
   const endDate = `${year}-12-31`;
 
