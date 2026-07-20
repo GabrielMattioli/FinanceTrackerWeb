@@ -57,6 +57,17 @@ export default function DashboardPage() {
         }, 200);
     };
 
+    const handleMonthChange = (newMonth: number | string) => {
+        const m = Number(newMonth);
+        if (m === month) return;
+        setSlideClass('fade-out');
+        setTimeout(() => {
+            setMonth(m);
+            setSlideClass('fade-in');
+            setTimeout(() => setSlideClass(''), 300);
+        }, 150);
+    };
+
     return (
         <div>
             <div className="page-header">
@@ -68,7 +79,7 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={(m) => setMonth(Number(m))} allowAllMonths={false} />
+                <MonthBar year={year} month={month} onMonthChange={handleMonthChange} allowAllMonths={false} />
             </div>
 
             <div className={`dashboard-slide-wrapper ${slideClass}`}>
