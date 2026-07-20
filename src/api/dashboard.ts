@@ -26,6 +26,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
 
   const categoryMap: Record<string, any> = {};
   const dailyMap: Record<number, any> = {};
+  const prevMonthDailyMap: Record<number, any> = {};
   const essentialCatHistory: Record<string, { lastMonthTotal: number, currentSpent: number, name: string, color: string }> = {};
   const historicalIncomeMap: Record<string, number> = {};
 
@@ -70,6 +71,21 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
           } else {
             prevMonthExpense += expenseAmount;
           }
+        }
+
+        // Daily expenses for previous month
+        if (amount < 0 && !(tx.categories?.is_savings)) {
+          const day = parseInt(tx.date.split('-')[2], 10);
+          if (!prevMonthDailyMap[day]) {
+            prevMonthDailyMap[day] = { day, total: 0 };
+          }
+          prevMonthDailyMap[day].total += expenseAmount;
+        } else if (amount >= 0 && tx.categories && !tx.categories.is_savings) {
+          const day = parseInt(tx.date.split('-')[2], 10);
+          if (!prevMonthDailyMap[day]) {
+            prevMonthDailyMap[day] = { day, total: 0 };
+          }
+          prevMonthDailyMap[day].total -= amount;
         }
       }
 
@@ -144,6 +160,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   const accumulatedBalance = previousMonthBalance + netBalance;
   const categoryBreakdown = Object.values(categoryMap).filter((c: any) => c.total > 0);
   const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
+  const prevMonthDailyExpenses = Object.values(prevMonthDailyMap).sort((a: any, b: any) => a.day - b.day);
 
   // Fetch all essential categories to ensure we include ones with zero transactions
   let expectedEssentialOutflow = 0;
@@ -226,6 +243,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
     categoryBreakdown,
     uncategorizedTotal,
     dailyExpenses,
+    prevMonthDailyExpenses,
     fixedExpenses,
     prevMonthIncome,
     prevMonthExpense,

@@ -36,6 +36,7 @@ export interface DashboardData {
   categoryBreakdown: CategoryBreakdownItem[];
   uncategorizedTotal: number;
   dailyExpenses: DailyExpense[];
+  prevMonthDailyExpenses: { day: number; total: number }[];
   fixedExpenses: FixedExpense[];
   prevMonthIncome: number;
   prevMonthExpense: number;

@@ -80,31 +80,32 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: { d
     // Dynamic height for bar chart — 44px per item, min 200
     const barChartHeight = Math.max(200, barData.length * 44 + 20);
 
-    // Burn-down chart data — cumulative daily expenses vs ideal pace
+    // Burn-down chart data — cumulative daily expenses vs previous month
     const daysInMonth = new Date(year, month, 0).getDate();
     const dailyExpenses: { day: number; total: number }[] = data?.dailyExpenses || [];
-    const prevMonthExpense = Number(data?.prevMonthExpense || 0);
-    const idealTotal = prevMonthExpense > 0 ? prevMonthExpense : totalExpense;
+    const prevMonthDailyExpenses: { day: number; total: number }[] = data?.prevMonthDailyExpenses || [];
 
-    const burnDownData: { day: number; real: number; ideal: number }[] = [];
+    const burnDownData: { day: number; real: number; prevMonth: number }[] = [];
     let cumulative = 0;
+    let prevCumulative = 0;
     const dailyMap = new Map(dailyExpenses.map(d => [d.day, d.total]));
+    const prevMonthDailyMap = new Map(prevMonthDailyExpenses.map(d => [d.day, d.total]));
 
     for (let d = 1; d <= daysInMonth; d++) {
         cumulative += dailyMap.get(d) || 0;
-        const idealValue = idealTotal > 0 ? (idealTotal / daysInMonth) * d : 0;
+        prevCumulative += prevMonthDailyMap.get(d) || 0;
 
-        // For the current month, only include days up to today
+        // For the current month, only include days up to today for current month's line
         const now = new Date();
         const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
         if (isCurrentMonth && d > now.getDate()) {
-            burnDownData.push({ day: d, real: undefined as any, ideal: Math.round(idealValue * 100) / 100 });
+            burnDownData.push({ day: d, real: undefined as any, prevMonth: Math.round(prevCumulative * 100) / 100 });
         } else {
-            burnDownData.push({ day: d, real: Math.round(cumulative * 100) / 100, ideal: Math.round(idealValue * 100) / 100 });
+            burnDownData.push({ day: d, real: Math.round(cumulative * 100) / 100, prevMonth: Math.round(prevCumulative * 100) / 100 });
         }
     }
 
-    const hasBurnDownData = dailyExpenses.length > 0;
+    const hasBurnDownData = dailyExpenses.length > 0 || prevMonthDailyExpenses.length > 0;
 
     return (
         <div className="charts-grid">
@@ -113,7 +114,7 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: { d
                 <div className="card-header" style={{ marginBottom: 28 }}>
                     <h3 className="card-title">Ritmo de Gastos</h3>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        Acumulado diário vs ritmo ideal — {MONTHS[month]} {year}
+                        Acumulado diário vs mês passado — {MONTHS[month]} {year}
                     </span>
                 </div>
                 {!hasBurnDownData ? (
@@ -148,8 +149,8 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: { d
                             />
                             <Line
                                 type="monotone"
-                                dataKey="ideal"
-                                name="Ritmo Ideal"
+                                dataKey="prevMonth"
+                                name="Mês Passado"
                                 stroke="var(--text-muted)"
                                 strokeDasharray="6 4"
                                 strokeWidth={2}
@@ -159,7 +160,7 @@ export default function DashboardCharts({ data, baseCurrency, year, month }: { d
                             <Line
                                 type="monotone"
                                 dataKey="real"
-                                name="Gasto Real"
+                                name="Mês Atual"
                                 stroke="#f43f5e"
                                 strokeWidth={2.5}
                                 dot={false}
