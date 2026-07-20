@@ -34,9 +34,6 @@ function TrendBadge({ trend }: { trend: TrendInfo | null }) {
             fontWeight: 600,
             color,
             marginTop: 4,
-            padding: '2px 6px',
-            borderRadius: 6,
-            background: trend.favorable ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
         }}>
             <Icon size={12} />
             {trend.pct.toFixed(1)}%
