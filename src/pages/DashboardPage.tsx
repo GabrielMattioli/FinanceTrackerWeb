@@ -9,6 +9,7 @@ import StatGrid from '../components/dashboard/StatGrid';
 import SafetyMarginCard from '../components/dashboard/SafetyMarginCard';
 import FixedExpensesCard from '../components/dashboard/FixedExpensesCard';
 import DashboardCharts from '../components/dashboard/DashboardCharts';
+import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
 
 export default function DashboardPage() {
     const { baseCurrency } = useSettings();
@@ -71,7 +72,7 @@ export default function DashboardPage() {
 
             <div className={`dashboard-slide-wrapper ${slideClass}`}>
                 {loading ? (
-                    <div className="loading-page"><span className="spinner" /> Carregando...</div>
+                    <DashboardSkeleton />
                 ) : (
                     <>
                         <StatGrid data={data} baseCurrency={baseCurrency} year={year} month={month} />
