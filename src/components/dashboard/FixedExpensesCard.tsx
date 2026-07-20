@@ -26,8 +26,8 @@ export default function FixedExpensesCard({ data, baseCurrency, year, month, onR
     return (
         <div className="card" style={{ marginBottom: 24 }}>
             <div className="card-header" style={{ marginBottom: 20 }}>
-                <h3 className="card-title">Despesas Fixas (Mês Passado)</h3>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Status de pagamento baseado no mês passado</span>
+                <h3 className="card-title">Contas Fixas — Acompanhamento</h3>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Referência: gasto do mês anterior</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {fixedExpenses.map((expense: any) => {
