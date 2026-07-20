@@ -75,7 +75,6 @@ export default function FixedExpensesCard({ data, baseCurrency, year, month, onR
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
                                 <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
-                                <span>Mês Passado: {formatCurrencyValue(expense.lastMonthAmount, baseCurrency)} {expense.isFirstMonth ? '(Sem Dados)' : ''}</span>
                             </div>
                             <div style={{ height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
                                 <div style={{
