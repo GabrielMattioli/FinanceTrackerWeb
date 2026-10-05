@@ -1,12 +1,14 @@
 import { supabase } from '../supabaseClient';
 import { checkError } from './common';
 
+const createTransactionQuery = () => supabase
+  .from('transactions')
+  .select('*, categories(id, name, color)', { count: 'exact' })
+  .order('date', { ascending: false });
+
 export const getPending = async (page: number = 0, size: number = 100) => {
-  const { data, error, count } = await supabase
-    .from('transactions')
-    .select('*, categories(id, name, color)', { count: 'exact' })
+  const { data, error, count } = await createTransactionQuery()
     .is('category_id', null)
-    .order('date', { ascending: false })
     .range(page * size, (page + 1) * size - 1);
 
   if (error) throw error;
@@ -25,11 +27,7 @@ export interface GetHistoryParams {
 }
 
 export const getHistory = async (params: GetHistoryParams = {}) => {
-  let query = supabase
-    .from('transactions')
-    .select('*, categories(id, name, color)', { count: 'exact' })
-    .not('category_id', 'is', null)
-    .order('date', { ascending: false });
+  let query = createTransactionQuery().not('category_id', 'is', null);
 
   if (params.month && params.year) {
     const startDate = `${params.year}-${String(params.month).padStart(2, '0')}-01`;

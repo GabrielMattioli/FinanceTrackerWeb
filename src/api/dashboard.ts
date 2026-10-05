@@ -186,7 +186,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
       paidRes.data.forEach((p: any) => manuallyPaidCategoryIds.add(p.category_id));
     }
   } catch (e) {
-    // Ignore error
+    console.error('Error fetching essential categories or paid states:', e);
   }
 
   for (const catId in essentialCatHistory) {
@@ -224,7 +224,11 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   const minHistoricalIncome = pastIncomes.length > 0 ? Math.min(...pastIncomes) : 0;
 
   const expectedMonthlyIncomeStr = localStorage.getItem('expectedMonthlyIncome');
-  const baseExpectedIncome = expectedMonthlyIncomeStr ? Number(expectedMonthlyIncomeStr) : minHistoricalIncome;
+  let parsedExpectedIncome = expectedMonthlyIncomeStr ? Number(expectedMonthlyIncomeStr) : NaN;
+  if (isNaN(parsedExpectedIncome)) {
+    parsedExpectedIncome = minHistoricalIncome;
+  }
+  const baseExpectedIncome = parsedExpectedIncome;
   const pendingIncome = Math.max(0, baseExpectedIncome - totalIncome);
   const expectedTotalIncome = totalIncome + pendingIncome;
   const safeMoneyMargin = accumulatedBalance + pendingIncome - expectedEssentialOutflow;
@@ -361,7 +365,11 @@ export const toggleCategoryPaidState = async (categoryId: string, year: number, 
     if (error) throw error;
   } else {
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw new Error("Usuário não autenticado");
+    if (!userData.user) {
+      const authError = new Error("Usuário não autenticado");
+      authError.name = "AuthError";
+      throw authError;
+    }
     const { error } = await supabase
       .from('category_monthly_state')
       .insert({
