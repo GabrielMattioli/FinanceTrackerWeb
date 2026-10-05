@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
     Tooltip, ResponsiveContainer, LabelList,
@@ -60,52 +61,54 @@ function LineTooltip({ active = false, payload = null, label, baseCurrency }: an
 
 export default function DashboardCharts({ data, baseCurrency, year, month }: { data: DashboardData | null; baseCurrency: string; year: number; month: number }) {
     // Bar chart data
-    const categorizedItems = (data?.categoryBreakdown || []).map((c: CategoryBreakdownItem) => ({
-        name: c.name,
-        value: Number(c.total),
-        color: c.color,
-    }));
+    const barData = useMemo(() => {
+        const categorizedItems = (data?.categoryBreakdown || []).map((c: CategoryBreakdownItem) => ({
+            name: c.name,
+            value: Number(c.total),
+            color: c.color,
+        }));
 
-    const uncategorizedVal = Number(data?.uncategorizedTotal || 0);
-    const barDataUnsorted = uncategorizedVal > 0
-        ? [...categorizedItems, { name: 'Sem Categoria', value: uncategorizedVal, color: SEM_CATEGORIA_COLOR }]
-        : categorizedItems;
-    
-    // Sort from highest spend to lowest
-    const barData = [...barDataUnsorted].sort((a, b) => b.value - a.value);
+        const uncategorizedVal = Number(data?.uncategorizedTotal || 0);
+        const barDataUnsorted = uncategorizedVal > 0
+            ? [...categorizedItems, { name: 'Sem Categoria', value: uncategorizedVal, color: SEM_CATEGORIA_COLOR }]
+            : categorizedItems;
+        
+        return [...barDataUnsorted].sort((a, b) => b.value - a.value);
+    }, [data?.categoryBreakdown, data?.uncategorizedTotal]);
 
     const totalExpense = Number(data?.totalExpense || 0);
     const hasBarData = barData.length > 0;
-    
-    // Dynamic height for bar chart — 44px per item, min 200
     const barChartHeight = Math.max(200, barData.length * 44 + 20);
 
-    // Burn-down chart data — cumulative daily expenses vs previous month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const dailyExpenses: { day: number; total: number }[] = data?.dailyExpenses || [];
-    const prevMonthDailyExpenses: { day: number; total: number }[] = data?.prevMonthDailyExpenses || [];
+    // Burn-down chart data
+    const burnDownData = useMemo(() => {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const dailyExpenses = data?.dailyExpenses || [];
+        const prevMonthDailyExpenses = data?.prevMonthDailyExpenses || [];
 
-    const burnDownData: { day: number; real: number; prevMonth: number }[] = [];
-    let cumulative = 0;
-    let prevCumulative = 0;
-    const dailyMap = new Map(dailyExpenses.map(d => [d.day, d.total]));
-    const prevMonthDailyMap = new Map(prevMonthDailyExpenses.map(d => [d.day, d.total]));
+        const result: { day: number; real: number; prevMonth: number }[] = [];
+        let cumulative = 0;
+        let prevCumulative = 0;
+        const dailyMap = new Map(dailyExpenses.map((d: any) => [d.day, d.total]));
+        const prevMonthDailyMap = new Map(prevMonthDailyExpenses.map((d: any) => [d.day, d.total]));
 
-    for (let d = 1; d <= daysInMonth; d++) {
-        cumulative += dailyMap.get(d) || 0;
-        prevCumulative += prevMonthDailyMap.get(d) || 0;
-
-        // For the current month, only include days up to today for current month's line
         const now = new Date();
         const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
-        if (isCurrentMonth && d > now.getDate()) {
-            burnDownData.push({ day: d, real: undefined as any, prevMonth: Math.round(prevCumulative * 100) / 100 });
-        } else {
-            burnDownData.push({ day: d, real: Math.round(cumulative * 100) / 100, prevMonth: Math.round(prevCumulative * 100) / 100 });
-        }
-    }
 
-    const hasBurnDownData = dailyExpenses.length > 0 || prevMonthDailyExpenses.length > 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+            cumulative += dailyMap.get(d) || 0;
+            prevCumulative += prevMonthDailyMap.get(d) || 0;
+
+            if (isCurrentMonth && d > now.getDate()) {
+                result.push({ day: d, real: undefined as any, prevMonth: Math.round(prevCumulative * 100) / 100 });
+            } else {
+                result.push({ day: d, real: Math.round(cumulative * 100) / 100, prevMonth: Math.round(prevCumulative * 100) / 100 });
+            }
+        }
+        return result;
+    }, [data?.dailyExpenses, data?.prevMonthDailyExpenses, year, month]);
+
+    const hasBurnDownData = (data?.dailyExpenses || []).length > 0 || (data?.prevMonthDailyExpenses || []).length > 0;
 
     return (
         <div className="charts-grid">

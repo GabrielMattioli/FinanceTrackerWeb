@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, RotateCcw, Trash2, CheckSquare, Eye, EyeOff } from 'lucide-react';
 import { getHistory, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports, GetHistoryParams } from '../api/transactions';
 import { getCategories } from '../api/categories';
@@ -66,44 +66,52 @@ export default function HistoryPage() {
     }, [year, month, categoryId]);
 
     const handleUncategorize = async (id: string) => {
+        setTransactions(prev => prev.filter(tx => tx.id !== id));
         try {
             await uncategorizeOne(id);
             toast.success('Transação movida para Pendentes.');
-            load(page, false);
         } catch {
             toast.error('Erro ao descategorizar.');
+            load(page, false);
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Excluir esta transação?')) return;
+        setTransactions(prev => prev.filter(tx => tx.id !== id));
         try {
             await deleteTransaction(id);
             toast.success('Transação excluída.');
-            load(page, false);
         } catch {
             toast.error('Erro ao excluir.');
+            load(page, false);
         }
     };
 
     const handleQuickCategory = async (id: string, catId: string) => {
+        const cat = categories.find(c => c.id === catId);
+        setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, category_id: catId, category: cat } : tx));
         try {
             await categorizeOne(id, catId);
-            load(page, false);
+            if (categoryId && categoryId !== catId) {
+                 setTransactions(prev => prev.filter(tx => tx.id !== id));
+            }
         } catch {
             toast.error('Erro ao categorizar.');
+            load(page, false);
         }
     };
 
     const handleToggleIgnore = async (id: string, currentStatus: boolean) => {
+        setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ignore_in_reports: !currentStatus } : tx));
         try {
             await toggleIgnoreInReports(id, !currentStatus);
             toast.success(!currentStatus ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
-            load(page, false);
         } catch (err) {
             console.error('handleToggleIgnore error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
             toast.error(`Erro ao atualizar status: ${errorMessage}`);
+            load(page, false);
         }
     };
 
@@ -111,21 +119,25 @@ export default function HistoryPage() {
         if (selected.size === 0) return;
         if (!confirm(`Excluir ${selected.size} transições selecionadas do histórico?`)) return;
         setApplying(true);
+        const deletedIds = Array.from(selected) as string[];
+        setTransactions(prev => prev.filter(tx => !deletedIds.includes(tx.id)));
         try {
-            await bulkDelete(Array.from(selected) as string[]);
+            await bulkDelete(deletedIds);
             toast.success(`${selected.size} transações excluídas!`);
             clearSelection();
-            load(page, false);
         } catch {
             toast.error('Erro ao excluir em lote.');
+            load(page, false);
         } finally {
             setApplying(false);
         }
     };
 
-    const filtered = filter.trim()
-        ? transactions.filter(t => t.description.toLowerCase().includes(filter.toLowerCase()))
-        : transactions;
+    const filtered = useMemo(() => {
+        return filter.trim()
+            ? transactions.filter(t => t.description.toLowerCase().includes(filter.toLowerCase()))
+            : transactions;
+    }, [transactions, filter]);
 
     const { selected, setSelected, toggleSelect, toggleAll, clearSelection, allSelected, someSelected } = useRowSelection(filtered);
 
