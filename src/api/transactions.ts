@@ -16,7 +16,15 @@ export const getPending = async (page: number = 0, size: number = 100) => {
   };
 };
 
-export const getHistory = async (params: any = {}) => {
+export interface GetHistoryParams {
+  month?: number;
+  year?: number;
+  categoryId?: string;
+  page?: number;
+  size?: number;
+}
+
+export const getHistory = async (params: GetHistoryParams = {}) => {
   let query = supabase
     .from('transactions')
     .select('*, categories(id, name, color)', { count: 'exact' })
@@ -50,7 +58,7 @@ export const getHistory = async (params: any = {}) => {
   };
 };
 
-export const categorizeOne = async (id: any, categoryId: any) => {
+export const categorizeOne = async (id: string, categoryId: string) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
@@ -60,7 +68,7 @@ export const categorizeOne = async (id: any, categoryId: any) => {
   return checkError(error, data);
 };
 
-export const uncategorizeOne = async (id: any) => {
+export const uncategorizeOne = async (id: string) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: null })
@@ -70,7 +78,7 @@ export const uncategorizeOne = async (id: any) => {
   return checkError(error, data);
 };
 
-export const bulkCategorize = async (transactionIds: any[], categoryId: any) => {
+export const bulkCategorize = async (transactionIds: string[], categoryId: string) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
@@ -79,7 +87,7 @@ export const bulkCategorize = async (transactionIds: any[], categoryId: any) => 
   return checkError(error, data);
 };
 
-export const applyCategoryRuleToUncategorized = async (keyword: string, categoryId: any) => {
+export const applyCategoryRuleToUncategorized = async (keyword: string, categoryId: string) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
@@ -89,17 +97,17 @@ export const applyCategoryRuleToUncategorized = async (keyword: string, category
   return checkError(error, data);
 };
 
-export const deleteTransaction = async (id: any) => {
+export const deleteTransaction = async (id: string) => {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
 };
 
-export const bulkDelete = async (transactionIds: any[]) => {
+export const bulkDelete = async (transactionIds: string[]) => {
   const { error } = await supabase.from('transactions').delete().in('id', transactionIds);
   if (error) throw error;
 };
 
-export const toggleIgnoreInReports = async (id: any, ignore: boolean) => {
+export const toggleIgnoreInReports = async (id: string, ignore: boolean) => {
   const { data, error } = await supabase
     .from('transactions')
     .update({ ignore_in_reports: ignore })

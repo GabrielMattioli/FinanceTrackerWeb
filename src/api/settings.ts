@@ -32,11 +32,10 @@ export const updateCurrency = async (baseCurrency: string) => {
     if (error) throw error;
     return { baseCurrency: data.base_currency };
   } else {
-    // Cria com um ID aleatório para evitar colisão com outros usuários
-    const randomId = Math.floor(Math.random() * 1000000000) + 2;
+    // Let the database generate the ID
     const { data, error } = await supabase
       .from('settings')
-      .insert({ id: randomId, base_currency: baseCurrency })
+      .insert({ base_currency: baseCurrency })
       .select()
       .single();
     if (error) throw error;
@@ -44,7 +43,13 @@ export const updateCurrency = async (baseCurrency: string) => {
   }
 };
 
-export const importCsv = async (file: File, options: any = {}) => {
+export interface ImportCsvOptions {
+  dateColumn?: number;
+  descColumn?: number;
+  amountColumn?: number;
+}
+
+export const importCsv = async (file: File, options: ImportCsvOptions = {}) => {
   const text = await file.text();
   const firstLine = text.split('\n')[0] || '';
   const delimiter = firstLine.includes(';') ? ';' : ',';
@@ -108,7 +113,7 @@ export const importCsv = async (file: File, options: any = {}) => {
   }
 
   // Fetch rules for auto-categorization
-  let rules: any[] = [];
+  let rules: { keyword: string; category_id: string }[] = [];
   try {
     const { data } = await supabase.from('category_rules').select('keyword, category_id');
     if (data) rules = data;

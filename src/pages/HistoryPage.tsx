@@ -1,7 +1,6 @@
-// @ts-nocheck
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, RotateCcw, Trash2, CheckSquare, Eye, EyeOff } from 'lucide-react';
-import { getHistory, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports } from '../api/transactions';
+import { getHistory, uncategorizeOne, deleteTransaction, bulkDelete, categorizeOne, toggleIgnoreInReports, GetHistoryParams } from '../api/transactions';
 import { getCategories } from '../api/categories';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
@@ -9,11 +8,27 @@ import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
 import { useSettings } from '../context/SettingsContext';
 
+export interface Category {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+export interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category_id?: string;
+  category?: Category;
+  ignore_in_reports: boolean;
+}
+
 export default function HistoryPage() {
     const { baseCurrency } = useSettings();
     const now = new Date();
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [year, setYear] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth() + 1);
@@ -27,7 +42,7 @@ export default function HistoryPage() {
     const load = async (p = 0, showLoading = true) => {
         if (showLoading) setLoading(true);
         try {
-            const params = { page: p, size: 50 };
+            const params: GetHistoryParams = { page: p, size: 50 };
             if (year) params.year = year;
             if (month) params.month = month;
             if (categoryId) params.categoryId = categoryId;
@@ -50,7 +65,7 @@ export default function HistoryPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [year, month, categoryId]);
 
-    const handleCategorize = async (id: any, catId: any) => {
+    const handleUncategorize = async (id: string) => {
         try {
             await uncategorizeOne(id);
             toast.success('Transação movida para Pendentes.');
@@ -60,17 +75,7 @@ export default function HistoryPage() {
         }
     };
 
-    const handleUncategorize = async (id: any) => {
-        try {
-            await uncategorizeOne(id);
-            toast.success('Transação movida para Pendentes.');
-            load(page, false);
-        } catch {
-            toast.error('Erro ao descategorizar.');
-        }
-    };
-
-    const handleDelete = async (id: any) => {
+    const handleDelete = async (id: string) => {
         if (!confirm('Excluir esta transação?')) return;
         try {
             await deleteTransaction(id);
@@ -81,7 +86,7 @@ export default function HistoryPage() {
         }
     };
 
-    const handleQuickCategory = async (id, catId) => {
+    const handleQuickCategory = async (id: string, catId: string) => {
         try {
             await categorizeOne(id, catId);
             load(page, false);
@@ -90,14 +95,15 @@ export default function HistoryPage() {
         }
     };
 
-    const handleToggleIgnore = async (id: any, currentStatus: boolean) => {
+    const handleToggleIgnore = async (id: string, currentStatus: boolean) => {
         try {
             await toggleIgnoreInReports(id, !currentStatus);
             toast.success(!currentStatus ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
             load(page, false);
-        } catch (err: any) {
+        } catch (err) {
             console.error('handleToggleIgnore error:', err);
-            toast.error(`Erro ao atualizar status: ${err?.message || 'Erro desconhecido'}`);
+            const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+            toast.error(`Erro ao atualizar status: ${errorMessage}`);
         }
     };
 
@@ -106,7 +112,7 @@ export default function HistoryPage() {
         if (!confirm(`Excluir ${selected.size} transições selecionadas do histórico?`)) return;
         setApplying(true);
         try {
-            await bulkDelete([...selected]);
+            await bulkDelete(Array.from(selected) as string[]);
             toast.success(`${selected.size} transações excluídas!`);
             clearSelection();
             load(page, false);
@@ -138,7 +144,7 @@ export default function HistoryPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={setMonth} allowAllMonths={true} categorizedOnly={true} updateTrigger={transactions} />
+                <MonthBar year={year} month={month} onMonthChange={(m) => setMonth(Number(m))} allowAllMonths={true} categorizedOnly={true} updateTrigger={transactions} />
             </div>
 
             <div className="filter-bar">
