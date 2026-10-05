@@ -670,11 +670,43 @@ tbody tr.selected {
 
 /* ===== CHECKBOX ===== */
 .custom-checkbox {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: grid;
+  place-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
   flex-shrink: 0;
+}
+
+.custom-checkbox::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  transform: scale(0);
+  background-color: white;
+  transition: 120ms transform ease-in-out;
+}
+
+.custom-checkbox:checked {
+  background-color: var(--checkbox-color, var(--accent));
+  border-color: var(--checkbox-color, var(--accent));
+}
+
+.custom-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.custom-checkbox:hover:not(:checked) {
+  border-color: #9ca3af;
 }
 
 /* ===== MONTH YEAR SELECTOR ===== */

@@ -189,9 +189,10 @@ export default function CategoryManager() {
                                             <div style={{ padding: '0 0 0 10px', display: 'flex', alignItems: 'center' }}>
                                                 <input 
                                                     type="checkbox" 
+                                                    className="custom-checkbox"
                                                     checked={selectedCategoryIds.includes(c.id)} 
                                                     onChange={() => handleToggleSelect(c.id)}
-                                                    style={{ cursor: 'pointer', margin: 0, width: 14, height: 14, accentColor: c.color }}
+                                                    style={{ '--checkbox-color': c.color } as any}
                                                 />
                                             </div>
                                             <div 
