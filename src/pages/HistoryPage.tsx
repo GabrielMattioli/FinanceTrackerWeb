@@ -11,7 +11,7 @@ import { useSettings } from '../context/SettingsContext';
 export interface Category {
   id: string;
   name: string;
-  color?: string;
+  color?: string | null;
 }
 
 export interface Transaction {
@@ -19,9 +19,9 @@ export interface Transaction {
   date: string;
   description: string;
   amount: number;
-  category_id?: string;
-  category?: Category;
-  ignore_in_reports: boolean;
+  category_id?: string | null;
+  category?: Category | null;
+  ignore_in_reports: boolean | null;
 }
 
 export default function HistoryPage() {
@@ -102,11 +102,12 @@ export default function HistoryPage() {
         }
     };
 
-    const handleToggleIgnore = async (id: string, currentStatus: boolean) => {
-        setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ignore_in_reports: !currentStatus } : tx));
+    const handleToggleIgnore = async (id: string, currentStatus: boolean | null) => {
+        const isIgnored = currentStatus === true;
+        setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ignore_in_reports: !isIgnored } : tx));
         try {
-            await toggleIgnoreInReports(id, !currentStatus);
-            toast.success(!currentStatus ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
+            await toggleIgnoreInReports(id, !isIgnored);
+            toast.success(!isIgnored ? 'Transação ignorada em relatórios.' : 'Transação incluída em relatórios.');
         } catch (err) {
             console.error('handleToggleIgnore error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';

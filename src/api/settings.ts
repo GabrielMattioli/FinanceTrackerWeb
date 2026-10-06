@@ -116,7 +116,11 @@ export const importCsv = async (file: File, options: ImportCsvOptions = {}) => {
   let rules: { keyword: string; category_id: string }[] = [];
   try {
     const { data } = await supabase.from('category_rules').select('keyword, category_id');
-    if (data) rules = data;
+    if (data) {
+      rules = data
+        .filter(r => r.category_id !== null)
+        .map(r => ({ keyword: r.keyword, category_id: r.category_id as string }));
+    }
   } catch (e) {
     // Ignore error, rules are optional
   }

@@ -23,8 +23,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         getSettings()
             .then(data => {
                 if (!isMounted) return;
-                // Prefer normalized baseCurrency, fallback to snake_case if api isn't updated yet
-                const currency = data?.baseCurrency || data?.base_currency || 'EUR';
+                const currency = data?.baseCurrency || 'EUR';
                 setSettings(prev => ({ ...prev, baseCurrency: currency }));
             })
             .catch(err => console.error('Failed to load settings', err))
@@ -41,7 +40,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         try {
             const data = await apiUpdateCurrency(newCurrency);
             if (data?.baseCurrency) {
-                setSettings(prev => ({ ...prev, baseCurrency: data.baseCurrency }));
+                setSettings(prev => ({ ...prev, baseCurrency: data.baseCurrency as string }));
             }
         } catch (err) {
             console.error('Failed to update currency', err);

@@ -7,7 +7,6 @@ import { useSettings } from '../context/SettingsContext';
 export default function SettingsPage() {
     // dbDir is declared but never read, we'll keep it or comment it out
     // const [dbDir, setDbDir] = useState<string>('');
-    const [version, setVersion] = useState('');
     const [loading, setLoading] = useState(true);
     const { baseCurrency, updateBaseCurrency } = useSettings();
     const [updatingCurrency, setUpdatingCurrency] = useState(false);
@@ -16,10 +15,6 @@ export default function SettingsPage() {
     useEffect(() => {
         setExpectedIncome(localStorage.getItem('expectedMonthlyIncome') || '');
         getSettings()
-            .then(data => {
-                // setDbDir(data.dbDir || '');
-                setVersion(data.version || '');
-            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -135,7 +130,7 @@ export default function SettingsPage() {
                     <span>Sobre</span>
                 </div>
                 <div className="settings-about">
-                    <div className="about-row"><span>Versão</span><span>{version || '1.0.0'}</span></div>
+                    <div className="about-row"><span>Versão</span><span>1.0.0</span></div>
                     <div className="about-row"><span>Banco de dados</span><span>Supabase (PostgreSQL)</span></div>
                 </div>
             </div>

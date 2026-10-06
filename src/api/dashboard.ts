@@ -6,14 +6,34 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   const daysInMonth = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-  const { data: txs, error } = await supabase
-    .from('transactions')
-    .select('*, categories(id, name, color, is_essential, is_savings, is_main_income)')
-    .lte('date', endDate);
+  const lastMonthYear = month === 1 ? year - 1 : year;
+  const lastMonthMonth = month === 1 ? 12 : month - 1;
+  const lastMonthStartDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-01`;
+  const daysInLastMonth = new Date(lastMonthYear, lastMonthMonth, 0).getDate();
+  const lastMonthEndDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-${String(daysInLastMonth).padStart(2, '0')}`;
 
-  if (error) throw error;
+  const { data: userResp } = await supabase.auth.getUser();
+  if (!userResp.user) {
+    throw new Error('User not authenticated');
+  }
+  const user_uuid = userResp.user.id;
 
-  let previousMonthBalance = 0;
+  // Run the new RPCs alongside fetching the limited transactions
+  const [txRes, prevBalanceRes, minIncomeRes] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('*, categories(id, name, color, is_essential, is_savings, is_main_income)')
+      .gte('date', lastMonthStartDate)
+      .lte('date', endDate),
+    supabase.rpc('get_balance_before_date', { target_date: startDate, user_uuid }),
+    supabase.rpc('get_min_monthly_main_income', { user_uuid })
+  ]);
+
+  if (txRes.error) throw txRes.error;
+
+  const txs = txRes.data || [];
+  let previousMonthBalance = prevBalanceRes.data || 0;
+  
   let totalIncome = 0;
   let totalExpense = 0;
   let totalSaved = 0;
@@ -24,19 +44,10 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   let prevMonthExpense = 0;
   let prevMonthSaved = 0;
 
-  const categoryMap: Record<string, any> = {};
-  const dailyMap: Record<number, any> = {};
-  const prevMonthDailyMap: Record<number, any> = {};
-  const essentialCatHistory: Record<string, { lastMonthTotal: number, currentSpent: number, name: string, color: string }> = {};
-  const historicalIncomeMap: Record<string, number> = {};
-
-  const lastMonthYear = month === 1 ? year - 1 : year;
-  const lastMonthMonth = month === 1 ? 12 : month - 1;
-  const lastMonthStartDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-01`;
-  const daysInLastMonth = new Date(lastMonthYear, lastMonthMonth, 0).getDate();
-  const lastMonthEndDate = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}-${String(daysInLastMonth).padStart(2, '0')}`;
-
-
+  const categoryMap: Record<string, { name: string; color: string; total: number }> = {};
+  const dailyMap: Record<number, { day: number; total: number; transactions: any[] }> = {};
+  const prevMonthDailyMap: Record<number, { day: number; total: number }> = {};
+  const essentialCatHistory: Record<string, { lastMonthTotal: number; currentSpent: number; name: string; color: string }> = {};
 
   for (const tx of txs) {
     if (tx.ignore_in_reports) continue;
@@ -44,67 +55,58 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
     const amount = Number(tx.amount);
     const isExpense = amount < 0;
     const expenseAmount = isExpense ? Math.abs(amount) : 0;
-    const isEssential = tx.categories?.is_essential;
+    const cat = tx.categories as any; // Using any for nested relations temporarily until mapped 
+    const isEssential = cat?.is_essential;
 
-    if (tx.date < startDate) {
-      previousMonthBalance += amount;
-      
-      if (amount >= 0 && (!tx.categories?.is_savings && (!tx.categories || tx.categories.is_main_income))) {
-        const monthKey = tx.date.substring(0, 7); // e.g. "YYYY-MM"
-        historicalIncomeMap[monthKey] = (historicalIncomeMap[monthKey] || 0) + amount;
-      }
+    const isLastMonth = tx.date >= lastMonthStartDate && tx.date <= lastMonthEndDate;
+    const isCurrentMonth = tx.date >= startDate && tx.date <= endDate;
 
-      // Track previous month totals for trend indicators
-      const isLastMonth = tx.date >= lastMonthStartDate && tx.date <= lastMonthEndDate;
-      if (isLastMonth) {
-        if (amount >= 0) {
-          if (tx.categories?.is_savings) {
-            prevMonthSaved -= amount;
-          } else if (!tx.categories || tx.categories.is_main_income) {
-            prevMonthIncome += amount;
-          } else {
-            prevMonthExpense -= amount;
-          }
+    if (isLastMonth) {
+      if (amount >= 0) {
+        if (cat?.is_savings) {
+          prevMonthSaved -= amount;
+        } else if (!cat || cat.is_main_income) {
+          prevMonthIncome += amount;
         } else {
-          if (tx.categories?.is_savings) {
-            prevMonthSaved += expenseAmount;
-          } else {
-            prevMonthExpense += expenseAmount;
-          }
+          prevMonthExpense -= amount;
         }
-
-        // Daily expenses for previous month
-        if (amount < 0 && !(tx.categories?.is_savings)) {
-          const day = parseInt(tx.date.split('-')[2], 10);
-          if (!prevMonthDailyMap[day]) {
-            prevMonthDailyMap[day] = { day, total: 0 };
-          }
-          prevMonthDailyMap[day].total += expenseAmount;
-        } else if (amount >= 0 && tx.categories && !tx.categories.is_savings) {
-          const day = parseInt(tx.date.split('-')[2], 10);
-          if (!prevMonthDailyMap[day]) {
-            prevMonthDailyMap[day] = { day, total: 0 };
-          }
-          prevMonthDailyMap[day].total -= amount;
+      } else {
+        if (cat?.is_savings) {
+          prevMonthSaved += expenseAmount;
+        } else {
+          prevMonthExpense += expenseAmount;
         }
       }
 
-      if (isEssential && tx.categories) {
-        const catId = tx.categories.id;
+      // Daily expenses for previous month
+      if (amount < 0 && !(cat?.is_savings)) {
+        const day = parseInt(tx.date.split('-')[2], 10);
+        if (!prevMonthDailyMap[day]) {
+          prevMonthDailyMap[day] = { day, total: 0 };
+        }
+        prevMonthDailyMap[day].total += expenseAmount;
+      } else if (amount >= 0 && cat && !cat.is_savings) {
+        const day = parseInt(tx.date.split('-')[2], 10);
+        if (!prevMonthDailyMap[day]) {
+          prevMonthDailyMap[day] = { day, total: 0 };
+        }
+        prevMonthDailyMap[day].total -= amount;
+      }
+
+      if (isEssential && cat) {
+        const catId = cat.id;
         if (!essentialCatHistory[catId]) {
-          essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+          essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: cat.name, color: cat.color };
         }
-        if (isLastMonth) {
-          essentialCatHistory[catId].lastMonthTotal -= amount;
-        }
+        essentialCatHistory[catId].lastMonthTotal -= amount;
       }
-    } else {
-      if (tx.categories && !tx.categories.is_savings) {
-        const catId = tx.categories.id;
+    } else if (isCurrentMonth) {
+      if (cat && !cat.is_savings) {
+        const catId = cat.id;
         if (!categoryMap[catId]) {
           categoryMap[catId] = {
-            name: tx.categories.name,
-            color: tx.categories.color,
+            name: cat.name,
+            color: cat.color,
             total: 0
           };
         }
@@ -112,40 +114,40 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
 
         if (isEssential) {
           if (!essentialCatHistory[catId]) {
-            essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: tx.categories.name, color: tx.categories.color };
+            essentialCatHistory[catId] = { lastMonthTotal: 0, currentSpent: 0, name: cat.name, color: cat.color };
           }
           essentialCatHistory[catId].currentSpent -= amount;
         }
       }
 
       if (amount >= 0) {
-        if (tx.categories?.is_savings) {
+        if (cat?.is_savings) {
           totalSaved -= amount;
-        } else if (!tx.categories || tx.categories.is_main_income) {
+        } else if (!cat || cat.is_main_income) {
           totalIncome += amount;
         } else {
           totalExpense -= amount;
         }
       } else {
-        if (tx.categories?.is_savings) {
+        if (cat?.is_savings) {
           totalSaved += expenseAmount;
         } else {
           totalExpense += expenseAmount;
-          if (!tx.categories) {
+          if (!cat) {
             uncategorizedTotal += expenseAmount;
           }
         }
       }
 
       // Daily expenses
-      if (amount < 0 && !(tx.categories?.is_savings)) {
+      if (amount < 0 && !(cat?.is_savings)) {
         const day = parseInt(tx.date.split('-')[2], 10);
         if (!dailyMap[day]) {
           dailyMap[day] = { day, total: 0, transactions: [] };
         }
         dailyMap[day].total += expenseAmount;
         dailyMap[day].transactions.push(tx);
-      } else if (amount >= 0 && tx.categories && !tx.categories.is_savings) {
+      } else if (amount >= 0 && cat && !cat.is_savings) {
         const day = parseInt(tx.date.split('-')[2], 10);
         if (!dailyMap[day]) {
           dailyMap[day] = { day, total: 0, transactions: [] };
@@ -158,13 +160,12 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
 
   const netBalance = totalIncome - totalExpense - totalSaved;
   const accumulatedBalance = previousMonthBalance + netBalance;
-  const categoryBreakdown = Object.values(categoryMap).filter((c: any) => c.total > 0);
-  const dailyExpenses = Object.values(dailyMap).sort((a: any, b: any) => a.day - b.day);
-  const prevMonthDailyExpenses = Object.values(prevMonthDailyMap).sort((a: any, b: any) => a.day - b.day);
+  const categoryBreakdown = Object.values(categoryMap).filter((c) => c.total > 0);
+  const dailyExpenses = Object.values(dailyMap).sort((a, b) => a.day - b.day);
+  const prevMonthDailyExpenses = Object.values(prevMonthDailyMap).sort((a, b) => a.day - b.day);
 
-  // Fetch all essential categories to ensure we include ones with zero transactions
   let expectedEssentialOutflow = 0;
-  const fixedExpenses = [];
+  const fixedExpenses: any[] = [];
   const manuallyPaidCategoryIds = new Set<string>();
 
   try {
@@ -175,15 +176,17 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
     ]);
 
     if (catsRes.data) {
-      for (const cat of catsRes.data) {
-        if (!essentialCatHistory[cat.id]) {
-          essentialCatHistory[cat.id] = { lastMonthTotal: 0, currentSpent: 0, name: cat.name, color: cat.color };
+      for (const category of catsRes.data) {
+        if (!essentialCatHistory[category.id]) {
+          essentialCatHistory[category.id] = { lastMonthTotal: 0, currentSpent: 0, name: category.name, color: category.color || '' };
         }
       }
     }
     
     if (paidRes.data) {
-      paidRes.data.forEach((p: any) => manuallyPaidCategoryIds.add(p.category_id));
+      paidRes.data.forEach((p) => {
+         if (p.category_id) manuallyPaidCategoryIds.add(p.category_id);
+      });
     }
   } catch (e) {
     console.error('Error fetching essential categories or paid states:', e);
@@ -217,17 +220,14 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
     });
   }
 
-  // Sort fixed expenses by highest lastMonthAmount first
   fixedExpenses.sort((a, b) => b.lastMonthAmount - a.lastMonthAmount);
-
-  const pastIncomes = Object.values(historicalIncomeMap).filter(v => v > 0);
-  const minHistoricalIncome = pastIncomes.length > 0 ? Math.min(...pastIncomes) : 0;
 
   const expectedMonthlyIncomeStr = localStorage.getItem('expectedMonthlyIncome');
   let parsedExpectedIncome = expectedMonthlyIncomeStr ? Number(expectedMonthlyIncomeStr) : NaN;
   if (isNaN(parsedExpectedIncome)) {
-    parsedExpectedIncome = minHistoricalIncome;
+    parsedExpectedIncome = minIncomeRes.data || 0;
   }
+  
   const baseExpectedIncome = parsedExpectedIncome;
   const pendingIncome = Math.max(0, baseExpectedIncome - totalIncome);
   const expectedTotalIncome = totalIncome + pendingIncome;

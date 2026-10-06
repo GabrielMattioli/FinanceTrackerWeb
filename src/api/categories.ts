@@ -1,5 +1,11 @@
 import { supabase } from '../supabaseClient';
 import { checkError } from './common';
+import type { Database } from '../types/supabase';
+
+type CategoryInsert = Database['public']['Tables']['categories']['Insert'];
+type CategoryUpdate = Database['public']['Tables']['categories']['Update'];
+type CategoryRuleInsert = Database['public']['Tables']['category_rules']['Insert'];
+type CategoryRuleUpdate = Database['public']['Tables']['category_rules']['Update'];
 
 export const getCategories = async () => {
   const { data, error } = await supabase.from('categories').select('*').order('name');
@@ -12,8 +18,8 @@ export const getCategories = async () => {
   }));
 };
 
-export const createCategory = async (dto: any) => {
-  const payload = {
+export const createCategory = async (dto: { name: string; color: string; isEssential: boolean; isSavings: boolean; isMainIncome: boolean }) => {
+  const payload: CategoryInsert = {
     name: dto.name,
     color: dto.color,
     is_essential: dto.isEssential,
@@ -24,8 +30,8 @@ export const createCategory = async (dto: any) => {
   return checkError(error, data);
 };
 
-export const updateCategory = async (id: any, dto: any) => {
-  const payload = {
+export const updateCategory = async (id: string, dto: { name: string; color: string; isEssential: boolean; isSavings: boolean; isMainIncome: boolean }) => {
+  const payload: CategoryUpdate = {
     name: dto.name,
     color: dto.color,
     is_essential: dto.isEssential,
@@ -36,12 +42,12 @@ export const updateCategory = async (id: any, dto: any) => {
   return checkError(error, data);
 };
 
-export const deleteCategory = async (id: any) => {
+export const deleteCategory = async (id: string) => {
   const { error } = await supabase.from('categories').delete().eq('id', id);
   if (error) throw error;
 };
 
-export const bulkDeleteCategories = async (categoryIds: any[]) => {
+export const bulkDeleteCategories = async (categoryIds: string[]) => {
   const { error } = await supabase.from('categories').delete().in('id', categoryIds);
   if (error) throw error;
 };
@@ -59,8 +65,8 @@ export const getCategoryRules = async () => {
   }));
 };
 
-export const createCategoryRule = async (dto: any) => {
-  const payload = {
+export const createCategoryRule = async (dto: { keyword: string; categoryId: string }) => {
+  const payload: CategoryRuleInsert = {
     keyword: dto.keyword,
     category_id: dto.categoryId
   };
@@ -68,8 +74,8 @@ export const createCategoryRule = async (dto: any) => {
   return checkError(error, data);
 };
 
-export const updateCategoryRule = async (id: any, dto: any) => {
-  const payload = {
+export const updateCategoryRule = async (id: string, dto: { keyword: string; categoryId: string }) => {
+  const payload: CategoryRuleUpdate = {
     keyword: dto.keyword,
     category_id: dto.categoryId
   };
@@ -77,7 +83,7 @@ export const updateCategoryRule = async (id: any, dto: any) => {
   return checkError(error, data);
 };
 
-export const deleteCategoryRule = async (id: any) => {
+export const deleteCategoryRule = async (id: string) => {
   const { error } = await supabase.from('category_rules').delete().eq('id', id);
   if (error) throw error;
 };
