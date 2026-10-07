@@ -8,13 +8,17 @@ export default function SettingsPage() {
     // dbDir is declared but never read, we'll keep it or comment it out
     // const [dbDir, setDbDir] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const { baseCurrency, updateBaseCurrency } = useSettings();
+    const { baseCurrency, updateBaseCurrency, initialBalance, updateInitialBalance } = useSettings();
     const [updatingCurrency, setUpdatingCurrency] = useState(false);
     const [expectedIncome, setExpectedIncome] = useState('');
+    const [updatingInitialBalance, setUpdatingInitialBalance] = useState(false);
+    const [localInitialBalance, setLocalInitialBalance] = useState('');
 
     useEffect(() => {
         setExpectedIncome(localStorage.getItem('expectedMonthlyIncome') || '');
+        setLocalInitialBalance(String(initialBalance));
         getSettings()
+            .then((data) => setLocalInitialBalance(String(data?.initialBalance || 0)))
             .finally(() => setLoading(false));
     }, []);
 
@@ -61,6 +65,42 @@ export default function SettingsPage() {
                     </div>
                     <p className="form-hint">
                         A moeda base será exibida em todo o aplicativo (dashboard, transações, etc).
+                    </p>
+                </div>
+
+                
+                <div className="form-group" style={{ marginTop: 24 }}>
+                    <label>Saldo Inicial</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <input
+                            type="number"
+                            step="0.01"
+                            className="form-control"
+                            value={localInitialBalance}
+                            onChange={(e) => setLocalInitialBalance(e.target.value)}
+                            onBlur={async () => {
+                                const val = parseFloat(localInitialBalance);
+                                if (isNaN(val) || val === initialBalance) return;
+                                setUpdatingInitialBalance(true);
+                                try {
+                                    await updateInitialBalance(val);
+                                    toast.success('Saldo inicial atualizado!');
+                                } catch (err: any) {
+                                    console.error(err);
+                                    toast.error('Erro ao atualizar: ' + (err.message || JSON.stringify(err)));
+                                    setLocalInitialBalance(String(initialBalance));
+                                } finally {
+                                    setUpdatingInitialBalance(false);
+                                }
+                            }}
+                            disabled={updatingInitialBalance}
+                            placeholder="Ex: 1500,00"
+                            style={{ maxWidth: 250 }}
+                        />
+                        {updatingInitialBalance && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Atualizando...</span>}
+                    </div>
+                    <p className="form-hint">
+                        Este valor é adicionado ao saldo total da sua conta para refletir a quantia que você tinha antes de começar a rastrear transações.
                     </p>
                 </div>
 

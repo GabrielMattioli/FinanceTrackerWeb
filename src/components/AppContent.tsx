@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import ImportModal from './ImportModal';
+import InitialBalanceModal from './InitialBalanceModal';
 import PendingPage from '../pages/PendingPage';
 import HistoryPage from '../pages/HistoryPage';
 import DashboardPage from '../pages/DashboardPage';
@@ -83,6 +84,8 @@ export default function AppContent() {
           }}
         />
       )}
+
+      <InitialBalanceModal />
     </div>
   );
 }

@@ -120,16 +120,19 @@ export type Database = {
       settings: {
         Row: {
           base_currency: string | null
+          initial_balance: number | null
           id: number
           user_id: string
         }
         Insert: {
           base_currency?: string | null
+          initial_balance?: number | null
           id?: number
           user_id?: string
         }
         Update: {
           base_currency?: string | null
+          initial_balance?: number | null
           id?: number
           user_id?: string
         }

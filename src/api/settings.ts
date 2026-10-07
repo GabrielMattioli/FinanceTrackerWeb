@@ -10,14 +10,40 @@ export const getSettings = async () => {
 
   // Se não existir (maybeSingle retorna null), retorna um padrão
   if (!data) {
-    return { baseCurrency: 'EUR' };
+    return { baseCurrency: 'EUR', initialBalance: 0 };
   }
 
   return {
     ...data,
-    baseCurrency: data.base_currency || 'EUR'
+    baseCurrency: data.base_currency || 'EUR',
+    initialBalance: data.initial_balance || 0
   };
 };
+
+
+export const updateInitialBalance = async (initialBalance: number) => {
+  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('settings')
+      .update({ initial_balance: initialBalance })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { initialBalance: data.initial_balance };
+  } else {
+    const { data, error } = await supabase
+      .from('settings')
+      .insert({ initial_balance: initialBalance })
+      .select()
+      .single();
+    if (error) throw error;
+    return { initialBalance: data.initial_balance };
+  }
+};
+
 
 export const updateCurrency = async (baseCurrency: string) => {
   const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
