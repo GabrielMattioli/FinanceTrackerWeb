@@ -50,7 +50,7 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '100vh',
+      minHeight: '100dvh',
       backgroundColor: 'var(--bg-primary)',
       color: 'var(--text-primary)',
       position: 'relative'

@@ -43,15 +43,11 @@ export function DashboardSkeleton() {
             <div className="charts-grid">
                 <div className="card skeleton-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="skeleton-line skeleton-md" style={{ width: '30%', marginBottom: 24 }} />
-                    <div className="skeleton-chart" />
+                    <div className="skeleton-chart" style={{ height: 250 }} />
                 </div>
-                <div className="card skeleton-card">
+                <div className="card skeleton-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="skeleton-line skeleton-md" style={{ width: '50%', marginBottom: 24 }} />
-                    <div className="skeleton-chart-circle" />
-                </div>
-                <div className="card skeleton-card">
-                    <div className="skeleton-line skeleton-md" style={{ width: '50%', marginBottom: 24 }} />
-                    <div className="skeleton-chart" />
+                    <div className="skeleton-chart" style={{ height: 200 }} />
                 </div>
             </div>
         </div>

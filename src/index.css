@@ -104,7 +104,7 @@ body {
 /* ===== LAYOUT ===== */
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -120,6 +120,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 28px 32px;
+  container-type: inline-size;
 }
 
 /* ===== SIDEBAR ===== */
@@ -950,18 +951,13 @@ tbody tr.selected {
 }
 
 .safety-stat .value {
-  font-size: 26px;
+  font-size: clamp(16px, 1rem + 2dvw, 26px);
   font-weight: 800;
-  letter-spacing: -1px;
+  letter-spacing: clamp(-0.5px, -1px, -0.5px);
   line-height: 1;
 }
 
-@media (max-width: 768px) {
-  .safety-stat .value {
-    font-size: 16px;
-    letter-spacing: -0.5px;
-  }
-}
+
 
 .safety-divider {
   width: 1px;
@@ -1405,7 +1401,7 @@ input[type="color"] {
   margin-top: 20px;
 }
 
-@media (max-width: 900px) {
+@container (max-width: 850px) {
   .charts-grid {
     grid-template-columns: 1fr;
   }
@@ -1714,8 +1710,8 @@ input[type="color"] {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
     background: rgba(0, 0, 0, 0.5);
     z-index: 99;
     animation: fadeIn 0.3s ease;
