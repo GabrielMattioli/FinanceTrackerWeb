@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setUser(session?.user || null);
       setLoading(false);
     });
 
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      setUser(session?.user || null);
       if (event === 'SIGNED_OUT') {
         invalidateYearlySummaryCache();
         localStorage.removeItem('expectedMonthlyIncome');
@@ -44,14 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
-  useEffect(() => {
-    if (session?.user) {
-      setUser(session.user);
-    } else {
-      setUser(null);
-    }
-  }, [session]);
 
   return (
     <AuthContext.Provider value={{ session, user, signOut }}>

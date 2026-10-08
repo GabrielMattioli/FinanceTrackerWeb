@@ -23,6 +23,8 @@ useEffect(() => {
                     
                     setIsExistingUser((count || 0) > 0);
                     setIsOpen(true);
+                } else {
+                    setIsOpen(false);
                 }
             } catch (e) {
                 console.error('Failed to check user status', e);
