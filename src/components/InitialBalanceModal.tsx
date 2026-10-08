@@ -5,24 +5,18 @@ import { Wallet, X, Lightbulb } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 export default function InitialBalanceModal() {
-    const { initialBalance, updateInitialBalance, loadingSettings } = useSettings();
+    const { initialBalance, updateInitialBalance, loadingSettings, hasSeenOnboarding, dismissOnboarding } = useSettings();
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
     const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
 
-    useEffect(() => {
+useEffect(() => {
         if (loadingSettings) return;
 
         const checkAndShow = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-
-                const storageKey = `@FinanceTracker:seenInitialBalancePrompt_${user.id}`;
-                const hasSeen = localStorage.getItem(storageKey);
-
-                if (!hasSeen && initialBalance === 0) {
+                if (!hasSeenOnboarding && initialBalance === 0) {
                     const { count } = await supabase
                         .from('transactions')
                         .select('id', { count: 'exact', head: true });
@@ -36,14 +30,16 @@ export default function InitialBalanceModal() {
         };
 
         checkAndShow();
-    }, [initialBalance, loadingSettings]);
+    }, [initialBalance, loadingSettings, hasSeenOnboarding]);
 
-    const handleClose = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            localStorage.setItem(`@FinanceTracker:seenInitialBalancePrompt_${user.id}`, 'true');
+const handleClose = async () => {
+        try {
+            await dismissOnboarding();
+        } catch (e) {
+            console.error('Error dismissing onboarding:', e);
+        } finally {
+            setIsOpen(false);
         }
-        setIsOpen(false);
     };
 
     const handleSave = async () => {

@@ -121,18 +121,21 @@ export type Database = {
         Row: {
           base_currency: string | null
           initial_balance: number | null
+          has_seen_onboarding: boolean | null
           id: number
           user_id: string
         }
         Insert: {
           base_currency?: string | null
           initial_balance?: number | null
+          has_seen_onboarding?: boolean | null
           id?: number
           user_id?: string
         }
         Update: {
           base_currency?: string | null
           initial_balance?: number | null
+          has_seen_onboarding?: boolean | null
           id?: number
           user_id?: string
         }

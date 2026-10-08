@@ -10,7 +10,7 @@ export const getSettings = async () => {
 
   // Se não existir (maybeSingle retorna null), retorna um padrão
   if (!data) {
-    return { baseCurrency: 'EUR', initialBalance: 0 };
+    return { baseCurrency: 'EUR', initialBalance: 0, has_seen_onboarding: false };
   }
 
   return {
@@ -66,6 +66,29 @@ export const updateCurrency = async (baseCurrency: string) => {
       .single();
     if (error) throw error;
     return { baseCurrency: data.base_currency };
+  }
+};
+
+
+export const dismissOnboarding = async () => {
+  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+  if (existing) {
+    const { data, error } = await supabase
+      .from('settings')
+      .update({ has_seen_onboarding: true })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data.has_seen_onboarding;
+  } else {
+    const { data, error } = await supabase
+      .from('settings')
+      .insert({ has_seen_onboarding: true })
+      .select()
+      .single();
+    if (error) throw error;
+    return data.has_seen_onboarding;
   }
 };
 
