@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Plus, Edit2, X } from 'lucide-react';
 
 const DEFAULT_COLORS = [
@@ -33,19 +33,56 @@ export function CategoryModal({
     isEssential, setIsEssential, isSavings, setIsSavings,
     isMainIncome, setIsMainIncome, saving, onSave, onClose
 }: CategoryModalProps) {
+    const dialogRef = useRef<HTMLDialogElement>(null);
     const colorRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        
+        if (isOpen && !dialog.open) {
+            dialog.showModal();
+        } else if (!isOpen && dialog.open) {
+            dialog.close();
+        }
+
+        // Fallback for browsers without closedby="any" support
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const handleBackdropClick = (event: MouseEvent) => {
+                if (event.target !== dialog) return;
+                const rect = dialog.getBoundingClientRect();
+                const isDialogContent = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isDialogContent) {
+                    dialog.close();
+                    onClose();
+                }
+            };
+            dialog.addEventListener('click', handleBackdropClick);
+            return () => dialog.removeEventListener('click', handleBackdropClick);
+        }
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="modal" style={{ maxWidth: 500, width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
-                <div className="modal-header">
-                    <h2 className="modal-title">{isEditing ? 'Editar Categoria' : 'Nova Categoria'}</h2>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
-                        <X size={20} />
-                    </button>
-                </div>
+        <dialog 
+            ref={dialogRef}
+            className="modal" 
+            style={{ maxWidth: 500, width: '95%', maxHeight: '90vh', overflowY: 'auto', margin: 'auto' }}
+            onClose={onClose}
+            closedby="any"
+        >
+            <div className="modal-header">
+                <h2 className="modal-title">{isEditing ? 'Editar Categoria' : 'Nova Categoria'}</h2>
+                <button type="button" className="btn btn-ghost btn-icon" onClick={() => { dialogRef.current?.close(); onClose(); }}>
+                    <X size={20} />
+                </button>
+            </div>
                 <div className="modal-body">
                     <form id="category-form" onSubmit={onSave}>
                         <div className="form-group">
@@ -165,7 +202,6 @@ export function CategoryModal({
                         {isEditing ? 'Salvar' : 'Criar'}
                     </button>
                 </div>
-            </div>
-        </div>
+            </dialog>
     );
 }

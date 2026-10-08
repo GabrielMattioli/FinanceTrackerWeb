@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, X } from 'lucide-react';
 import { getCategoryRules, createCategoryRule, deleteCategoryRule, updateCategoryRule, getCategories } from '../../api/categories';
 import { applyCategoryRuleToUncategorized } from '../../api/transactions';
@@ -13,6 +13,41 @@ export default function RuleManager() {
     const [savingRule, setSavingRule] = useState(false);
     const [editingRuleId, setEditingRuleId] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const dialogRef = useRef<HTMLDialogElement>(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        
+        if (isModalOpen && !dialog.open) {
+            dialog.showModal();
+        } else if (!isModalOpen && dialog.open) {
+            dialog.close();
+        }
+
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const handleBackdropClick = (event: MouseEvent) => {
+                if (event.target !== dialog) return;
+                const rect = dialog.getBoundingClientRect();
+                const isDialogContent = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isDialogContent) {
+                    dialog.close();
+                    setIsModalOpen(false);
+                    setEditingRuleId(null);
+                    setKeyword('');
+                    setCategoryId('');
+                }
+            };
+            dialog.addEventListener('click', handleBackdropClick);
+            return () => dialog.removeEventListener('click', handleBackdropClick);
+        }
+    }, [isModalOpen]);
 
     const loadData = async () => {
         setLoadingRules(true);
@@ -225,9 +260,8 @@ export default function RuleManager() {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCancelEditRule()}>
-                    <div className="modal" style={{ maxWidth: 500, width: '95%' }}>
-                        <div className="modal-header">
+                <dialog ref={dialogRef} className="modal" style={{ maxWidth: 500, width: '95%', margin: 'auto' }} onClose={handleCancelEditRule} closedby="any">
+                    <div className="modal-header">
                             <h2 className="modal-title">{editingRuleId ? 'Editar Regra' : 'Nova Regra'}</h2>
                             <button className="btn btn-ghost btn-icon" onClick={handleCancelEditRule}>
                                 <X size={20} />
@@ -272,9 +306,10 @@ export default function RuleManager() {
                                 {editingRuleId ? 'Salvar Alterações' : 'Criar Regra'}
                             </button>
                         </div>
-                    </div>
-                </div>
+                </dialog>
             )}
         </div>
     );
 }
+
+

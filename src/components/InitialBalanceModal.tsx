@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
 import { Wallet, X, Lightbulb } from 'lucide-react';
@@ -10,6 +10,33 @@ export default function InitialBalanceModal() {
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
     const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
+    const dialogRef = useRef<HTMLDialogElement>(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        if (isOpen && !dialog.open) { dialog.showModal(); }
+        else if (!isOpen && dialog.open) { dialog.close(); }
+
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const handleBackdropClick = (event: MouseEvent) => {
+                if (event.target !== dialog) return;
+                const rect = dialog.getBoundingClientRect();
+                const isDialogContent = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isDialogContent) {
+                    dialog.close();
+                    handleClose();
+                }
+            };
+            dialog.addEventListener('click', handleBackdropClick);
+            return () => dialog.removeEventListener('click', handleBackdropClick);
+        }
+    }, [isOpen]);
 
 useEffect(() => {
         if (loadingSettings) return;
@@ -67,8 +94,7 @@ const handleClose = async () => {
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
-            <div className="modal" style={{ maxWidth: 450 }}>
+        <dialog ref={dialogRef} className="modal" style={{ maxWidth: 450 }} onClose={handleClose} closedby="any">
                 <div className="modal-header">
                     <h2 className="modal-title">
                         {isExistingUser ? 'Ajuste seu Saldo Inicial' : 'Qual o seu Saldo Atual?'}
@@ -149,7 +175,8 @@ const handleClose = async () => {
                         {loading ? 'Salvando...' : 'Salvar Saldo'}
                     </button>
                 </div>
-            </div>
-        </div>
+            </dialog>
     );
 }
+
+

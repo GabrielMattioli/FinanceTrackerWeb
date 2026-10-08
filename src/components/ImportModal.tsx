@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Upload, FileText, Sparkles } from 'lucide-react';
 import { importCsv } from '../api/settings';
 import toast from 'react-hot-toast';
@@ -15,6 +15,32 @@ export default function ImportModal({ onClose, onSuccess }) {
     const [manualCols, setManualCols] = useState({ dateColumn: '', descColumn: '', amountColumn: '' });
 
     const fileInputRef = useRef(null);
+    const dialogRef = useRef(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        if (!dialog.open) { dialog.showModal(); }
+
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            const handleBackdropClick = (event) => {
+                if (event.target !== dialog) return;
+                const rect = dialog.getBoundingClientRect();
+                const isDialogContent = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isDialogContent) {
+                    dialog.close();
+                    onClose();
+                }
+            };
+            dialog.addEventListener('click', handleBackdropClick);
+            return () => dialog.removeEventListener('click', handleBackdropClick);
+        }
+    }, [onClose]);
 
     const handleFile = (f) => {
         if (f && f.name.toLowerCase().endsWith('.csv')) {
@@ -70,8 +96,7 @@ export default function ImportModal({ onClose, onSuccess }) {
         manualCols.amountColumn !== '';
 
     return (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="modal">
+        <dialog ref={dialogRef} className="modal" onClose={onClose} closedby="any">
                 <div className="modal-header">
                     <h2 className="modal-title">Importar Extrato CSV</h2>
                     <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
@@ -201,7 +226,9 @@ export default function ImportModal({ onClose, onSuccess }) {
                         {loading ? <><span className="spinner" /> Importando...</> : <><Upload size={14} /> Importar</>}
                     </button>
                 </div>
-            </div>
-        </div>
+            </dialog> 
     );
 }
+
+
+

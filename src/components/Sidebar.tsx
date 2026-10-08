@@ -24,37 +24,37 @@ export default function Sidebar({ pendingCount = 0, isOpen = false, onClose }: S
             <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }} onClick={onClose}>
                 <span className="sidebar-section-label">Visão Geral</span>
 
-                <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <LayoutDashboard size={16} />
                     Dashboard
                 </NavLink>
 
                 <span className="sidebar-section-label">Transações</span>
 
-                <NavLink to="/pending" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/pending" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <Clock size={16} />
                     Pendentes
                     {pendingCount > 0 && <span className="nav-badge">{pendingCount > 99 ? '99+' : pendingCount}</span>}
                 </NavLink>
 
-                <NavLink to="/history" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/history" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <History size={16} />
                     Histórico
                 </NavLink>
 
                 <span className="sidebar-section-label">Configurações</span>
 
-                <NavLink to="/categories" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/categories" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <Tag size={16} />
                     Categorias
                 </NavLink>
 
-                <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <Settings size={16} />
                     Configurações
                 </NavLink>
 
-                <NavLink to="/help" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink viewTransition to="/help" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <HelpCircle size={16} />
                     Ajuda
                 </NavLink>
