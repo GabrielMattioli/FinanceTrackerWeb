@@ -19,14 +19,15 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   const user_uuid = userResp.user.id;
 
   // Run the new RPCs alongside fetching the limited transactions
-  const [txRes, prevBalanceRes, minIncomeRes] = await Promise.all([
+  const [txRes, prevBalanceRes, minIncomeRes, settingsRes] = await Promise.all([
     supabase
       .from('transactions')
       .select('*, categories(id, name, color, is_essential, is_savings, is_main_income)')
       .gte('date', lastMonthStartDate)
       .lte('date', endDate),
     supabase.rpc('get_balance_before_date', { target_date: startDate, user_uuid }),
-    supabase.rpc('get_min_monthly_main_income', { user_uuid })
+    supabase.rpc('get_min_monthly_main_income', { user_uuid }),
+    supabase.from('settings').select('expected_monthly_income').eq('user_id', user_uuid).maybeSingle()
   ]);
 
   if (txRes.error) throw txRes.error;
@@ -222,9 +223,8 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
 
   fixedExpenses.sort((a, b) => b.lastMonthAmount - a.lastMonthAmount);
 
-  const expectedMonthlyIncomeStr = localStorage.getItem('expectedMonthlyIncome');
-  let parsedExpectedIncome = expectedMonthlyIncomeStr ? Number(expectedMonthlyIncomeStr) : NaN;
-  if (isNaN(parsedExpectedIncome)) {
+  let parsedExpectedIncome = settingsRes?.data?.expected_monthly_income;
+  if (parsedExpectedIncome === null || parsedExpectedIncome === undefined || isNaN(parsedExpectedIncome)) {
     parsedExpectedIncome = minIncomeRes.data || 0;
   }
   

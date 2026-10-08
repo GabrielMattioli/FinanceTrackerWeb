@@ -1,8 +1,15 @@
 import { supabase } from '../supabaseClient';
 import { checkError } from './common';
 
+const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user;
+};
+
 export const getSettings = async () => {
-  const { data, error } = await supabase.from('settings').select('*').maybeSingle();
+  const user = await getCurrentUser();
+  const { data, error } = await supabase.from('settings').select('*').eq('user_id', user.id).maybeSingle();
 
   if (error) {
     return checkError(error, data);
@@ -10,19 +17,22 @@ export const getSettings = async () => {
 
   // Se não existir (maybeSingle retorna null), retorna um padrão
   if (!data) {
-    return { baseCurrency: 'EUR', initialBalance: 0, has_seen_onboarding: false };
+    return { baseCurrency: 'EUR', initialBalance: 0, expectedMonthlyIncome: null, has_seen_onboarding: false };
   }
 
   return {
     ...data,
     baseCurrency: data.base_currency || 'EUR',
-    initialBalance: data.initial_balance || 0
+    initialBalance: data.initial_balance || 0,
+    expectedMonthlyIncome: data.expected_monthly_income,
+    has_seen_onboarding: data.has_seen_onboarding || false
   };
 };
 
 
 export const updateInitialBalance = async (initialBalance: number) => {
-  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+  const user = await getCurrentUser();
+  const { data: existing } = await supabase.from('settings').select('id').eq('user_id', user.id).maybeSingle();
 
   if (existing) {
     const { data, error } = await supabase
@@ -36,7 +46,7 @@ export const updateInitialBalance = async (initialBalance: number) => {
   } else {
     const { data, error } = await supabase
       .from('settings')
-      .insert({ initial_balance: initialBalance })
+      .insert({ initial_balance: initialBalance, user_id: user.id })
       .select()
       .single();
     if (error) throw error;
@@ -46,7 +56,8 @@ export const updateInitialBalance = async (initialBalance: number) => {
 
 
 export const updateCurrency = async (baseCurrency: string) => {
-  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+  const user = await getCurrentUser();
+  const { data: existing } = await supabase.from('settings').select('id').eq('user_id', user.id).maybeSingle();
 
   if (existing) {
     const { data, error } = await supabase
@@ -61,7 +72,7 @@ export const updateCurrency = async (baseCurrency: string) => {
     // Let the database generate the ID
     const { data, error } = await supabase
       .from('settings')
-      .insert({ base_currency: baseCurrency })
+      .insert({ base_currency: baseCurrency, user_id: user.id })
       .select()
       .single();
     if (error) throw error;
@@ -71,7 +82,8 @@ export const updateCurrency = async (baseCurrency: string) => {
 
 
 export const dismissOnboarding = async () => {
-  const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
+  const user = await getCurrentUser();
+  const { data: existing } = await supabase.from('settings').select('id').eq('user_id', user.id).maybeSingle();
   if (existing) {
     const { data, error } = await supabase
       .from('settings')
@@ -84,7 +96,7 @@ export const dismissOnboarding = async () => {
   } else {
     const { data, error } = await supabase
       .from('settings')
-      .insert({ has_seen_onboarding: true })
+      .insert({ has_seen_onboarding: true, user_id: user.id })
       .select()
       .single();
     if (error) throw error;
@@ -301,3 +313,28 @@ export const importCsv = async (file: File, options: ImportCsvOptions = {}) => {
 };
 
 
+
+
+export const updateExpectedMonthlyIncome = async (expectedIncome: number | null) => {
+  const user = await getCurrentUser();
+  const { data: existing } = await supabase.from('settings').select('id').eq('user_id', user.id).maybeSingle();
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('settings')
+      .update({ expected_monthly_income: expectedIncome })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { expectedMonthlyIncome: data.expected_monthly_income };
+  } else {
+    const { data, error } = await supabase
+      .from('settings')
+      .insert({ expected_monthly_income: expectedIncome, user_id: user.id })
+      .select()
+      .single();
+    if (error) throw error;
+    return { expectedMonthlyIncome: data.expected_monthly_income };
+  }
+};

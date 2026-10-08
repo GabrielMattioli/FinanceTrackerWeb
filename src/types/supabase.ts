@@ -120,6 +120,7 @@ export type Database = {
       settings: {
         Row: {
           base_currency: string | null
+          expected_monthly_income: number | null
           initial_balance: number | null
           has_seen_onboarding: boolean | null
           id: number
@@ -127,6 +128,7 @@ export type Database = {
         }
         Insert: {
           base_currency?: string | null
+          expected_monthly_income?: number | null
           initial_balance?: number | null
           has_seen_onboarding?: boolean | null
           id?: number
@@ -134,6 +136,7 @@ export type Database = {
         }
         Update: {
           base_currency?: string | null
+          expected_monthly_income?: number | null
           initial_balance?: number | null
           has_seen_onboarding?: boolean | null
           id?: number

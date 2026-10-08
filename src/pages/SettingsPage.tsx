@@ -8,19 +8,19 @@ export default function SettingsPage() {
     // dbDir is declared but never read, we'll keep it or comment it out
     // const [dbDir, setDbDir] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const { baseCurrency, updateBaseCurrency, initialBalance, updateInitialBalance } = useSettings();
+    const { baseCurrency, updateBaseCurrency, initialBalance, updateInitialBalance, expectedIncome: dbExpectedIncome, updateExpectedIncome } = useSettings();
     const [updatingCurrency, setUpdatingCurrency] = useState(false);
-    const [expectedIncome, setExpectedIncome] = useState('');
+    const [localExpectedIncome, setLocalExpectedIncome] = useState('');
     const [updatingInitialBalance, setUpdatingInitialBalance] = useState(false);
     const [localInitialBalance, setLocalInitialBalance] = useState('');
 
     useEffect(() => {
-        setExpectedIncome(localStorage.getItem('expectedMonthlyIncome') || '');
+        setLocalExpectedIncome(dbExpectedIncome !== null ? String(dbExpectedIncome) : '');
         setLocalInitialBalance(String(initialBalance));
         getSettings()
             .then((data) => setLocalInitialBalance(String(data?.initialBalance || 0)))
             .finally(() => setLoading(false));
-    }, []);
+    }, [initialBalance, dbExpectedIncome]);
 
     const handleCurrencyChange = async (e: any) => {
         const newCurrency = e.target.value;
@@ -111,10 +111,20 @@ export default function SettingsPage() {
                             type="number"
                             step="0.01"
                             className="form-control"
-                            value={expectedIncome}
-                            onChange={(e) => {
-                                setExpectedIncome(e.target.value);
-                                localStorage.setItem('expectedMonthlyIncome', e.target.value);
+                            value={localExpectedIncome}
+                            onChange={(e) => setLocalExpectedIncome(e.target.value)}
+                            onBlur={async () => {
+                                const val = parseFloat(localExpectedIncome);
+                                const newVal = isNaN(val) ? null : val;
+                                if (newVal === dbExpectedIncome) return;
+                                try {
+                                    await updateExpectedIncome(newVal);
+                                    toast.success('Receita esperada atualizada!');
+                                } catch (err: any) {
+                                    console.error(err);
+                                    toast.error('Erro ao atualizar receita: ' + (err.message || JSON.stringify(err)));
+                                    setLocalExpectedIncome(dbExpectedIncome !== null ? String(dbExpectedIncome) : '');
+                                }
                             }}
                             placeholder="Ex: 3500,00"
                             style={{ maxWidth: 250 }}
