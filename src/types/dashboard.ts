@@ -1,4 +1,7 @@
+import type { TransactionRow } from './domain';
+
 export interface CategoryBreakdownItem {
+  id: string;
   name: string;
   color: string;
   total: number;
@@ -7,13 +10,18 @@ export interface CategoryBreakdownItem {
 export interface DailyExpense {
   day: number;
   total: number;
-  transactions: unknown[];
+  transactions: TransactionRow[];
 }
+
+export type FixedExpenseReferenceSource = 'budget' | 'lastMonth' | 'none';
 
 export interface FixedExpense {
   id: string;
   name: string;
   color: string;
+  expectedAmount: number | null;
+  referenceAmount: number;
+  referenceSource: FixedExpenseReferenceSource;
   lastMonthAmount: number;
   currentSpent: number;
   pending: number;

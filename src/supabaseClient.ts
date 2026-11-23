@@ -5,15 +5,9 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. Please check your .env file.');
+  throw new Error(
+    'Missing Supabase environment variables (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY). Check your .env file.'
+  );
 }
 
-export const supabase = createClient<Database>(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder',
-  {
-    auth: {
-      storage: window.sessionStorage,
-    },
-  }
-);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
