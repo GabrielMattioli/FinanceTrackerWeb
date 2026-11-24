@@ -71,6 +71,11 @@ export default function FixedExpensesCard({
                     }}
                   />
                   <span style={{ fontWeight: 600, fontSize: 15 }}>{expense.name}</span>
+                  {expense.referenceSource === 'budget' && (
+                    <span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: 10.5 }}>
+                      Orçamento: {formatCurrencyValue(expense.referenceAmount, baseCurrency)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div
@@ -82,7 +87,15 @@ export default function FixedExpensesCard({
                   color: 'var(--text-secondary)',
                 }}
               >
-                <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
+                <span>
+                  Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}
+                  {expense.referenceSource === 'lastMonth' && (
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      {' '}
+                      / {formatCurrencyValue(expense.referenceAmount, baseCurrency)}
+                    </span>
+                  )}
+                </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>
                     {expense.isPaid ? (

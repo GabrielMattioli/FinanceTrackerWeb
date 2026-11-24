@@ -1,12 +1,16 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Search, CheckSquare, Tag, Trash2, Eye, EyeOff } from 'lucide-react';
+import { useState, useMemo, useEffect, type FormEvent } from 'react';
+import { Search, CheckSquare, Tag, Trash2, Eye, EyeOff, Pencil, Wand2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useSettings } from '../context/SettingsContext';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { useCategories } from '../hooks/queries/useCategoryQueries';
+import { Modal } from '../components/ui/Modal';
+import { TransactionModal } from '../components/transactions/TransactionModal';
+import { useCategories, useCreateCategoryRule } from '../hooks/queries/useCategoryQueries';
 import {
+  useApplyCategoryRule,
   useBulkCategorize,
   useBulkDeleteTransactions,
   useCategorizeTransaction,
@@ -14,19 +18,37 @@ import {
   usePendingTransactions,
   useToggleIgnoreTransaction,
 } from '../hooks/queries/useTransactionQueries';
+import type { Transaction } from '../types/domain';
+
+function suggestKeyword(description: string): string {
+  const firstSegment = description.split(' - ')[0]?.trim() || description.trim();
+  return firstSegment.slice(0, 40);
+}
 
 export default function PendingPage() {
   const { baseCurrency } = useSettings();
-  const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const [page, setPage] = useState(0);
   const [bulkCategory, setBulkCategory] = useState('');
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [ruleModalTx, setRuleModalTx] = useState<Transaction | null>(null);
+  const [ruleKeyword, setRuleKeyword] = useState('');
+  const [ruleCategoryId, setRuleCategoryId] = useState('');
   const [confirmState, setConfirmState] = useState<
     { type: 'single'; id: string } | { type: 'bulk'; ids: string[] } | null
   >(null);
 
-  const { data: pendingPage, isPending: loadingPending, isError } = usePendingTransactions({
-    page: 0,
-    size: 500,
-  });
+  const queryParams = useMemo(
+    () => ({
+      page,
+      size: 50,
+      search: debouncedSearch.trim() || undefined,
+    }),
+    [page, debouncedSearch]
+  );
+
+  const { data: pendingPage, isPending: loadingPending, isError } = usePendingTransactions(queryParams);
   const { data: categories = [] } = useCategories();
 
   const categorizeMutation = useCategorizeTransaction();
@@ -34,6 +56,8 @@ export default function PendingPage() {
   const deleteMutation = useDeleteTransaction();
   const bulkDeleteMutation = useBulkDeleteTransactions();
   const toggleIgnoreMutation = useToggleIgnoreTransaction();
+  const createRuleMutation = useCreateCategoryRule();
+  const applyRuleMutation = useApplyCategoryRule();
 
   useEffect(() => {
     if (isError) {
@@ -42,18 +66,8 @@ export default function PendingPage() {
   }, [isError]);
 
   const transactions = useMemo(() => pendingPage?.content ?? [], [pendingPage]);
-  const totalElements = pendingPage?.totalElements ?? transactions.length;
-
-  const filtered = useMemo(() => {
-    if (!filter.trim()) return transactions;
-    const q = filter.toLowerCase();
-    return transactions.filter(
-      (t) =>
-        t.description.toLowerCase().includes(q) ||
-        String(t.amount).includes(q) ||
-        t.date.includes(q)
-    );
-  }, [transactions, filter]);
+  const totalElements = pendingPage?.totalElements ?? 0;
+  const totalPages = pendingPage?.totalPages ?? 0;
 
   const {
     selected,
@@ -63,9 +77,10 @@ export default function PendingPage() {
     clearSelection,
     allSelected,
     someSelected,
-  } = useRowSelection(filtered);
+  } = useRowSelection(transactions);
 
   const applying = bulkCategorizeMutation.isPending || bulkDeleteMutation.isPending;
+  const savingRule = createRuleMutation.isPending || applyRuleMutation.isPending;
 
   const handleBulkApply = async () => {
     if (!bulkCategory || selected.size === 0) return;
@@ -128,6 +143,37 @@ export default function PendingPage() {
     }
   };
 
+  const openQuickRule = (tx: Transaction) => {
+    setRuleModalTx(tx);
+    setRuleKeyword(suggestKeyword(tx.description));
+    setRuleCategoryId('');
+  };
+
+  const handleCreateQuickRule = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmed = ruleKeyword.trim();
+    if (!trimmed || !ruleCategoryId) return;
+    try {
+      await createRuleMutation.mutateAsync({ keyword: trimmed, categoryId: ruleCategoryId });
+      const applied = await applyRuleMutation.mutateAsync({
+        keyword: trimmed,
+        categoryId: ruleCategoryId,
+      });
+      const count = applied ? applied.length : 0;
+      toast.success(
+        count > 0
+          ? `Regra criada e aplicada em ${count} transações pendentes!`
+          : 'Regra criada com sucesso!'
+      );
+      setRuleModalTx(null);
+      setRuleKeyword('');
+      setRuleCategoryId('');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar regra.';
+      toast.error(message);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -142,9 +188,14 @@ export default function PendingPage() {
           <Search size={15} className="search-icon" />
           <input
             className="input"
-            placeholder="Filtrar por descrição, valor ou data..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Buscar pendentes por descrição..."
+            aria-label="Buscar transações pendentes"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+              clearSelection();
+            }}
           />
         </div>
       </div>
@@ -155,6 +206,7 @@ export default function PendingPage() {
           <span className="bulk-count">{selected.size} selecionadas</span>
           <select
             className="select"
+            aria-label="Categoria para aplicar em lote"
             value={bulkCategory}
             onChange={(e) => setBulkCategory(e.target.value)}
           >
@@ -195,11 +247,11 @@ export default function PendingPage() {
             <div className="loading-page">
               <span className="spinner" /> Carregando...
             </div>
-          ) : filtered.length === 0 ? (
+          ) : transactions.length === 0 ? (
             <div className="table-empty">
               <div className="empty-icon">🎉</div>
-              <p>{filter ? 'Nenhum resultado para o filtro.' : 'Nenhuma transação pendente!'}</p>
-              <span>Importe um extrato CSV para começar.</span>
+              <p>{search ? 'Nenhum resultado para o filtro.' : 'Nenhuma transação pendente!'}</p>
+              <span>Importe um extrato CSV ou adicione uma transação manualmente.</span>
             </div>
           ) : (
             <>
@@ -216,7 +268,7 @@ export default function PendingPage() {
               <table className="responsive-table">
                 <thead>
                   <tr>
-                      <th style={{ width: 44 }}>
+                    <th style={{ width: 44 }}>
                       <input
                         type="checkbox"
                         className="custom-checkbox"
@@ -228,11 +280,11 @@ export default function PendingPage() {
                     <th>Data</th>
                     <th>Descrição</th>
                     <th style={{ textAlign: 'right' }}>Valor</th>
-                    <th style={{ width: 200 }}>Categorizar</th>
+                    <th style={{ width: 270 }}>Categorizar</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((tx) => (
+                  {transactions.map((tx) => (
                     <tr key={tx.id} className={selected.has(tx.id) ? 'selected' : ''}>
                       <td data-label="">
                         <input
@@ -254,6 +306,7 @@ export default function PendingPage() {
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}
+                        title={tx.description}
                       >
                         {tx.description}
                       </td>
@@ -269,9 +322,10 @@ export default function PendingPage() {
                         {formatAmount(tx.amount, baseCurrency)}
                       </td>
                       <td data-label="Ações">
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                           <select
                             className="select"
+                            aria-label={`Categorizar ${tx.description}`}
                             style={{ fontSize: 12, padding: '5px 10px', flex: 1 }}
                             defaultValue=""
                             onChange={(e) => e.target.value && handleQuickCategory(tx.id, e.target.value)}
@@ -286,6 +340,26 @@ export default function PendingPage() {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
+                            title="Criar regra automática a partir desta transação"
+                            aria-label={`Criar regra para ${tx.description}`}
+                            onClick={() => openQuickRule(tx)}
+                            style={{ padding: '6px 7px' }}
+                          >
+                            <Wand2 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            title="Editar Transação"
+                            aria-label={`Editar transação ${tx.description}`}
+                            onClick={() => setEditingTx(tx)}
+                            style={{ padding: '6px 7px' }}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
                             title={
                               tx.ignore_in_reports
                                 ? 'Incluir nos relatórios'
@@ -297,7 +371,7 @@ export default function PendingPage() {
                                 : `Ignorar ${tx.description} nos relatórios`
                             }
                             onClick={() => handleToggleIgnore(tx.id, tx.ignore_in_reports)}
-                            style={{ padding: '6px 8px' }}
+                            style={{ padding: '6px 7px' }}
                           >
                             {tx.ignore_in_reports ? <Eye size={13} /> : <EyeOff size={13} />}
                           </button>
@@ -307,7 +381,7 @@ export default function PendingPage() {
                             title="Excluir Transação"
                             aria-label={`Excluir transação ${tx.description}`}
                             onClick={() => handleDelete(tx.id)}
-                            style={{ padding: '6px 8px' }}
+                            style={{ padding: '6px 7px' }}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -321,6 +395,112 @@ export default function PendingPage() {
           )}
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            disabled={page === 0}
+            onClick={() => {
+              setPage(page - 1);
+              clearSelection();
+            }}
+          >
+            ← Anterior
+          </button>
+          <span className="page-info">
+            Página {page + 1} de {totalPages}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => {
+              setPage(page + 1);
+              clearSelection();
+            }}
+          >
+            Próxima →
+          </button>
+        </div>
+      )}
+
+      {editingTx && (
+        <TransactionModal
+          key={editingTx.id}
+          isOpen={true}
+          transaction={editingTx}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
+
+      <Modal
+        isOpen={ruleModalTx !== null}
+        title="Criar Regra Automática"
+        onClose={() => setRuleModalTx(null)}
+        maxWidth={460}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setRuleModalTx(null)}
+              disabled={savingRule}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="quick-rule-form"
+              className="btn btn-primary"
+              disabled={!ruleKeyword.trim() || !ruleCategoryId || savingRule}
+            >
+              {savingRule ? <span className="spinner" /> : <Wand2 size={14} />}
+              Criar e Aplicar
+            </button>
+          </>
+        }
+      >
+        <form id="quick-rule-form" onSubmit={handleCreateQuickRule}>
+          <div className="form-group">
+            <label className="label" htmlFor="quick-rule-keyword">
+              Palavra-chave na descrição
+            </label>
+            <input
+              id="quick-rule-keyword"
+              className="input"
+              value={ruleKeyword}
+              onChange={(e) => setRuleKeyword(e.target.value)}
+              maxLength={100}
+              required
+              autoFocus
+            />
+            <p className="form-hint">
+              Todas as transações pendentes contendo esse texto serão categorizadas automaticamente.
+            </p>
+          </div>
+          <div className="form-group">
+            <label className="label" htmlFor="quick-rule-category">
+              Categoria Destino
+            </label>
+            <select
+              id="quick-rule-category"
+              className="select"
+              value={ruleCategoryId}
+              onChange={(e) => setRuleCategoryId(e.target.value)}
+              required
+            >
+              <option value="">-- Selecione uma categoria --</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </form>
+      </Modal>
 
       <ConfirmDialog
         isOpen={confirmState !== null}

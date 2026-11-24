@@ -1,17 +1,32 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
-import Login from './pages/Login';
 import { SettingsProvider } from './context/SettingsContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AppContent from './components/AppContent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { queryClient } from './lib/queryClient';
 
 import './index.css';
+
+const Login = lazy(() => import('./pages/Login'));
+const AppContent = lazy(() => import('./components/AppContent'));
+
+function RouteLoader() {
+  return (
+    <div
+      className="loading-page"
+      style={{ height: '100dvh', background: 'var(--bg-primary)' }}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="spinner" /> Carregando...
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -35,17 +50,19 @@ export default function App() {
                     error: { iconTheme: { primary: '#f43f5e', secondary: 'white' } },
                   }}
                 />
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route
-                    path="*"
-                    element={
-                      <ProtectedRoute>
-                        <AppContent />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
+                <Suspense fallback={<RouteLoader />}>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="*"
+                      element={
+                        <ProtectedRoute>
+                          <AppContent />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </Suspense>
               </BrowserRouter>
             </SettingsProvider>
           </ThemeProvider>
