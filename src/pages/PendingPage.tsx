@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, type FormEvent } from 'react';
-import { Search, CheckSquare, Tag, Trash2, Eye, EyeOff, Pencil, Wand2 } from 'lucide-react';
+import { Search, CheckSquare, Tag, Trash2, Eye, EyeOff, Wand2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
@@ -7,7 +7,6 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useSettings } from '../context/SettingsContext';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Modal } from '../components/ui/Modal';
-import { TransactionModal } from '../components/transactions/TransactionModal';
 import { useCategories, useCreateCategoryRule } from '../hooks/queries/useCategoryQueries';
 import {
   useApplyCategoryRule,
@@ -31,7 +30,6 @@ export default function PendingPage() {
   const debouncedSearch = useDebouncedValue(search, 300);
   const [page, setPage] = useState(0);
   const [bulkCategory, setBulkCategory] = useState('');
-  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [ruleModalTx, setRuleModalTx] = useState<Transaction | null>(null);
   const [ruleKeyword, setRuleKeyword] = useState('');
   const [ruleCategoryId, setRuleCategoryId] = useState('');
@@ -251,7 +249,7 @@ export default function PendingPage() {
             <div className="table-empty">
               <div className="empty-icon">🎉</div>
               <p>{search ? 'Nenhum resultado para o filtro.' : 'Nenhuma transação pendente!'}</p>
-              <span>Importe um extrato CSV ou adicione uma transação manualmente.</span>
+              <span>Importe um extrato CSV para começar.</span>
             </div>
           ) : (
             <>
@@ -350,16 +348,6 @@ export default function PendingPage() {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
-                            title="Editar Transação"
-                            aria-label={`Editar transação ${tx.description}`}
-                            onClick={() => setEditingTx(tx)}
-                            style={{ padding: '6px 7px' }}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
                             title={
                               tx.ignore_in_reports
                                 ? 'Incluir nos relatórios'
@@ -424,15 +412,6 @@ export default function PendingPage() {
             Próxima →
           </button>
         </div>
-      )}
-
-      {editingTx && (
-        <TransactionModal
-          key={editingTx.id}
-          isOpen={true}
-          transaction={editingTx}
-          onClose={() => setEditingTx(null)}
-        />
       )}
 
       <Modal

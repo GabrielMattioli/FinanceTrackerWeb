@@ -7,8 +7,6 @@ import {
   CheckSquare,
   Eye,
   EyeOff,
-  Pencil,
-  Download,
   ArrowUpDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -18,7 +16,6 @@ import { useRowSelection } from '../hooks/useRowSelection';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useSettings } from '../context/SettingsContext';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { TransactionModal } from '../components/transactions/TransactionModal';
 import { useCategories } from '../hooks/queries/useCategoryQueries';
 import {
   useBulkDeleteTransactions,
@@ -29,19 +26,12 @@ import {
   useUncategorizeTransaction,
 } from '../hooks/queries/useTransactionQueries';
 import {
-  getAllTransactionsForExport,
   type GetHistoryParams,
   type SortDirection,
   type TransactionIgnoredFilter,
   type TransactionSortBy,
   type TransactionTypeFilter,
 } from '../api/transactions';
-import {
-  downloadTextFile,
-  serializeTransactionsToCsv,
-  serializeTransactionsToJson,
-} from '../utils/exportTransactions';
-import type { Transaction } from '../types/domain';
 
 function parseIntParam(value: string | null, fallback: number): number {
   if (!value) return fallback;
@@ -70,8 +60,6 @@ export default function HistoryPage() {
   const [sortBy, setSortBy] = useState<TransactionSortBy>('date');
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc');
   const [page, setPage] = useState(0);
-  const [exporting, setExporting] = useState(false);
-  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [confirmState, setConfirmState] = useState<
     { type: 'single'; id: string } | { type: 'bulk'; ids: string[] } | null
   >(null);
@@ -146,48 +134,6 @@ export default function HistoryPage() {
     });
   };
 
-  const handleExport = async (format: 'csv' | 'json') => {
-    setExporting(true);
-    try {
-      const exportParams: Omit<GetHistoryParams, 'page' | 'size'> = {
-        year,
-        type: typeFilter,
-        ignoredFilter,
-        sortBy,
-        sortOrder,
-      };
-      if (month !== '') exportParams.month = month;
-      if (categoryId) exportParams.categoryId = categoryId;
-      if (debouncedSearch.trim()) exportParams.search = debouncedSearch.trim();
-
-      const allRows = await getAllTransactionsForExport(exportParams);
-      if (allRows.length === 0) {
-        toast('Nenhuma transação para exportar com os filtros atuais.');
-        return;
-      }
-
-      const periodLabel = month !== '' ? `${year}-${String(month).padStart(2, '0')}` : String(year);
-      if (format === 'csv') {
-        downloadTextFile(
-          serializeTransactionsToCsv(allRows),
-          `historico-${periodLabel}.csv`,
-          'text/csv;charset=utf-8'
-        );
-      } else {
-        downloadTextFile(
-          serializeTransactionsToJson(allRows),
-          `historico-${periodLabel}.json`,
-          'application/json;charset=utf-8'
-        );
-      }
-      toast.success(`${allRows.length} transações exportadas (${format.toUpperCase()})!`);
-    } catch {
-      toast.error('Erro ao exportar transações.');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const handleUncategorize = async (id: string) => {
     try {
       await uncategorizeMutation.mutateAsync(id);
@@ -254,27 +200,7 @@ export default function HistoryPage() {
           <h2>Histórico de Transações</h2>
           <p>{totalElements} transações localizadas</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => void handleExport('csv')}
-            disabled={exporting || totalElements === 0}
-            title="Exportar filtro atual em CSV"
-          >
-            <Download size={14} /> CSV
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => void handleExport('json')}
-            disabled={exporting || totalElements === 0}
-            title="Exportar filtro atual em JSON"
-          >
-            <Download size={14} /> JSON
-          </button>
-          <YearSelector year={year} onYearChange={(y) => handleFilterChange(() => setYear(y))} />
-        </div>
+        <YearSelector year={year} onYearChange={(y) => handleFilterChange(() => setYear(y))} />
       </div>
 
       <div style={{ marginBottom: 24 }}>
@@ -487,16 +413,6 @@ export default function HistoryPage() {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
-                            title="Editar Transação"
-                            aria-label={`Editar transação ${tx.description}`}
-                            onClick={() => setEditingTx(tx)}
-                            style={{ padding: '4px 7px' }}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
                             title={
                               tx.ignore_in_reports
                                 ? 'Incluir nos relatórios'
@@ -571,15 +487,6 @@ export default function HistoryPage() {
             Próxima →
           </button>
         </div>
-      )}
-
-      {editingTx && (
-        <TransactionModal
-          key={editingTx.id}
-          isOpen={true}
-          transaction={editingTx}
-          onClose={() => setEditingTx(null)}
-        />
       )}
 
       <ConfirmDialog

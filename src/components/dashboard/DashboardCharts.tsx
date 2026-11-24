@@ -15,7 +15,6 @@ import {
   Legend,
 } from 'recharts';
 import { formatCurrencyValue } from '../../utils/formatters';
-import { useYearlySummary } from '../../hooks/queries/useDashboardQueries';
 import type { DashboardData, CategoryBreakdownItem } from '../../types/dashboard';
 
 const SEM_CATEGORIA_COLOR = '#6b7280';
@@ -23,7 +22,6 @@ const MONTHS = [
   '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
-const ABBR_MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 interface TooltipPayloadItem {
   name?: string;
@@ -148,7 +146,6 @@ export default function DashboardCharts({
   month: number;
 }) {
   const navigate = useNavigate();
-  const { data: yearlyData } = useYearlySummary(year, false);
 
   const barData = useMemo(() => {
     const categorizedItems = (data?.categoryBreakdown ?? []).map((c: CategoryBreakdownItem) => ({
@@ -206,19 +203,8 @@ export default function DashboardCharts({
     return result;
   }, [data?.dailyExpenses, data?.prevMonthDailyExpenses, year, month]);
 
-  const yearlyChartData = useMemo(() => {
-    const months = yearlyData?.months ?? [];
-    return months.map((m) => ({
-      name: ABBR_MONTHS[m.month - 1],
-      monthNumber: m.month,
-      income: Math.max(0, m.totalIncome),
-      expense: Math.max(0, m.totalExpense),
-    }));
-  }, [yearlyData?.months]);
-
   const hasBurnDownData =
     (data?.dailyExpenses ?? []).length > 0 || (data?.prevMonthDailyExpenses ?? []).length > 0;
-  const hasYearlyData = yearlyChartData.some((m) => m.income > 0 || m.expense > 0);
 
   const handleCategoryBarClick = (categoryId: string) => {
     if (categoryId === '__uncategorized__') {
@@ -369,50 +355,6 @@ export default function DashboardCharts({
                   }}
                 />
               </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      <div className="card" style={{ gridColumn: '1 / -1' }}>
-        <div className="card-header" style={{ marginBottom: 28 }}>
-          <h3 className="card-title">Evolução Anual — {year}</h3>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Entradas vs Saídas nos 12 meses
-          </span>
-        </div>
-        {!hasYearlyData ? (
-          <div className="table-empty" style={{ padding: '40px 0' }}>
-            <div className="empty-icon">📅</div>
-            <p>Sem movimentações registradas em {year}</p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={yearlyChartData} margin={{ left: 10, right: 20, top: 10, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                axisLine={{ stroke: 'var(--border-color)' }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => formatCurrencyValue(v, baseCurrency)}
-                width={90}
-              />
-              <Tooltip content={<MultiSeriesTooltip baseCurrency={baseCurrency} />} />
-              <Legend
-                verticalAlign="top"
-                height={36}
-                formatter={(value: string) => (
-                  <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{value}</span>
-                )}
-              />
-              <Bar dataKey="income" name="Entradas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={22} />
-              <Bar dataKey="expense" name="Saídas" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={22} />
             </BarChart>
           </ResponsiveContainer>
         )}

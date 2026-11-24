@@ -1,14 +1,8 @@
 import { useState, type ChangeEvent } from 'react';
-import { Database, Info, Coins, Download } from 'lucide-react';
+import { Database, Info, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme, type ThemePreference } from '../context/ThemeContext';
-import { getAllTransactionsForExport } from '../api/transactions';
-import {
-  downloadTextFile,
-  serializeTransactionsToCsv,
-  serializeTransactionsToJson,
-} from '../utils/exportTransactions';
 
 export default function SettingsPage() {
   const {
@@ -25,37 +19,6 @@ export default function SettingsPage() {
   const [draftExpectedIncome, setDraftExpectedIncome] = useState<string | null>(null);
   const [updatingInitialBalance, setUpdatingInitialBalance] = useState(false);
   const [draftInitialBalance, setDraftInitialBalance] = useState<string | null>(null);
-  const [exportingBackup, setExportingBackup] = useState(false);
-
-  const handleFullBackup = async (format: 'csv' | 'json') => {
-    setExportingBackup(true);
-    try {
-      const rows = await getAllTransactionsForExport({ includeUncategorized: true });
-      if (rows.length === 0) {
-        toast('Nenhuma transação encontrada para exportar.');
-        return;
-      }
-      const today = new Date().toISOString().slice(0, 10);
-      if (format === 'csv') {
-        downloadTextFile(
-          serializeTransactionsToCsv(rows),
-          `backup-financetracker-${today}.csv`,
-          'text/csv;charset=utf-8'
-        );
-      } else {
-        downloadTextFile(
-          serializeTransactionsToJson(rows),
-          `backup-financetracker-${today}.json`,
-          'application/json;charset=utf-8'
-        );
-      }
-      toast.success(`Backup de ${rows.length} transações exportado!`);
-    } catch {
-      toast.error('Erro ao exportar backup.');
-    } finally {
-      setExportingBackup(false);
-    }
-  };
 
   const localInitialBalance = draftInitialBalance ?? String(initialBalance);
   const localExpectedIncome =
@@ -240,32 +203,6 @@ export default function SettingsPage() {
           <p className="form-hint">
             Seus dados são sincronizados automaticamente e não correm risco de serem perdidos
             localmente.
-          </p>
-        </div>
-
-        <div className="form-group" style={{ marginTop: 20, marginBottom: 0 }}>
-          <label>Exportar Backup Completo</label>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => void handleFullBackup('csv')}
-              disabled={exportingBackup}
-            >
-              <Download size={14} /> Exportar CSV
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => void handleFullBackup('json')}
-              disabled={exportingBackup}
-            >
-              <Download size={14} /> Exportar JSON
-            </button>
-          </div>
-          <p className="form-hint">
-            Baixe todas as suas transações (categorizadas e pendentes) para backup ou uso em
-            planilhas.
           </p>
         </div>
       </div>

@@ -15,7 +15,6 @@ export interface Category extends CategoryRow {
   isEssential: boolean;
   isSavings: boolean;
   isMainIncome: boolean;
-  expectedAmount: number | null;
 }
 
 export interface CategoryInput {
@@ -24,7 +23,6 @@ export interface CategoryInput {
   isEssential: boolean;
   isSavings: boolean;
   isMainIncome: boolean;
-  expectedAmount?: number | null;
 }
 
 export interface CategoryRule extends CategoryRuleRow {
@@ -38,22 +36,6 @@ export interface CategoryRuleInput {
 
 export interface Transaction extends TransactionRow {
   category: CategorySummary | null;
-}
-
-export interface TransactionInput {
-  date: string;
-  description: string;
-  amount: number;
-  categoryId?: string | null;
-  ignoreInReports?: boolean;
-}
-
-export interface TransactionUpdateInput {
-  date?: string;
-  description?: string;
-  amount?: number;
-  categoryId?: string | null;
-  ignoreInReports?: boolean;
 }
 
 export interface UserSettings {

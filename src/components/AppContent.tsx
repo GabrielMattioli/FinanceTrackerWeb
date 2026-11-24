@@ -11,7 +11,6 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import ImportModal from './ImportModal';
 import InitialBalanceModal from './InitialBalanceModal';
-import { TransactionModal } from './transactions/TransactionModal';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const PendingPage = lazy(() => import('../pages/PendingPage'));
@@ -41,7 +40,6 @@ export default function AppContent() {
   const location = useLocation();
   const qc = useQueryClient();
   const [showImport, setShowImport] = useState(false);
-  const [showNewTx, setShowNewTx] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { data: pendingCount = 0 } = usePendingCount();
@@ -63,7 +61,6 @@ export default function AppContent() {
       <div className="main-content">
         <Topbar
           title={title}
-          onNewTransactionClick={() => setShowNewTx(true)}
           onImportClick={() => setShowImport(true)}
           theme={theme}
           toggleTheme={toggleTheme}
@@ -93,10 +90,6 @@ export default function AppContent() {
             handleImportSuccess();
           }}
         />
-      )}
-
-      {showNewTx && (
-        <TransactionModal isOpen={showNewTx} onClose={() => setShowNewTx(false)} />
       )}
 
       <InitialBalanceModal />

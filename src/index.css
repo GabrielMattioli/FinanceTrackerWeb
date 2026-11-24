@@ -1341,12 +1341,6 @@ input[type="color"] {
   background: var(--bg-hover);
 }
 
-.entity-chip-budget {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .entity-chip-remove {
   background: transparent;
   border: none;

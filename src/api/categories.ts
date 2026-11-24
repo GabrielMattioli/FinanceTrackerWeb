@@ -16,7 +16,6 @@ export const getCategories = async (): Promise<Category[]> => {
     isEssential: c.is_essential ?? false,
     isSavings: c.is_savings ?? false,
     isMainIncome: c.is_main_income ?? false,
-    expectedAmount: c.expected_amount ?? null,
   }));
 };
 
@@ -27,7 +26,6 @@ export const createCategory = async (dto: CategoryInput) => {
     is_essential: dto.isEssential,
     is_savings: dto.isSavings,
     is_main_income: dto.isMainIncome,
-    expected_amount: dto.expectedAmount ?? null,
   };
   const { data, error } = await supabase.from('categories').insert([payload]).select().single();
   return checkError(error, data);
@@ -40,7 +38,6 @@ export const updateCategory = async (id: string, dto: CategoryInput) => {
     is_essential: dto.isEssential,
     is_savings: dto.isSavings,
     is_main_income: dto.isMainIncome,
-    expected_amount: dto.expectedAmount ?? null,
   };
   const { data, error } = await supabase.from('categories').update(payload).eq('id', id).select().single();
   return checkError(error, data);

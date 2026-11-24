@@ -20,8 +20,6 @@ interface CategoryModalProps {
   setColor: (val: string) => void;
   isEssential: boolean;
   setIsEssential: (val: boolean) => void;
-  expectedAmount: string;
-  setExpectedAmount: (val: string) => void;
   isSavings: boolean;
   setIsSavings: (val: boolean) => void;
   isMainIncome: boolean;
@@ -40,8 +38,6 @@ export function CategoryModal({
   setColor,
   isEssential,
   setIsEssential,
-  expectedAmount,
-  setExpectedAmount,
   isSavings,
   setIsSavings,
   isMainIncome,
@@ -155,24 +151,6 @@ export function CategoryModal({
               </span>
             </div>
           </label>
-
-          {isEssential && (
-            <div className="form-group" style={{ marginBottom: 4, paddingLeft: 4 }}>
-              <label className="label" htmlFor="category-expected-amount">
-                Valor mensal esperado (opcional)
-              </label>
-              <input
-                id="category-expected-amount"
-                type="number"
-                step="0.01"
-                min="0"
-                className="input"
-                placeholder="Deixe vazio para usar o gasto do mês anterior"
-                value={expectedAmount}
-                onChange={(e) => setExpectedAmount(e.target.value)}
-              />
-            </div>
-          )}
 
           <label className={`option-card ${isSavings ? 'active-savings' : ''}`}>
             <input

@@ -3,8 +3,6 @@ import { Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CategoryModal } from './CategoryModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { useSettings } from '../../context/SettingsContext';
-import { formatCurrencyValue } from '../../utils/formatters';
 import {
   useBulkDeleteCategories,
   useCategories,
@@ -20,7 +18,6 @@ type ConfirmState =
   | null;
 
 export default function CategoryManager() {
-  const { baseCurrency } = useSettings();
   const { data: categories = [], isPending: loadingCategories, isError } = useCategories();
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
@@ -30,7 +27,6 @@ export default function CategoryManager() {
   const [name, setName] = useState('');
   const [color, setColor] = useState('#6366f1');
   const [isEssential, setIsEssential] = useState(false);
-  const [expectedAmount, setExpectedAmount] = useState('');
   const [isSavings, setIsSavings] = useState(false);
   const [isMainIncome, setIsMainIncome] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -52,7 +48,6 @@ export default function CategoryManager() {
     setName('');
     setColor('#6366f1');
     setIsEssential(false);
-    setExpectedAmount('');
     setIsSavings(false);
     setIsMainIncome(false);
     setIsModalOpen(false);
@@ -61,9 +56,6 @@ export default function CategoryManager() {
   const handleSaveCategory = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    const parsedExpected = parseFloat(expectedAmount.replace(',', '.'));
-    const normalizedExpected =
-      isEssential && !Number.isNaN(parsedExpected) && parsedExpected > 0 ? parsedExpected : null;
     try {
       const payload = {
         name: name.trim(),
@@ -71,7 +63,6 @@ export default function CategoryManager() {
         isEssential,
         isSavings,
         isMainIncome,
-        expectedAmount: normalizedExpected,
       };
       if (editingCategoryId) {
         await updateMutation.mutateAsync({ id: editingCategoryId, dto: payload });
@@ -92,7 +83,6 @@ export default function CategoryManager() {
     setName(c.name);
     setColor(c.color || '#6366f1');
     setIsEssential(c.isEssential);
-    setExpectedAmount(c.expectedAmount !== null && c.expectedAmount > 0 ? String(c.expectedAmount) : '');
     setIsSavings(c.isSavings);
     setIsMainIncome(c.isMainIncome);
     setIsModalOpen(true);
@@ -233,11 +223,6 @@ export default function CategoryManager() {
                         >
                           <span className="category-dot" style={{ background: catColor }} />
                           <span>{c.name}</span>
-                          {c.isEssential && c.expectedAmount !== null && c.expectedAmount > 0 && (
-                            <span className="entity-chip-budget">
-                              ({formatCurrencyValue(c.expectedAmount, baseCurrency)})
-                            </span>
-                          )}
                         </button>
                         <button
                           type="button"
@@ -267,8 +252,6 @@ export default function CategoryManager() {
         setColor={setColor}
         isEssential={isEssential}
         setIsEssential={setIsEssential}
-        expectedAmount={expectedAmount}
-        setExpectedAmount={setExpectedAmount}
         isSavings={isSavings}
         setIsSavings={setIsSavings}
         isMainIncome={isMainIncome}

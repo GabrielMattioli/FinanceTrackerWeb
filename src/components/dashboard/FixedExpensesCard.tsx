@@ -44,19 +44,19 @@ export default function FixedExpensesCard({
       <div className="card-header" style={{ marginBottom: 20 }}>
         <h3 className="card-title">Contas Fixas — Acompanhamento</h3>
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          Referência: orçamento ou mês anterior
+          Referência: gasto do mês anterior
         </span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {fixedExpenses.map((expense) => {
-          const target = expense.referenceAmount;
           const pct =
-            target > 0
-              ? Math.min(100, (expense.currentSpent / target) * 100)
+            expense.lastMonthAmount > 0
+              ? Math.min(100, (expense.currentSpent / expense.lastMonthAmount) * 100)
               : expense.currentSpent > 0
                 ? 100
                 : 0;
-          const isOverspent = expense.currentSpent > target && target > 0;
+          const isOverspent =
+            expense.currentSpent > expense.lastMonthAmount && expense.lastMonthAmount > 0;
 
           return (
             <div key={expense.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -71,11 +71,6 @@ export default function FixedExpensesCard({
                     }}
                   />
                   <span style={{ fontWeight: 600, fontSize: 15 }}>{expense.name}</span>
-                  {expense.referenceSource === 'budget' && (
-                    <span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: 10.5 }}>
-                      Orçamento: {formatCurrencyValue(expense.referenceAmount, baseCurrency)}
-                    </span>
-                  )}
                 </div>
               </div>
               <div
@@ -87,15 +82,7 @@ export default function FixedExpensesCard({
                   color: 'var(--text-secondary)',
                 }}
               >
-                <span>
-                  Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}
-                  {expense.referenceSource === 'lastMonth' && (
-                    <span style={{ color: 'var(--text-muted)' }}>
-                      {' '}
-                      / {formatCurrencyValue(expense.referenceAmount, baseCurrency)}
-                    </span>
-                  )}
-                </span>
+                <span>Gasto: {formatCurrencyValue(expense.currentSpent, baseCurrency)}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>
                     {expense.isPaid ? (
@@ -109,10 +96,10 @@ export default function FixedExpensesCard({
                       >
                         <ShieldCheck size={16} /> Pago{' '}
                         {isOverspent
-                          ? `(+${formatCurrencyValue(expense.currentSpent - target, baseCurrency)})`
+                          ? `(+${formatCurrencyValue(expense.currentSpent - expense.lastMonthAmount, baseCurrency)})`
                           : ''}
                       </span>
-                    ) : target === 0 ? (
+                    ) : expense.lastMonthAmount === 0 ? (
                       <span
                         style={{
                           color: 'var(--text-secondary)',

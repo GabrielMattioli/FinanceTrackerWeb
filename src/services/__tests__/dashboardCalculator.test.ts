@@ -26,7 +26,6 @@ const SALARY_CAT = {
   is_essential: false,
   is_savings: false,
   is_main_income: true,
-  expected_amount: null,
 };
 
 const RENT_CAT = {
@@ -36,7 +35,6 @@ const RENT_CAT = {
   is_essential: true,
   is_savings: false,
   is_main_income: false,
-  expected_amount: 1200,
 };
 
 const INTERNET_CAT = {
@@ -46,7 +44,6 @@ const INTERNET_CAT = {
   is_essential: true,
   is_savings: false,
   is_main_income: false,
-  expected_amount: null,
 };
 
 const MARKET_CAT = {
@@ -56,7 +53,6 @@ const MARKET_CAT = {
   is_essential: false,
   is_savings: false,
   is_main_income: false,
-  expected_amount: null,
 };
 
 const SAVINGS_CAT = {
@@ -66,7 +62,6 @@ const SAVINGS_CAT = {
   is_essential: false,
   is_savings: true,
   is_main_income: false,
-  expected_amount: null,
 };
 
 describe('computeDashboardMetrics', () => {
@@ -129,11 +124,12 @@ describe('computeDashboardMetrics', () => {
     expect(result.categoryBreakdown[0].total).toBe(150);
   });
 
-  it('handles savings, ignored transactions, expected_amount budgets, and manual paid overrides', () => {
+  it('handles savings, ignored transactions, last-month fixed expense references, and manual paid overrides', () => {
     const transactions: DashboardTransactionInput[] = [
-      // Last month internet expense (no expected_amount, so uses lastMonth = 100)
+      // Last month rent (1200) and internet (100)
+      makeTx({ id: 'p0', date: '2026-04-02', amount: -1200, category_id: RENT_CAT.id, categories: RENT_CAT }),
       makeTx({ id: 'p1', date: '2026-04-05', amount: -100, category_id: INTERNET_CAT.id, categories: INTERNET_CAT }),
-      // Current month: partial rent paid (400 of 1200 budget), savings outflow, ignored transfer, uncategorized expense
+      // Current month: partial rent paid (400 of 1200), savings outflow, ignored transfer, uncategorized expense
       makeTx({ id: 'c1', date: '2026-05-02', amount: -400, category_id: RENT_CAT.id, categories: RENT_CAT }),
       makeTx({ id: 'c2', date: '2026-05-03', amount: -300, category_id: SAVINGS_CAT.id, categories: SAVINGS_CAT }),
       makeTx({ id: 'c3', date: '2026-05-04', amount: -999, category_id: MARKET_CAT.id, categories: MARKET_CAT, ignore_in_reports: true }),
@@ -143,8 +139,8 @@ describe('computeDashboardMetrics', () => {
     const result = computeDashboardMetrics({
       transactions,
       essentialCategories: [
-        { id: RENT_CAT.id, name: RENT_CAT.name, color: RENT_CAT.color, expected_amount: 1200 },
-        { id: INTERNET_CAT.id, name: INTERNET_CAT.name, color: INTERNET_CAT.color, expected_amount: null },
+        { id: RENT_CAT.id, name: RENT_CAT.name, color: RENT_CAT.color },
+        { id: INTERNET_CAT.id, name: INTERNET_CAT.name, color: INTERNET_CAT.color },
       ],
       manuallyPaidCategoryIds: new Set([INTERNET_CAT.id]),
       previousMonthBalance: 2000,
@@ -166,8 +162,7 @@ describe('computeDashboardMetrics', () => {
     const internet = result.fixedExpenses.find((f) => f.id === INTERNET_CAT.id);
 
     expect(rent).toMatchObject({
-      referenceSource: 'budget',
-      referenceAmount: 1200,
+      lastMonthAmount: 1200,
       currentSpent: 400,
       pending: 800,
       isPaid: false,
@@ -175,8 +170,7 @@ describe('computeDashboardMetrics', () => {
     });
 
     expect(internet).toMatchObject({
-      referenceSource: 'lastMonth',
-      referenceAmount: 100,
+      lastMonthAmount: 100,
       currentSpent: 0,
       pending: 0,
       isPaid: true,

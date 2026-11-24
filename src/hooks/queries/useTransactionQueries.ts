@@ -4,18 +4,15 @@ import {
   bulkCategorize,
   bulkDelete,
   categorizeOne,
-  createTransaction,
   deleteTransaction,
   getHistory,
   getPending,
   toggleIgnoreInReports,
   uncategorizeOne,
-  updateTransaction,
   type GetHistoryParams,
   type GetPendingParams,
 } from '../../api/transactions';
 import { queryKeys } from '../../lib/queryKeys';
-import type { TransactionInput, TransactionUpdateInput } from '../../types/domain';
 
 export function invalidateTransactionRelatedQueries(qc: QueryClient): Promise<void> {
   return Promise.all([
@@ -47,23 +44,6 @@ export function useHistoryTransactions(params: GetHistoryParams) {
     queryKey: queryKeys.transactions.history(params),
     queryFn: () => getHistory(params),
     placeholderData: keepPreviousData,
-  });
-}
-
-export function useCreateTransaction() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: TransactionInput) => createTransaction(input),
-    onSuccess: () => invalidateTransactionRelatedQueries(qc),
-  });
-}
-
-export function useUpdateTransaction() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: TransactionUpdateInput }) =>
-      updateTransaction(id, input),
-    onSuccess: () => invalidateTransactionRelatedQueries(qc),
   });
 }
 

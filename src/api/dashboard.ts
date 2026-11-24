@@ -30,7 +30,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
       fetchAllPages<DashboardTransactionInput>((from, to) =>
         supabase
           .from('transactions')
-          .select('*, categories(id, name, color, is_essential, is_savings, is_main_income, expected_amount)')
+          .select('*, categories(id, name, color, is_essential, is_savings, is_main_income)')
           .gte('date', lastMonthStartDate)
           .lte('date', endDate)
           .order('date', { ascending: true })
@@ -40,7 +40,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
       supabase.rpc('get_balance_before_date', { target_date: startDate, user_uuid }),
       supabase.rpc('get_min_monthly_main_income', { user_uuid }),
       supabase.from('settings').select('expected_monthly_income').eq('user_id', user_uuid).maybeSingle(),
-      supabase.from('categories').select('id, name, color, expected_amount').eq('is_essential', true),
+      supabase.from('categories').select('id, name, color').eq('is_essential', true),
       supabase
         .from('category_monthly_state')
         .select('category_id')

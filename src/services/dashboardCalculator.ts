@@ -1,4 +1,4 @@
-import type { DashboardData, FixedExpense, FixedExpenseReferenceSource } from '../types/dashboard';
+import type { DashboardData, FixedExpense } from '../types/dashboard';
 import type { TransactionRow, YearlyMonthSummary } from '../types/domain';
 import { fromCents, toCents } from '../utils/money';
 
@@ -9,7 +9,6 @@ export interface DashboardCategoryJoin {
   is_essential: boolean | null;
   is_savings: boolean | null;
   is_main_income: boolean | null;
-  expected_amount?: number | null;
 }
 
 export interface DashboardTransactionInput extends TransactionRow {
@@ -20,7 +19,6 @@ export interface EssentialCategoryInput {
   id: string;
   name: string;
   color: string | null;
-  expected_amount: number | null;
 }
 
 export interface ComputeDashboardParams {
@@ -81,7 +79,6 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
       currentSpentCents: number;
       name: string;
       color: string;
-      expectedAmount: number | null;
     }
   >();
 
@@ -91,10 +88,6 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
       currentSpentCents: 0,
       name: category.name,
       color: category.color || '#6366f1',
-      expectedAmount:
-        category.expected_amount !== null && Number.isFinite(Number(category.expected_amount)) && Number(category.expected_amount) > 0
-          ? Number(category.expected_amount)
-          : null,
     });
   }
 
@@ -148,7 +141,6 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
           currentSpentCents: 0,
           name: cat.name,
           color: cat.color || '#6366f1',
-          expectedAmount: null,
         };
         existing.lastMonthCents -= amountCents;
         essentialCatHistory.set(cat.id, existing);
@@ -170,7 +162,6 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
             currentSpentCents: 0,
             name: cat.name,
             color: cat.color || '#6366f1',
-            expectedAmount: null,
           };
           ess.currentSpentCents -= amountCents;
           essentialCatHistory.set(cat.id, ess);
@@ -244,19 +235,8 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
   const fixedExpenses: FixedExpense[] = [];
 
   for (const [catId, data] of essentialCatHistory.entries()) {
-    const hasBudget = data.expectedAmount !== null && data.expectedAmount > 0;
-    const referenceSource: FixedExpenseReferenceSource = hasBudget
-      ? 'budget'
-      : data.lastMonthCents > 0
-        ? 'lastMonth'
-        : 'none';
-
-    const referenceCents = hasBudget
-      ? toCents(data.expectedAmount as number)
-      : Math.max(0, data.lastMonthCents);
-
-    let pendingCents = Math.max(0, referenceCents - data.currentSpentCents);
-    let isPaid = data.currentSpentCents >= referenceCents && referenceCents > 0;
+    let pendingCents = Math.max(0, data.lastMonthCents - data.currentSpentCents);
+    let isPaid = data.currentSpentCents >= data.lastMonthCents && data.lastMonthCents > 0;
     const isManuallyPaid = manuallyPaidCategoryIds.has(catId);
 
     if (isManuallyPaid) {
@@ -270,19 +250,16 @@ export function computeDashboardMetrics(params: ComputeDashboardParams): Dashboa
       id: catId,
       name: data.name,
       color: data.color,
-      expectedAmount: data.expectedAmount,
-      referenceAmount: fromCents(referenceCents),
-      referenceSource,
       lastMonthAmount: fromCents(data.lastMonthCents),
       currentSpent: fromCents(data.currentSpentCents),
       pending: fromCents(pendingCents),
       isPaid,
       isManuallyPaid,
-      isFirstMonth: referenceSource === 'none',
+      isFirstMonth: data.lastMonthCents === 0,
     });
   }
 
-  fixedExpenses.sort((a, b) => b.referenceAmount - a.referenceAmount || a.name.localeCompare(b.name));
+  fixedExpenses.sort((a, b) => b.lastMonthAmount - a.lastMonthAmount || a.name.localeCompare(b.name));
 
   const hasValidExpectedSetting =
     expectedMonthlyIncomeSetting !== null &&
