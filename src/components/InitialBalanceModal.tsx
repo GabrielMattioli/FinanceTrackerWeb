@@ -1,182 +1,175 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { Wallet, Lightbulb } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { Wallet, X, Lightbulb } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { Modal } from './ui/Modal';
 
 export default function InitialBalanceModal() {
-    const { initialBalance, updateInitialBalance, loadingSettings, hasSeenOnboarding, dismissOnboarding } = useSettings();
-    const [isOpen, setIsOpen] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
-    const dialogRef = useRef<HTMLDialogElement>(null);
+  const { initialBalance, updateInitialBalance, loadingSettings, hasSeenOnboarding, dismissOnboarding } =
+    useSettings();
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
 
-    useEffect(() => {
-        const dialog = dialogRef.current;
-        if (!dialog) return;
-        if (isOpen && !dialog.open) { dialog.showModal(); }
-        else if (!isOpen && dialog.open) { dialog.close(); }
+  useEffect(() => {
+    if (loadingSettings) return;
 
-        if (!('closedBy' in HTMLDialogElement.prototype)) {
-            const handleBackdropClick = (event: MouseEvent) => {
-                if (event.target !== dialog) return;
-                const rect = dialog.getBoundingClientRect();
-                const isDialogContent = (
-                    rect.top <= event.clientY &&
-                    event.clientY <= rect.top + rect.height &&
-                    rect.left <= event.clientX &&
-                    event.clientX <= rect.left + rect.width
-                );
-                if (!isDialogContent) {
-                    dialog.close();
-                }
-            };
-            dialog.addEventListener('click', handleBackdropClick);
-            return () => dialog.removeEventListener('click', handleBackdropClick);
+    let cancelled = false;
+    const checkAndShow = async () => {
+      try {
+        if (!hasSeenOnboarding && initialBalance === 0) {
+          const { count } = await supabase
+            .from('transactions')
+            .select('id', { count: 'exact', head: true });
+
+          if (!cancelled) {
+            setIsExistingUser((count || 0) > 0);
+            setIsOpen(true);
+          }
+        } else if (!cancelled) {
+          setIsOpen(false);
         }
-    }, [isOpen]);
-
-useEffect(() => {
-        if (loadingSettings) return;
-
-        const checkAndShow = async () => {
-            try {
-                if (!hasSeenOnboarding && initialBalance === 0) {
-                    const { count } = await supabase
-                        .from('transactions')
-                        .select('id', { count: 'exact', head: true });
-                    
-                    setIsExistingUser((count || 0) > 0);
-                    setIsOpen(true);
-                } else {
-                    setIsOpen(false);
-                }
-            } catch (e) {
-                console.error('Failed to check user status', e);
-            }
-        };
-
-        checkAndShow();
-    }, [initialBalance, loadingSettings, hasSeenOnboarding]);
-
-const handleClose = async () => {
-        try {
-            await dismissOnboarding();
-        } catch (e) {
-            console.error('Error dismissing onboarding:', e);
-        } finally {
-            setIsOpen(false);
-        }
+      } catch (e) {
+        console.error('Failed to check user status', e);
+      }
     };
 
-    const handleSave = async () => {
-        const val = parseFloat(inputValue);
-        if (isNaN(val)) {
-            toast.error('Valor inválido.');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            await updateInitialBalance(val);
-            toast.success('Saldo inicial configurado!');
-            handleClose();
-        } catch (err: unknown) {
-            console.error(err);
-            const message = err instanceof Error ? err.message : 'Erro desconhecido';
-            toast.error('Erro ao salvar: ' + message);
-        } finally {
-            setLoading(false);
-        }
+    void checkAndShow();
+    return () => {
+      cancelled = true;
     };
+  }, [initialBalance, loadingSettings, hasSeenOnboarding]);
 
-    if (!isOpen) return null;
+  const handleClose = async () => {
+    try {
+      await dismissOnboarding();
+    } catch (e) {
+      console.error('Error dismissing onboarding:', e);
+    } finally {
+      setIsOpen(false);
+    }
+  };
 
-    return (
-        <dialog ref={dialogRef} className="modal" style={{ maxWidth: 450 }} onClose={handleClose} closedby="any">
-                <div className="modal-header">
-                    <h2 className="modal-title">
-                        {isExistingUser ? 'Ajuste seu Saldo Inicial' : 'Qual o seu Saldo Atual?'}
-                    </h2>
-                    <button className="btn btn-ghost btn-sm" onClick={handleClose}>
-                        <X size={16} />
-                    </button>
-                </div>
+  const handleSave = async () => {
+    const val = parseFloat(inputValue);
+    if (Number.isNaN(val)) {
+      toast.error('Valor inválido.');
+      return;
+    }
 
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                    <div style={{ 
-                        background: 'var(--bg-secondary)', 
-                        padding: 16, 
-                        borderRadius: '50%', 
-                        color: 'var(--accent)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                    }}>
-                        <Wallet size={32} />
-                    </div>
-                </div>
-                
-                <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6, textAlign: 'center' }}>
-                    {isExistingUser 
-                        ? 'Novidade! Para que o cálculo bata certinho com a sua conta bancária hoje, qual era o seu saldo ANTES de você começar a registrar transações aqui?'
-                        : 'Para que o aplicativo calcule sua Saúde Financeira corretamente desde o início, informe o saldo atual da sua conta bancária.'}
-                </p>
+    setLoading(true);
+    try {
+      await updateInitialBalance(val);
+      toast.success('Saldo inicial configurado!');
+      await handleClose();
+    } catch (err: unknown) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Erro ao salvar: ${message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                <div className="form-group">
-                    <input
-                        type="number"
-                        step="0.01"
-                        className="form-control"
-                        placeholder="Ex: 1500.00"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSave();
-                        }}
-                        autoFocus
-                        style={{ fontSize: 18, padding: '12px 16px', textAlign: 'center' }}
-                    />
-                </div>
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={isExistingUser ? 'Ajuste seu Saldo Inicial' : 'Qual o seu Saldo Atual?'}
+      onClose={() => void handleClose()}
+      maxWidth={450}
+      footer={
+        <>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void handleClose()}
+            disabled={loading}
+          >
+            Pular
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => void handleSave()}
+            disabled={loading}
+          >
+            {loading ? 'Salvando...' : 'Salvar Saldo'}
+          </button>
+        </>
+      }
+    >
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        <div
+          style={{
+            background: 'var(--bg-primary)',
+            padding: 16,
+            borderRadius: '50%',
+            color: 'var(--accent)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <Wallet size={32} />
+        </div>
+      </div>
 
-                <div style={{ 
-                    background: 'var(--bg-input, var(--bg-secondary))', 
-                    padding: 14, 
-                    borderRadius: 10, 
-                    display: 'flex', 
-                    gap: 12, 
-                    textAlign: 'left', 
-                    marginTop: 20,
-                    border: '1px solid var(--border-subtle, var(--border-color))'
-                }}>
-                    <Lightbulb size={18} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        {isExistingUser 
-                            ? "Dica: Tente colocar um valor aproximado agora. Depois, lá na tela de Configurações, você pode ir ajustando esse Saldo Inicial até o Saldo Acumulado bater centavo por centavo com o do seu banco hoje!"
-                            : "Dica: É simples! Basta abrir o aplicativo do seu banco neste momento e digitar o saldo exato que aparece lá."}
-                    </span>
-                </div>
+      <p
+        style={{
+          fontSize: 14.5,
+          color: 'var(--text-secondary)',
+          marginBottom: 24,
+          lineHeight: 1.6,
+          textAlign: 'center',
+        }}
+      >
+        {isExistingUser
+          ? 'Novidade! Para que o cálculo bata certinho com a sua conta bancária hoje, qual era o seu saldo ANTES de você começar a registrar transações aqui?'
+          : 'Para que o aplicativo calcule sua Saúde Financeira corretamente desde o início, informe o saldo atual da sua conta bancária.'}
+      </p>
 
-                <div className="modal-footer" style={{ marginTop: 28 }}>
-                    <button 
-                        className="btn btn-secondary" 
-                        onClick={handleClose}
-                        disabled={loading}
-                    >
-                        Pular
-                    </button>
-                    <button 
-                        className="btn btn-primary" 
-                        onClick={handleSave}
-                        disabled={loading}
-                    >
-                        {loading ? 'Salvando...' : 'Salvar Saldo'}
-                    </button>
-                </div>
-            </dialog>
-    );
+      <div className="form-group">
+        <label className="label" htmlFor="initial-balance-onboarding-input">
+          Saldo inicial
+        </label>
+        <input
+          id="initial-balance-onboarding-input"
+          type="number"
+          step="0.01"
+          className="form-control"
+          placeholder="Ex: 1500.00"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void handleSave();
+          }}
+          autoFocus
+          style={{ fontSize: 18, padding: '12px 16px', textAlign: 'center' }}
+        />
+      </div>
+
+      <div
+        style={{
+          background: 'var(--bg-primary)',
+          padding: 14,
+          borderRadius: 10,
+          display: 'flex',
+          gap: 12,
+          textAlign: 'left',
+          marginTop: 20,
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        <Lightbulb size={18} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          {isExistingUser
+            ? 'Dica: Tente colocar um valor aproximado agora. Depois, lá na tela de Configurações, você pode ir ajustando esse Saldo Inicial até o Saldo Acumulado bater centavo por centavo com o do seu banco hoje!'
+            : 'Dica: É simples! Basta abrir o aplicativo do seu banco neste momento e digitar o saldo exato que aparece lá.'}
+        </span>
+      </div>
+    </Modal>
+  );
 }
-
-

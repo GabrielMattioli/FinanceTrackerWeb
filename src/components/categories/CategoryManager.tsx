@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, type CSSProperties, type FormEvent } from
 import { Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CategoryModal } from './CategoryModal';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import {
   useBulkDeleteCategories,
   useCategories,
@@ -10,6 +11,11 @@ import {
   useUpdateCategory,
 } from '../../hooks/queries/useCategoryQueries';
 import type { Category } from '../../types/domain';
+
+type ConfirmState =
+  | { type: 'single'; id: string; name: string }
+  | { type: 'bulk'; ids: string[] }
+  | null;
 
 export default function CategoryManager() {
   const { data: categories = [], isPending: loadingCategories, isError } = useCategories();
@@ -26,6 +32,7 @@ export default function CategoryManager() {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState<ConfirmState>(null);
 
   useEffect(() => {
     if (isError) {
@@ -34,6 +41,7 @@ export default function CategoryManager() {
   }, [isError]);
 
   const saving = createMutation.isPending || updateMutation.isPending;
+  const deleting = deleteMutation.isPending || bulkDeleteMutation.isPending;
 
   const resetForm = () => {
     setEditingCategoryId(null);
@@ -80,20 +88,23 @@ export default function CategoryManager() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCategory = async (id: string, catName: string) => {
-    if (
-      !window.confirm(
-        `Excluir a categoria "${catName}"? Transações vinculadas voltarão para Pendentes.`
-      )
-    ) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!confirmState) return;
     try {
-      await deleteMutation.mutateAsync(id);
-      toast.success(`Categoria "${catName}" excluída.`);
-      setSelectedCategoryIds((prev) => prev.filter((selectedId) => selectedId !== id));
+      if (confirmState.type === 'single') {
+        await deleteMutation.mutateAsync(confirmState.id);
+        toast.success(`Categoria "${confirmState.name}" excluída.`);
+        setSelectedCategoryIds((prev) => prev.filter((id) => id !== confirmState.id));
+      } else {
+        await bulkDeleteMutation.mutateAsync(confirmState.ids);
+        toast.success(`${confirmState.ids.length} categorias excluídas.`);
+        setSelectedCategoryIds([]);
+      }
+      setConfirmState(null);
     } catch {
-      toast.error('Erro ao excluir categoria.');
+      toast.error(
+        confirmState.type === 'single' ? 'Erro ao excluir categoria.' : 'Erro ao excluir categorias.'
+      );
     }
   };
 
@@ -101,24 +112,6 @@ export default function CategoryManager() {
     setSelectedCategoryIds((prev) =>
       prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
     );
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedCategoryIds.length === 0) return;
-    if (
-      !window.confirm(
-        `Excluir as ${selectedCategoryIds.length} categorias selecionadas? Transações vinculadas voltarão para Pendentes.`
-      )
-    ) {
-      return;
-    }
-    try {
-      await bulkDeleteMutation.mutateAsync(selectedCategoryIds);
-      toast.success(`${selectedCategoryIds.length} categorias excluídas.`);
-      setSelectedCategoryIds([]);
-    } catch {
-      toast.error('Erro ao excluir categorias.');
-    }
   };
 
   const groupedCategories = useMemo(() => {
@@ -164,7 +157,11 @@ export default function CategoryManager() {
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }} className="mobile-hidden">
                   {selectedCategoryIds.length} selecionadas
                 </span>
-                <button type="button" className="btn btn-sm btn-danger" onClick={handleBulkDelete}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => setConfirmState({ type: 'bulk', ids: selectedCategoryIds })}
+                >
                   <Trash2 size={14} /> <span className="mobile-hidden">Excluir</span>
                 </button>
               </div>
@@ -189,124 +186,50 @@ export default function CategoryManager() {
             <span>Clique em "Nova" para adicionar uma categoria.</span>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '16px',
-              padding: '16px',
-            }}
-          >
+          <div className="entity-group-grid">
             {groupedCategories.map((group) => (
-              <div
-                key={group.id}
-                style={{
-                  background: 'var(--bg-main)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <h4
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '16px',
-                    color: 'var(--text-primary)',
-                    fontSize: '15px',
-                  }}
-                >
-                  <span style={{ fontSize: '16px' }}>{group.icon}</span>
+              <div key={group.id} className="entity-group-card">
+                <h4 className="entity-group-title">
+                  <span style={{ fontSize: 16 }} aria-hidden="true">
+                    {group.icon}
+                  </span>
                   {group.name}
                 </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div className="entity-chip-list">
                   {group.items.map((c) => {
                     const catColor = c.color || '#6366f1';
                     const isSelected = selectedCategoryIds.includes(c.id);
                     return (
                       <div
                         key={c.id}
-                        style={{
-                          background: 'var(--bg-card)',
-                          border: `1px solid ${isSelected ? catColor : `${catColor}40`}`,
-                          borderRadius: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          overflow: 'hidden',
-                          transition: 'all 0.2s',
-                          boxShadow: isSelected ? `0 0 0 1px ${catColor}` : 'none',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSelected) e.currentTarget.style.borderColor = `${catColor}88`;
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected) e.currentTarget.style.borderColor = `${catColor}40`;
-                        }}
+                        className={`entity-chip ${isSelected ? 'selected' : ''}`}
+                        style={{ '--chip-color': catColor } as CSSProperties}
                       >
-                        <div style={{ padding: '0 0 0 10px', display: 'flex', alignItems: 'center' }}>
+                        <div className="entity-chip-check">
                           <input
                             type="checkbox"
                             className="custom-checkbox"
                             checked={isSelected}
                             onChange={() => handleToggleSelect(c.id)}
+                            aria-label={`Selecionar categoria ${c.name}`}
                             style={{ '--checkbox-color': catColor } as CSSProperties}
                           />
                         </div>
-                        <div
-                          style={{
-                            padding: '6px 10px 6px 8px',
-                            fontSize: '13px',
-                            color: 'var(--text-main)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                          onClick={() => handleEditCategory(c)}
-                          title="Clique para editar"
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(0,0,0,0.02)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span
-                            className="category-dot"
-                            style={{ background: catColor, width: 8, height: 8, minWidth: 8 }}
-                          />
-                          <span>{c.name}</span>
-                        </div>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleDeleteCategory(c.id, c.name);
-                          }}
+                          className="entity-chip-body"
+                          onClick={() => handleEditCategory(c)}
+                          title="Clique para editar"
+                        >
+                          <span className="category-dot" style={{ background: catColor }} />
+                          <span>{c.name}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="entity-chip-remove"
+                          onClick={() => setConfirmState({ type: 'single', id: c.id, name: c.name })}
                           title="Excluir Categoria"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            borderLeft: `1px solid ${catColor}22`,
-                            padding: '6px 10px',
-                            cursor: 'pointer',
-                            color: 'var(--text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = 'var(--danger)';
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'var(--text-muted)';
-                            e.currentTarget.style.background = 'transparent';
-                          }}
+                          aria-label={`Excluir categoria ${c.name}`}
                         >
                           <X size={14} />
                         </button>
@@ -336,6 +259,24 @@ export default function CategoryManager() {
         saving={saving}
         onSave={handleSaveCategory}
         onClose={resetForm}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmState !== null}
+        title={
+          confirmState?.type === 'bulk' ? 'Excluir categorias selecionadas?' : 'Excluir categoria?'
+        }
+        message={
+          confirmState?.type === 'bulk'
+            ? `Excluir as ${confirmState.ids.length} categorias selecionadas? Transações vinculadas voltarão para Pendentes.`
+            : confirmState?.type === 'single'
+              ? `Excluir a categoria "${confirmState.name}"? Transações vinculadas voltarão para Pendentes.`
+              : ''
+        }
+        confirmLabel="Excluir"
+        loading={deleting}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setConfirmState(null)}
       />
     </div>
   );

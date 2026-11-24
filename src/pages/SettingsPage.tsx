@@ -2,6 +2,7 @@ import { useState, type ChangeEvent } from 'react';
 import { Database, Info, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSettings } from '../context/SettingsContext';
+import { useTheme, type ThemePreference } from '../context/ThemeContext';
 
 export default function SettingsPage() {
   const {
@@ -13,6 +14,7 @@ export default function SettingsPage() {
     updateExpectedIncome,
     loadingSettings,
   } = useSettings();
+  const { preference, systemTheme, setPreference } = useTheme();
   const [updatingCurrency, setUpdatingCurrency] = useState(false);
   const [draftExpectedIncome, setDraftExpectedIncome] = useState<string | null>(null);
   const [updatingInitialBalance, setUpdatingInitialBalance] = useState(false);
@@ -68,6 +70,26 @@ export default function SettingsPage() {
           </div>
           <p className="form-hint">
             A moeda base será exibida em todo o aplicativo (dashboard, transações, etc).
+          </p>
+        </div>
+
+        <div className="form-group" style={{ marginTop: 24 }}>
+          <label htmlFor="settings-theme">Aparência</label>
+          <select
+            id="settings-theme"
+            className="form-control"
+            value={preference}
+            onChange={(e) => setPreference(e.target.value as ThemePreference)}
+            style={{ maxWidth: 250 }}
+          >
+            <option value="system">
+              Sistema ({systemTheme === 'dark' ? 'Escuro' : 'Claro'})
+            </option>
+            <option value="light">Claro</option>
+            <option value="dark">Escuro</option>
+          </select>
+          <p className="form-hint">
+            Por padrão o aplicativo acompanha o tema do seu sistema operacional.
           </p>
         </div>
 

@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useMemo, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type CSSProperties, type FormEvent } from 'react';
 import { Plus, Edit2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Modal } from '../ui/Modal';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import {
   useCategories,
   useCategoryRules,
@@ -29,42 +31,13 @@ export default function RuleManager() {
   const [categoryId, setCategoryId] = useState('');
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [ruleToDelete, setRuleToDelete] = useState<{ id: string; keyword: string } | null>(null);
 
   useEffect(() => {
     if (catsError || rulesError) {
       toast.error('Erro ao carregar regras e categorias.');
     }
   }, [catsError, rulesError]);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isModalOpen && !dialog.open) {
-      dialog.showModal();
-    } else if (!isModalOpen && dialog.open) {
-      dialog.close();
-    }
-
-    if (!('closedBy' in HTMLDialogElement.prototype)) {
-      const handleBackdropClick = (event: MouseEvent) => {
-        if (event.target !== dialog) return;
-        const rect = dialog.getBoundingClientRect();
-        const isDialogContent =
-          rect.top <= event.clientY &&
-          event.clientY <= rect.top + rect.height &&
-          rect.left <= event.clientX &&
-          event.clientX <= rect.left + rect.width;
-        if (!isDialogContent) {
-          dialog.close();
-        }
-      };
-      dialog.addEventListener('click', handleBackdropClick);
-      return () => dialog.removeEventListener('click', handleBackdropClick);
-    }
-  }, [isModalOpen]);
 
   const savingRule =
     createRuleMutation.isPending || updateRuleMutation.isPending || applyRuleMutation.isPending;
@@ -91,13 +64,11 @@ export default function RuleManager() {
           categoryId,
         });
         const updatedCount = updatedData ? updatedData.length : 0;
-        if (updatedCount > 0) {
-          toast.success(
-            `Regra atualizada! ${updatedCount} transações pendentes foram categorizadas.`
-          );
-        } else {
-          toast.success('Regra atualizada com sucesso!');
-        }
+        toast.success(
+          updatedCount > 0
+            ? `Regra atualizada! ${updatedCount} transações pendentes foram categorizadas.`
+            : 'Regra atualizada com sucesso!'
+        );
       } else {
         await createRuleMutation.mutateAsync({
           keyword: trimmedKeyword,
@@ -108,11 +79,11 @@ export default function RuleManager() {
           categoryId,
         });
         const updatedCount = updatedData ? updatedData.length : 0;
-        if (updatedCount > 0) {
-          toast.success(`Regra criada! ${updatedCount} transações pendentes foram categorizadas.`);
-        } else {
-          toast.success('Regra criada com sucesso!');
-        }
+        toast.success(
+          updatedCount > 0
+            ? `Regra criada! ${updatedCount} transações pendentes foram categorizadas.`
+            : 'Regra criada com sucesso!'
+        );
       }
 
       handleCancelEditRule();
@@ -129,11 +100,12 @@ export default function RuleManager() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteRule = async (id: string, ruleKeyword: string) => {
-    if (!window.confirm(`Excluir a regra para "${ruleKeyword}"?`)) return;
+  const handleConfirmDeleteRule = async () => {
+    if (!ruleToDelete) return;
     try {
-      await deleteRuleMutation.mutateAsync(id);
+      await deleteRuleMutation.mutateAsync(ruleToDelete.id);
       toast.success('Regra excluída.');
+      setRuleToDelete(null);
     } catch {
       toast.error('Erro ao excluir regra.');
     }
@@ -181,38 +153,12 @@ export default function RuleManager() {
             <span>Crie regras para categorizar transações automaticamente.</span>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '16px',
-              padding: '16px',
-            }}
-          >
+          <div className="entity-group-grid">
             {groupedRules.map((group) => {
               const groupColor = group.category?.color || '#6366f1';
               return (
-                <div
-                  key={group.category?.id || 'unknown'}
-                  style={{
-                    background: 'var(--bg-main)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <h4
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      marginBottom: '16px',
-                      color: 'var(--text-primary)',
-                      fontSize: '15px',
-                    }}
-                  >
+                <div key={group.category?.id || 'unknown'} className="entity-group-card">
+                  <h4 className="entity-group-title">
                     {group.category ? (
                       <>
                         <span className="category-dot" style={{ background: groupColor }} />
@@ -222,78 +168,27 @@ export default function RuleManager() {
                       'Sem Categoria'
                     )}
                   </h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <div className="entity-chip-list">
                     {group.rules.map((r) => (
                       <div
                         key={r.id}
-                        style={{
-                          background: 'var(--bg-card)',
-                          border: `1px solid ${group.category ? `${groupColor}33` : 'var(--border-color)'}`,
-                          borderRadius: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          overflow: 'hidden',
-                          transition: 'border-color 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = group.category
-                            ? `${groupColor}88`
-                            : 'var(--text-muted)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = group.category
-                            ? `${groupColor}33`
-                            : 'var(--border-color)';
-                        }}
+                        className="entity-chip"
+                        style={{ '--chip-color': group.category ? groupColor : 'var(--border-color)' } as CSSProperties}
                       >
-                        <div
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '13px',
-                            color: 'var(--text-main)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                          onClick={() => handleEditRule(r)}
-                          title="Clique para editar"
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(0,0,0,0.02)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span>{r.keyword}</span>
-                        </div>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleDeleteRule(r.id, r.keyword);
-                          }}
+                          className="entity-chip-body"
+                          onClick={() => handleEditRule(r)}
+                          title="Clique para editar"
+                        >
+                          <span>{r.keyword}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="entity-chip-remove"
+                          onClick={() => setRuleToDelete({ id: r.id, keyword: r.keyword })}
                           title="Excluir Regra"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            borderLeft: `1px solid ${group.category ? `${groupColor}22` : 'var(--border-color)'}`,
-                            padding: '6px 10px',
-                            cursor: 'pointer',
-                            color: 'var(--text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = 'var(--danger)';
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'var(--text-muted)';
-                            e.currentTarget.style.background = 'transparent';
-                          }}
+                          aria-label={`Excluir regra ${r.keyword}`}
                         >
                           <X size={14} />
                         </button>
@@ -307,65 +202,13 @@ export default function RuleManager() {
         )}
       </div>
 
-      {isModalOpen && (
-        <dialog
-          ref={dialogRef}
-          className="modal"
-          style={{ maxWidth: 500, width: '95%', margin: 'auto' }}
-          onClose={handleCancelEditRule}
-          closedby="any"
-        >
-          <div className="modal-header">
-            <h2 className="modal-title">{editingRuleId ? 'Editar Regra' : 'Nova Regra'}</h2>
-            <button type="button" className="btn btn-ghost btn-icon" onClick={handleCancelEditRule}>
-              <X size={20} />
-            </button>
-          </div>
-          <div className="modal-body">
-            <form id="rule-form" onSubmit={handleSaveRule}>
-              <div className="form-group">
-                <label className="label">Palavra-chave (Keyword)</label>
-                <input
-                  className="input"
-                  placeholder="Ex: Uber, Ifood, Netflix..."
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  maxLength={100}
-                  autoFocus
-                />
-                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
-                  Se a descrição da transação contiver esse texto, ela será categorizada
-                  automaticamente.
-                </small>
-              </div>
-              <div className="form-group">
-                <label className="label">Categoria Destino</label>
-                <select
-                  className="input"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}
-                >
-                  <option
-                    value=""
-                    style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}
-                  >
-                    -- Selecione --
-                  </option>
-                  {categories.map((c) => (
-                    <option
-                      key={c.id}
-                      value={c.id}
-                      style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}
-                    >
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </form>
-          </div>
-          <div className="modal-footer">
+      <Modal
+        isOpen={isModalOpen}
+        title={editingRuleId ? 'Editar Regra' : 'Nova Regra'}
+        onClose={handleCancelEditRule}
+        maxWidth={500}
+        footer={
+          <>
             <button type="button" className="btn btn-ghost" onClick={handleCancelEditRule}>
               Cancelar
             </button>
@@ -384,9 +227,58 @@ export default function RuleManager() {
               )}
               {editingRuleId ? 'Salvar Alterações' : 'Criar Regra'}
             </button>
+          </>
+        }
+      >
+        <form id="rule-form" onSubmit={handleSaveRule}>
+          <div className="form-group">
+            <label className="label" htmlFor="rule-keyword-input">
+              Palavra-chave (Keyword)
+            </label>
+            <input
+              id="rule-keyword-input"
+              className="input"
+              placeholder="Ex: Uber, Ifood, Netflix..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              maxLength={100}
+              autoFocus
+            />
+            <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+              Se a descrição da transação contiver esse texto, ela será categorizada
+              automaticamente.
+            </small>
           </div>
-        </dialog>
-      )}
+          <div className="form-group">
+            <label className="label" htmlFor="rule-category-select">
+              Categoria Destino
+            </label>
+            <select
+              id="rule-category-select"
+              className="select"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">-- Selecione --</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={ruleToDelete !== null}
+        title="Excluir regra?"
+        message={ruleToDelete ? `Excluir a regra para "${ruleToDelete.keyword}"?` : ''}
+        confirmLabel="Excluir"
+        loading={deleteRuleMutation.isPending}
+        onConfirm={() => void handleConfirmDeleteRule()}
+        onCancel={() => setRuleToDelete(null)}
+      />
     </div>
   );
 }

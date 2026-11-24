@@ -5,11 +5,11 @@ export default function HelpPage() {
         <div className="settings-page" style={{ paddingBottom: '40px' }}>
             <div className="settings-card card">
                 <div className="card-header" style={{ marginBottom: 20 }}>
-                    <BookOpen size={24} style={{ color: 'var(--primary-color)' }} />
+                    <BookOpen size={24} style={{ color: 'var(--accent)' }} />
                     <span style={{ fontSize: 20, fontWeight: 600 }}>Central de Ajuda</span>
                 </div>
 
-                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', marginBottom: '32px', borderLeft: '4px solid var(--primary-color)' }}>
+                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', marginBottom: '32px', borderLeft: '4px solid var(--accent)' }}>
                     <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 15, lineHeight: 1.6 }}>
                         Bem-vindo ao guia completo do Finance Tracker. Aqui você encontra não apenas o passo a passo de como usar cada tela, mas também <strong>melhores práticas</strong> e <strong>dicas</strong> de como manter suas finanças sempre organizadas e seus gráficos precisos.
                     </p>
@@ -20,8 +20,8 @@ export default function HelpPage() {
                     {/* Dashboard */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <LayoutDashboard size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <LayoutDashboard size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Dashboard e Gráficos</h4>
                         </div>
@@ -44,8 +44,8 @@ export default function HelpPage() {
                     {/* Importação */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <Upload size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <Upload size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Importar Transações (Arquivos CSV)</h4>
                         </div>
@@ -66,8 +66,8 @@ export default function HelpPage() {
                     {/* Pendentes e Conciliação */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <Clock size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <Clock size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Processando Transações Pendentes</h4>
                         </div>
@@ -84,8 +84,8 @@ export default function HelpPage() {
                     {/* Histórico */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <History size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <History size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Gerenciando o Histórico</h4>
                         </div>
@@ -103,8 +103,8 @@ export default function HelpPage() {
                     {/* Categorias */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <Tag size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <Tag size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Organização de Categorias</h4>
                         </div>
@@ -121,8 +121,8 @@ export default function HelpPage() {
                     {/* Configurações */}
                     <div className="help-section">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                            <div style={{ padding: '8px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px' }}>
-                                <Settings size={20} style={{ color: 'var(--primary-color)' }} />
+                            <div style={{ padding: '8px', backgroundColor: 'var(--accent-light)', borderRadius: '8px' }}>
+                                <Settings size={20} style={{ color: 'var(--accent)' }} />
                             </div>
                             <h4 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>Configurações do Sistema</h4>
                         </div>

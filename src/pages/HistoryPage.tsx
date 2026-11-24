@@ -5,6 +5,7 @@ import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
 import { useSettings } from '../context/SettingsContext';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useCategories } from '../hooks/queries/useCategoryQueries';
 import {
   useBulkDeleteTransactions,
@@ -24,6 +25,9 @@ export default function HistoryPage() {
   const [categoryId, setCategoryId] = useState('');
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(0);
+  const [confirmState, setConfirmState] = useState<
+    { type: 'single'; id: string } | { type: 'bulk'; ids: string[] } | null
+  >(null);
 
   const queryParams = useMemo<GetHistoryParams>(() => {
     const params: GetHistoryParams = { page, size: 50, year };
@@ -82,14 +86,8 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Excluir esta transação?')) return;
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success('Transação excluída.');
-    } catch {
-      toast.error('Erro ao excluir.');
-    }
+  const handleDelete = (id: string) => {
+    setConfirmState({ type: 'single', id });
   };
 
   const handleQuickCategory = async (id: string, catId: string) => {
@@ -114,16 +112,25 @@ export default function HistoryPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`Excluir ${selected.size} transações selecionadas do histórico?`)) return;
-    const deletedIds = Array.from(selected);
+    setConfirmState({ type: 'bulk', ids: Array.from(selected) });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmState) return;
     try {
-      await bulkDeleteMutation.mutateAsync(deletedIds);
-      toast.success(`${deletedIds.length} transações excluídas!`);
-      clearSelection();
+      if (confirmState.type === 'single') {
+        await deleteMutation.mutateAsync(confirmState.id);
+        toast.success('Transação excluída.');
+      } else {
+        await bulkDeleteMutation.mutateAsync(confirmState.ids);
+        toast.success(`${confirmState.ids.length} transações excluídas!`);
+        clearSelection();
+      }
+      setConfirmState(null);
     } catch {
-      toast.error('Erro ao excluir em lote.');
+      toast.error(confirmState.type === 'single' ? 'Erro ao excluir.' : 'Erro ao excluir em lote.');
     }
   };
 
@@ -225,6 +232,7 @@ export default function HistoryPage() {
                         className="custom-checkbox"
                         checked={allSelected}
                         onChange={() => toggleAll()}
+                        aria-label="Selecionar todas as transações"
                       />
                     </th>
                     <th>Data</th>
@@ -243,6 +251,7 @@ export default function HistoryPage() {
                           className="custom-checkbox"
                           checked={selected.has(tx.id)}
                           onChange={() => toggleSelect(tx.id)}
+                          aria-label={`Selecionar transação ${tx.description}`}
                         />
                       </td>
                       <td data-label="Data" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
@@ -297,6 +306,11 @@ export default function HistoryPage() {
                                 ? 'Incluir nos relatórios'
                                 : 'Ignorar nos relatórios (Transferência)'
                             }
+                            aria-label={
+                              tx.ignore_in_reports
+                                ? `Incluir ${tx.description} nos relatórios`
+                                : `Ignorar ${tx.description} nos relatórios`
+                            }
                             onClick={() => handleToggleIgnore(tx.id, tx.ignore_in_reports)}
                             style={{ padding: '4px 7px' }}
                           >
@@ -306,6 +320,7 @@ export default function HistoryPage() {
                             type="button"
                             className="btn btn-ghost btn-sm"
                             title="Mover para Pendentes"
+                            aria-label={`Mover ${tx.description} para Pendentes`}
                             onClick={() => handleUncategorize(tx.id)}
                             style={{ padding: '4px 7px' }}
                           >
@@ -315,6 +330,7 @@ export default function HistoryPage() {
                             type="button"
                             className="btn btn-danger btn-sm"
                             title="Excluir Transação"
+                            aria-label={`Excluir transação ${tx.description}`}
                             onClick={() => handleDelete(tx.id)}
                             style={{ padding: '4px 7px' }}
                           >
@@ -360,6 +376,22 @@ export default function HistoryPage() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmState !== null}
+        title={
+          confirmState?.type === 'bulk' ? 'Excluir transações selecionadas?' : 'Excluir transação?'
+        }
+        message={
+          confirmState?.type === 'bulk'
+            ? `Tem certeza que deseja excluir as ${confirmState.ids.length} transações selecionadas do histórico? Esta ação não pode ser desfeita.`
+            : 'Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.'
+        }
+        confirmLabel="Excluir"
+        loading={deleteMutation.isPending || bulkDeleteMutation.isPending}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }

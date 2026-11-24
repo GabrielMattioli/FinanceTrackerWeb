@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { formatAmount, formatDate } from '../utils/formatters';
 import { useRowSelection } from '../hooks/useRowSelection';
 import { useSettings } from '../context/SettingsContext';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useCategories } from '../hooks/queries/useCategoryQueries';
 import {
   useBulkCategorize,
@@ -18,6 +19,9 @@ export default function PendingPage() {
   const { baseCurrency } = useSettings();
   const [filter, setFilter] = useState('');
   const [bulkCategory, setBulkCategory] = useState('');
+  const [confirmState, setConfirmState] = useState<
+    { type: 'single'; id: string } | { type: 'bulk'; ids: string[] } | null
+  >(null);
 
   const { data: pendingPage, isPending: loadingPending, isError } = usePendingTransactions({
     page: 0,
@@ -76,17 +80,9 @@ export default function PendingPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`Excluir ${selected.size} transações selecionadas?`)) return;
-    try {
-      const ids = Array.from(selected);
-      await bulkDeleteMutation.mutateAsync(ids);
-      toast.success(`${ids.length} transações excluídas!`);
-      clearSelection();
-    } catch {
-      toast.error('Erro ao excluir em lote.');
-    }
+    setConfirmState({ type: 'bulk', ids: Array.from(selected) });
   };
 
   const handleQuickCategory = async (id: string, categoryId: string) => {
@@ -97,13 +93,24 @@ export default function PendingPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Excluir esta transação pendente?')) return;
+  const handleDelete = (id: string) => {
+    setConfirmState({ type: 'single', id });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmState) return;
     try {
-      await deleteMutation.mutateAsync(id);
-      toast.success('Transação excluída.');
+      if (confirmState.type === 'single') {
+        await deleteMutation.mutateAsync(confirmState.id);
+        toast.success('Transação excluída.');
+      } else {
+        await bulkDeleteMutation.mutateAsync(confirmState.ids);
+        toast.success(`${confirmState.ids.length} transações excluídas!`);
+        clearSelection();
+      }
+      setConfirmState(null);
     } catch {
-      toast.error('Erro ao excluir.');
+      toast.error(confirmState.type === 'single' ? 'Erro ao excluir.' : 'Erro ao excluir em lote.');
     }
   };
 
@@ -209,12 +216,13 @@ export default function PendingPage() {
               <table className="responsive-table">
                 <thead>
                   <tr>
-                    <th style={{ width: 44 }}>
+                      <th style={{ width: 44 }}>
                       <input
                         type="checkbox"
                         className="custom-checkbox"
                         checked={allSelected}
                         onChange={() => toggleAll()}
+                        aria-label="Selecionar todas as transações"
                       />
                     </th>
                     <th>Data</th>
@@ -232,6 +240,7 @@ export default function PendingPage() {
                           className="custom-checkbox"
                           checked={selected.has(tx.id)}
                           onChange={() => toggleSelect(tx.id)}
+                          aria-label={`Selecionar transação ${tx.description}`}
                         />
                       </td>
                       <td data-label="Data" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
@@ -282,6 +291,11 @@ export default function PendingPage() {
                                 ? 'Incluir nos relatórios'
                                 : 'Ignorar nos relatórios (Transferência)'
                             }
+                            aria-label={
+                              tx.ignore_in_reports
+                                ? `Incluir ${tx.description} nos relatórios`
+                                : `Ignorar ${tx.description} nos relatórios`
+                            }
                             onClick={() => handleToggleIgnore(tx.id, tx.ignore_in_reports)}
                             style={{ padding: '6px 8px' }}
                           >
@@ -291,6 +305,7 @@ export default function PendingPage() {
                             type="button"
                             className="btn btn-danger btn-sm"
                             title="Excluir Transação"
+                            aria-label={`Excluir transação ${tx.description}`}
                             onClick={() => handleDelete(tx.id)}
                             style={{ padding: '6px 8px' }}
                           >
@@ -306,6 +321,22 @@ export default function PendingPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmState !== null}
+        title={
+          confirmState?.type === 'bulk' ? 'Excluir transações selecionadas?' : 'Excluir transação?'
+        }
+        message={
+          confirmState?.type === 'bulk'
+            ? `Tem certeza que deseja excluir as ${confirmState.ids.length} transações selecionadas? Esta ação não pode ser desfeita.`
+            : 'Tem certeza que deseja excluir esta transação pendente? Esta ação não pode ser desfeita.'
+        }
+        confirmLabel="Excluir"
+        loading={deleteMutation.isPending || bulkDeleteMutation.isPending}
+        onConfirm={() => void handleConfirmDelete()}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }
