@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, Sun, Moon } from 'lucide-react';
@@ -12,7 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
@@ -29,8 +29,7 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleSignUp = async (e: any) => {
-    e.preventDefault();
+  const handleSignUp = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -46,38 +45,61 @@ const Login = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100dvh',
-      backgroundColor: 'var(--bg-primary)',
-      color: 'var(--text-primary)',
-      position: 'relative'
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100dvh',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+        position: 'relative',
+      }}
+    >
       <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
-        <button className="btn btn-ghost" onClick={toggleTheme} aria-label="Toggle Theme" style={{ padding: '8px' }}>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={toggleTheme}
+          aria-label="Alternar tema"
+          style={{ padding: '8px' }}
+        >
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
       <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '40px 30px' }}>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)',
-            borderRadius: '12px',
+        <div
+          style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            marginBottom: '16px',
-            boxShadow: '0 4px 12px var(--accent-glow)'
-          }}>
+            marginBottom: '32px',
+          }}
+        >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              marginBottom: '16px',
+              boxShadow: '0 4px 12px var(--accent-glow)',
+            }}
+          >
             <Wallet size={24} />
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>
+          <h2
+            style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: 'var(--text-primary)',
+              marginBottom: '8px',
+            }}
+          >
             FinanceTracker
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
@@ -87,7 +109,9 @@ const Login = () => {
 
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="label" htmlFor="email">E-mail</label>
+            <label className="label" htmlFor="email">
+              E-mail
+            </label>
             <input
               id="email"
               type="email"
@@ -100,7 +124,9 @@ const Login = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label className="label" htmlFor="password">Senha</label>
+            <label className="label" htmlFor="password">
+              Senha
+            </label>
             <input
               id="password"
               type="password"

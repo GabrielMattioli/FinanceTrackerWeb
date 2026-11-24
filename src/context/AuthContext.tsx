@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { supabase } from '../supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
-import { invalidateYearlySummaryCache } from '../api/dashboard';
+import { supabase } from '../supabaseClient';
+import { queryClient } from '../lib/queryClient';
 
 interface AuthContextType {
   session: Session | null;
@@ -17,25 +17,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user || null);
-      setLoading(false);
-    });
+    let isMounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: currentSession } }) => {
+        if (!isMounted) return;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+      })
+      .catch((error: unknown) => {
+        console.error('Error restoring Supabase session:', error);
+        if (!isMounted) return;
+        setSession(null);
+        setUser(null);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user || null);
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
       if (event === 'SIGNED_OUT') {
-        invalidateYearlySummaryCache();
-        localStorage.removeItem('expectedMonthlyIncome');
+        queryClient.clear();
       }
     });
 
     return () => {
-      subscription?.unsubscribe();
+      isMounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -47,9 +60,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  if (loading) {
+    return (
+      <div
+        className="loading-page"
+        style={{ height: '100dvh', background: 'var(--bg-primary)' }}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="spinner" /> Carregando sessão...
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={{ session, user, signOut }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

@@ -1,8 +1,11 @@
-// @ts-nocheck
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { getPending } from '../api/transactions';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../context/ThemeContext';
+import {
+  invalidateTransactionRelatedQueries,
+  usePendingCount,
+} from '../hooks/queries/useTransactionQueries';
 
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -15,7 +18,7 @@ import CategoriesPage from '../pages/CategoriesPage';
 import SettingsPage from '../pages/SettingsPage';
 import HelpPage from '../pages/HelpPage';
 
-const PAGE_TITLES = {
+const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/pending': 'Transações Pendentes',
   '/history': 'Histórico',
@@ -26,48 +29,41 @@ const PAGE_TITLES = {
 
 export default function AppContent() {
   const location = useLocation();
+  const qc = useQueryClient();
   const [showImport, setShowImport] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { theme, toggleTheme } = useTheme();
-
-  const refreshPendingCount = useCallback(async () => {
-    try {
-      const res = await getPending(0, 1);
-      setPendingCount(res.totalElements || 0);
-    } catch {
-      // silently ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshPendingCount();
-  }, [refreshPendingCount]);
+  const { data: pendingCount = 0 } = usePendingCount();
 
   const title = PAGE_TITLES[location.pathname] || 'FinanceTracker';
 
   const handleImportSuccess = () => {
-    setRefreshKey(k => k + 1);
-    refreshPendingCount();
+    void invalidateTransactionRelatedQueries(qc);
   };
 
   return (
     <div className="app-layout">
-      <Sidebar pendingCount={pendingCount} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        pendingCount={pendingCount}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       <div className="main-content">
-        <Topbar title={title} onImportClick={() => setShowImport(true)} theme={theme} toggleTheme={toggleTheme} onMenuClick={() => setIsSidebarOpen(true)} />
+        <Topbar
+          title={title}
+          onImportClick={() => setShowImport(true)}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
 
         <main className="page-content">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage key={refreshKey} />} />
-            <Route
-              path="/pending"
-              element={<PendingPage key={refreshKey} onCountChange={setPendingCount} />}
-            />
-            <Route path="/history" element={<HistoryPage key={refreshKey} />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/pending" element={<PendingPage />} />
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/help" element={<HelpPage />} />

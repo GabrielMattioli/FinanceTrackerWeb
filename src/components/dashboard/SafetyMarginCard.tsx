@@ -12,9 +12,9 @@ export default function SafetyMarginCard({ data, baseCurrency }: { data: Dashboa
 
     const safePctCalc = effectiveBal > 0 ? (safe / effectiveBal) * 100 : 0;
     
-    let statusColor = '#10b981';
-    let statusMsg = '';
-    let StatusIcon = ShieldCheck;
+    let statusColor: string;
+    let statusMsg: string;
+    let StatusIcon: typeof ShieldCheck;
     
     if (safe <= 0) {
         statusColor = '#f43f5e'; // Red (Crítico)
@@ -42,7 +42,7 @@ export default function SafetyMarginCard({ data, baseCurrency }: { data: Dashboa
 
     // Percentage calculation for the bar visual
     let safePct = 0;
-    let reservedPct = 0;
+    let reservedPct: number;
     if (effectiveBal > 0) {
         reservedPct = Math.min(100, (reserved / effectiveBal) * 100);
         safePct = Math.max(0, 100 - reservedPct);

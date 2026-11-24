@@ -1,6 +1,5 @@
 import { supabase } from '../supabaseClient';
 import { checkError, fetchAllPages } from './common';
-import { invalidateYearlySummaryCache } from './dashboard';
 import { escapeLikePattern } from '../utils/sql';
 import type { Transaction, TransactionInput, TransactionUpdateInput } from '../types/domain';
 import type { Database } from '../types/supabase';
@@ -180,7 +179,6 @@ export const createTransaction = async (input: TransactionInput): Promise<Transa
     .select('*, categories(id, name, color)')
     .single();
   if (error) throw error;
-  invalidateYearlySummaryCache();
   return { ...data, category: data.categories };
 };
 
@@ -199,7 +197,6 @@ export const updateTransaction = async (id: string, input: TransactionUpdateInpu
     .select('*, categories(id, name, color)')
     .single();
   if (error) throw error;
-  invalidateYearlySummaryCache();
   return { ...data, category: data.categories };
 };
 
@@ -211,7 +208,6 @@ export const categorizeOne = async (id: string, categoryId: string) => {
     .select()
     .single();
   const result = checkError(error, data);
-  invalidateYearlySummaryCache();
   return result;
 };
 
@@ -223,7 +219,6 @@ export const uncategorizeOne = async (id: string) => {
     .select()
     .single();
   const result = checkError(error, data);
-  invalidateYearlySummaryCache();
   return result;
 };
 
@@ -234,7 +229,6 @@ export const bulkCategorize = async (transactionIds: string[], categoryId: strin
     .in('id', transactionIds)
     .select();
   const result = checkError(error, data);
-  invalidateYearlySummaryCache();
   return result;
 };
 
@@ -247,20 +241,17 @@ export const applyCategoryRuleToUncategorized = async (keyword: string, category
     .ilike('description', `%${safeKeyword}%`)
     .select();
   const result = checkError(error, data);
-  invalidateYearlySummaryCache();
   return result;
 };
 
 export const deleteTransaction = async (id: string): Promise<void> => {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
-  invalidateYearlySummaryCache();
 };
 
 export const bulkDelete = async (transactionIds: string[]): Promise<void> => {
   const { error } = await supabase.from('transactions').delete().in('id', transactionIds);
   if (error) throw error;
-  invalidateYearlySummaryCache();
 };
 
 export const toggleIgnoreInReports = async (id: string, ignore: boolean) => {
@@ -275,6 +266,5 @@ export const toggleIgnoreInReports = async (id: string, ignore: boolean) => {
     console.error('toggleIgnoreInReports error:', error);
     throw error;
   }
-  invalidateYearlySummaryCache();
   return data;
 };

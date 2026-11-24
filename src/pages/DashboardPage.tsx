@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
-import { getDashboardSummary, getLatestDashboardMonth } from '../api/dashboard';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { MonthBar, YearSelector } from '../components/MonthYearSelector';
 import { useSettings } from '../context/SettingsContext';
-import type { DashboardData } from '../types/dashboard';
+import { useDashboardSummary } from '../hooks/queries/useDashboardQueries';
 
-// Components
 import StatGrid from '../components/dashboard/StatGrid';
 import SafetyMarginCard from '../components/dashboard/SafetyMarginCard';
 import FixedExpensesCard from '../components/dashboard/FixedExpensesCard';
@@ -13,89 +11,107 @@ import DashboardCharts from '../components/dashboard/DashboardCharts';
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
 
 export default function DashboardPage() {
-    const { baseCurrency } = useSettings();
-    const now = new Date();
-    const [year, setYear] = useState(now.getFullYear());
-    const [month, setMonth] = useState(now.getMonth() + 1);
-    const [data, setData] = useState<DashboardData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [slideClass, setSlideClass] = useState('');
-    const [initialised, setInitialised] = useState(false);
+  const { baseCurrency } = useSettings();
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [slideClass, setSlideClass] = useState('');
+  const timersRef = useRef<number[]>([]);
 
-    // On first mount, jump to the latest month that has transaction data
-    useEffect(() => {
-        getLatestDashboardMonth()
-            .then(({ year: y, month: m }) => {
-                setYear(y);
-                setMonth(m);
-            })
-            .catch(() => { /* keep current month defaults */ })
-            .finally(() => setInitialised(true));
-    }, []);
+  const { data, isPending, isError } = useDashboardSummary(year, month);
 
-    const load = async (y: number, m: number) => {
-        setLoading(true);
-        try {
-            const res = await getDashboardSummary(y, m);
-            setData(res);
-        } catch {
-            toast.error('Erro ao carregar dashboard.');
-        } finally {
-            setLoading(false);
-        }
+  useEffect(() => {
+    if (isError) {
+      toast.error('Erro ao carregar dashboard.');
+    }
+  }, [isError]);
+
+  useEffect(() => {
+    return () => {
+      for (const timerId of timersRef.current) {
+        window.clearTimeout(timerId);
+      }
+      timersRef.current = [];
     };
+  }, []);
 
-    useEffect(() => { if (initialised) load(year, month); }, [year, month, initialised]);
+  const clearScheduledAnimations = () => {
+    for (const timerId of timersRef.current) {
+      window.clearTimeout(timerId);
+    }
+    timersRef.current = [];
+  };
 
-    const handleYearChange = (newYear: number) => {
-        const direction = newYear > year ? 'left' : 'right';
-        setSlideClass(`slide-out-${direction}`);
-        setTimeout(() => {
-            setYear(newYear);
-            setSlideClass(`slide-in-${direction}`);
-            setTimeout(() => setSlideClass(''), 350);
-        }, 200);
-    };
+  const handleYearChange = (newYear: number) => {
+    clearScheduledAnimations();
+    const direction = newYear > year ? 'left' : 'right';
+    setSlideClass(`slide-out-${direction}`);
+    const t1 = window.setTimeout(() => {
+      setYear(newYear);
+      setSlideClass(`slide-in-${direction}`);
+      const t2 = window.setTimeout(() => setSlideClass(''), 350);
+      timersRef.current.push(t2);
+    }, 200);
+    timersRef.current.push(t1);
+  };
 
-    const handleMonthChange = (newMonth: number | string) => {
-        const m = Number(newMonth);
-        if (m === month) return;
-        setSlideClass('fade-out');
-        setTimeout(() => {
-            setMonth(m);
-            setSlideClass('fade-in');
-            setTimeout(() => setSlideClass(''), 300);
-        }, 150);
-    };
+  const handleMonthChange = (newMonth: number | string) => {
+    const m = Number(newMonth);
+    if (m === month) return;
+    clearScheduledAnimations();
+    setSlideClass('fade-out');
+    const t1 = window.setTimeout(() => {
+      setMonth(m);
+      setSlideClass('fade-in');
+      const t2 = window.setTimeout(() => setSlideClass(''), 300);
+      timersRef.current.push(t2);
+    }, 150);
+    timersRef.current.push(t1);
+  };
 
-    return (
+  return (
+    <div>
+      <div className="page-header">
         <div>
-            <div className="page-header">
-                <div>
-                    <h2>Dashboard Financeiro</h2>
-                    <p>Visão geral das suas finanças</p>
-                </div>
-                <YearSelector year={year} onYearChange={handleYearChange} />
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-                <MonthBar year={year} month={month} onMonthChange={handleMonthChange} allowAllMonths={false} />
-            </div>
-
-            <div className={`dashboard-slide-wrapper ${slideClass}`}>
-                {loading ? (
-                    <DashboardSkeleton />
-                ) : (
-                    <>
-                        <StatGrid data={data} baseCurrency={baseCurrency} year={year} month={month} />
-                        {year === now.getFullYear() && month === now.getMonth() + 1 && (
-                            <SafetyMarginCard data={data} baseCurrency={baseCurrency} />
-                        )}
-                        <FixedExpensesCard data={data} baseCurrency={baseCurrency} year={year} month={month} onRefresh={() => load(year, month)} />
-                        <DashboardCharts data={data} baseCurrency={baseCurrency} year={year} month={month} />
-                    </>
-                )}
-            </div>
+          <h2>Dashboard Financeiro</h2>
+          <p>Visão geral das suas finanças</p>
         </div>
-    );
+        <YearSelector year={year} onYearChange={handleYearChange} />
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <MonthBar
+          year={year}
+          month={month}
+          onMonthChange={handleMonthChange}
+          allowAllMonths={false}
+        />
+      </div>
+
+      <div className={`dashboard-slide-wrapper ${slideClass}`}>
+        {isPending ? (
+          <DashboardSkeleton />
+        ) : (
+          <>
+            <StatGrid data={data ?? null} baseCurrency={baseCurrency} year={year} month={month} />
+            {year === now.getFullYear() && month === now.getMonth() + 1 && (
+              <SafetyMarginCard data={data ?? null} baseCurrency={baseCurrency} />
+            )}
+            <FixedExpensesCard
+              data={data ?? null}
+              baseCurrency={baseCurrency}
+              year={year}
+              month={month}
+            />
+            <DashboardCharts
+              data={data ?? null}
+              baseCurrency={baseCurrency}
+              year={year}
+              month={month}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

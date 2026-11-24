@@ -30,7 +30,6 @@ export default function InitialBalanceModal() {
                 );
                 if (!isDialogContent) {
                     dialog.close();
-                    handleClose();
                 }
             };
             dialog.addEventListener('click', handleBackdropClick);
@@ -83,9 +82,10 @@ const handleClose = async () => {
             await updateInitialBalance(val);
             toast.success('Saldo inicial configurado!');
             handleClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            toast.error('Erro ao salvar: ' + (err.message || 'Erro desconhecido'));
+            const message = err instanceof Error ? err.message : 'Erro desconhecido';
+            toast.error('Erro ao salvar: ' + message);
         } finally {
             setLoading(false);
         }

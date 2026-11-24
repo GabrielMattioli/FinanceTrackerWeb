@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-typecheck:
+  verify:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,6 +22,12 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run Unit Tests
+      run: npm run test
 
     - name: Run TypeScript Compiler & Vite Build
       run: npm run build

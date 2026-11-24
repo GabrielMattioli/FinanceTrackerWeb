@@ -144,7 +144,7 @@ export function CategoryModal({
                                     gap: '12px'
                                 }}
                             >
-                                <input type="checkbox" className="custom-checkbox" checked={isEssential} readOnly style={{ '--checkbox-color': 'var(--accent)', marginTop: 2 } as any} />
+                                <input type="checkbox" className="custom-checkbox" checked={isEssential} readOnly style={{ '--checkbox-color': 'var(--accent)', marginTop: 2 } as React.CSSProperties} />
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Despesa Essencial</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Despesas fixas cobradas todos os meses.</p>
@@ -165,7 +165,7 @@ export function CategoryModal({
                                     gap: '12px'
                                 }}
                             >
-                                <input type="checkbox" className="custom-checkbox" checked={isSavings} readOnly style={{ '--checkbox-color': '#10b981', marginTop: 2 } as any} />
+                                <input type="checkbox" className="custom-checkbox" checked={isSavings} readOnly style={{ '--checkbox-color': '#10b981', marginTop: 2 } as React.CSSProperties} />
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Economia ou Investimento</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Identifica valores poupados ou investidos.</p>
@@ -186,7 +186,7 @@ export function CategoryModal({
                                     gap: '12px'
                                 }}
                             >
-                                <input type="checkbox" className="custom-checkbox" checked={isMainIncome} readOnly style={{ '--checkbox-color': '#eab308', marginTop: 2 } as any} />
+                                <input type="checkbox" className="custom-checkbox" checked={isMainIncome} readOnly style={{ '--checkbox-color': '#eab308', marginTop: 2 } as React.CSSProperties} />
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Entrada Principal</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>Considerada a fonte principal de receita.</p>

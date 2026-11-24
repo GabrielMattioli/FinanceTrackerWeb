@@ -75,40 +75,7 @@ export const getDashboardSummary = async (year: number, month: number): Promise<
   });
 };
 
-export const getLatestDashboardMonth = async () => {
-  return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
-};
-
-// In-memory cache kept during Phase 1 (invalidated on every transaction mutation; replaced by TanStack Query in Phase 2)
-const yearlySummaryCache = new Map<
-  string,
-  { promise: Promise<{ months: YearlyMonthSummary[] }>; timestamp: number }
->();
-const YEARLY_CACHE_TTL_MS = 30_000;
-
-export const getYearlySummary = (
-  year: number,
-  categorizedOnly: boolean = false
-): Promise<{ months: YearlyMonthSummary[] }> => {
-  const cacheKey = `${year}-${categorizedOnly}`;
-  const cached = yearlySummaryCache.get(cacheKey);
-
-  if (cached && Date.now() - cached.timestamp < YEARLY_CACHE_TTL_MS) {
-    return cached.promise;
-  }
-
-  const promise = fetchYearlySummary(year, categorizedOnly);
-  yearlySummaryCache.set(cacheKey, { promise, timestamp: Date.now() });
-  promise.catch(() => yearlySummaryCache.delete(cacheKey));
-
-  return promise;
-};
-
-export const invalidateYearlySummaryCache = () => {
-  yearlySummaryCache.clear();
-};
-
-const fetchYearlySummary = async (
+export const getYearlySummary = async (
   year: number,
   categorizedOnly: boolean = false
 ): Promise<{ months: YearlyMonthSummary[] }> => {
